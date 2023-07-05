@@ -1,0 +1,35 @@
+package version
+
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrInvalidVersion = errors.New("invalid version")
+)
+
+type Version interface {
+	fmt.Stringer
+	IsPreRelease() bool
+	Matches(Predicate) bool
+}
+
+func Parse(input string) Version {
+	if v, err := ParseSemver(input); err == nil {
+		return v
+	}
+	return ParseVerbal(input)
+}
+
+func Less(v1, v2 Version) bool {
+	if v1, ok := v1.(SemverVersion); ok {
+		if v2, ok := v2.(SemverVersion); ok {
+			return v1.Compare(v2) < 0
+		}
+	}
+	if v1.IsPreRelease() != v2.IsPreRelease() {
+		return v2.IsPreRelease()
+	}
+	return v1.String() < v2.String()
+}
