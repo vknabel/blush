@@ -72,7 +72,7 @@ test "any in enums matches all types", { fail =>
 		{token.IDENT, "Int"},
 		{token.COLON, ":"},
 		{token.LBRACE, "{"},
-		{token.IDENT, "_"},
+		{token.BLANK, "_"},
 		{token.ARROW, "=>"},
 		{token.IDENT, "False"},
 		{token.RBRACE, "}"},
@@ -80,7 +80,7 @@ test "any in enums matches all types", { fail =>
 		{token.IDENT, "Any"},
 		{token.COLON, ":"},
 		{token.LBRACE, "{"},
-		{token.IDENT, "_"},
+		{token.BLANK, "_"},
 		{token.ARROW, "=>"},
 		{token.IDENT, "True"},
 		{token.RBRACE, "}"},
@@ -441,6 +441,17 @@ func TestAllTokens(t *testing.T) {
 				expectedLiteral string
 			}{
 				{token.RBRACKET, "]"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "at",
+			input: `@`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.AT, "@"},
 				{token.EOF, ""},
 			},
 		},

@@ -2,6 +2,9 @@ package token
 
 type TokenType string
 
+// TODO: add whitespace and comments to tokens
+// This allows the parser to ignore all comments
+// and the ast may also drop docs completely
 type Token struct {
 	Type    TokenType
 	Literal string
@@ -47,6 +50,7 @@ const (
 	RBRACE   = "}"
 	LBRACKET = "["
 	RBRACKET = "]"
+	AT       = "@"
 
 	// KEYWORDS
 	MODULE   = "MODULE"
@@ -61,6 +65,7 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	FOR      = "FOR"
+	BLANK    = "BLANK"
 )
 
 var keywords = map[string]TokenType{
@@ -76,6 +81,7 @@ var keywords = map[string]TokenType{
 	"if":     IF,
 	"else":   ELSE,
 	"for":    FOR,
+	"_":      BLANK,
 }
 
 func LookupIdent(ident string) TokenType {

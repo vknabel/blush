@@ -1,0 +1,64 @@
+package ast
+
+import (
+	"fmt"
+	"github.com/vknabel/lithia/token"
+	"strings"
+)
+
+var _ Decl = DeclField{}
+var _ Overviewable = DeclField{}
+
+type DeclField struct {
+	Token      token.Token
+	Name       Identifier
+	Parameters []DeclParameter
+
+	Annotations *AnnotationChain
+
+	Docs *Docs
+}
+
+// TokenLiteral implements Decl.
+func (d DeclField) TokenLiteral() token.Token {
+	return d.Token
+}
+
+// declarationNode implements Decl.
+func (DeclField) declarationNode() {}
+
+func (e DeclField) DeclName() Identifier {
+	return e.Name
+}
+
+func (e DeclField) DeclOverview() string {
+	if len(e.Parameters) == 0 {
+		return string(e.Name.Value)
+	}
+	paramNames := make([]string, len(e.Parameters))
+	for i, param := range e.Parameters {
+		paramNames[i] = string(param.Name.Value)
+	}
+	return fmt.Sprintf("%s %s", e.Name, strings.Join(paramNames, ", "))
+}
+
+func (e DeclField) IsExportedDecl() bool {
+	return true
+}
+
+func MakeDeclField(name Identifier, params []DeclParameter, annotations *AnnotationChain) *DeclField {
+	return &DeclField{
+		Name:        name,
+		Parameters:  params,
+		Annotations: annotations,
+		Docs:        MakeDocs([]string{}),
+	}
+}
+
+func (decl DeclField) ProvidedDocs() *Docs {
+	return decl.Docs
+}
+
+func (DeclField) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
+	// no nested decls
+}

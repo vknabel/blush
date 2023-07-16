@@ -1,0 +1,63 @@
+package ast
+
+type SourceFile struct {
+	Path         string
+	Imports      []ModuleName
+	Declarations []Decl
+	Statements   []Expr
+}
+
+func MakeSourceFile(path string) *SourceFile {
+	return &SourceFile{
+		Path:         path,
+		Imports:      make([]ModuleName, 0),
+		Declarations: make([]Decl, 0),
+		Statements:   make([]Expr, 0),
+	}
+}
+
+func (sf *SourceFile) Add(globalStmt Statement) {
+	switch node := globalStmt.(type) {
+	case DeclData:
+		sf.Declarations = append(sf.Declarations, node)
+	default:
+		panic("TODO: unknown global statement in sourcefile")
+	}
+}
+
+func (sf *SourceFile) AddDecl(decl Decl) {
+	if decl == nil {
+		return
+	}
+	if importDecl, ok := decl.(DeclImport); ok {
+		sf.Imports = append(sf.Imports, importDecl.ModuleName)
+	}
+	sf.Declarations = append(sf.Declarations, decl)
+}
+
+func (sf *SourceFile) AddExpr(expr Expr) {
+	if expr == nil {
+		return
+	}
+	sf.Statements = append(sf.Statements, expr)
+}
+
+func (sf *SourceFile) ExportedDeclarations() []Decl {
+	decls := make([]Decl, 0)
+	for _, decl := range sf.Declarations {
+		if decl.IsExportedDecl() {
+			decls = append(decls, decl)
+		}
+	}
+	return decls
+}
+
+// Enumerate all declarations in this source file.
+func (sf SourceFile) EnumerateNestedDecls(enumerate func(declaredAt any, decl []Decl)) {
+	for _, decl := range sf.Declarations {
+		decl.EnumerateNestedDecls(enumerate)
+	}
+	for _, stmt := range sf.Statements {
+		stmt.EnumerateNestedDecls(enumerate)
+	}
+}

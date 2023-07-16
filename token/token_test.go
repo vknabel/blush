@@ -25,6 +25,7 @@ func TestLookupIdent(t *testing.T) {
 		{"if", token.IF},
 		{"else", token.ELSE},
 		{"for", token.FOR},
+		{"_", token.BLANK},
 	}
 
 	for _, tc := range testCases {

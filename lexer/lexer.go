@@ -1,19 +1,25 @@
 package lexer
 
-import "github.com/vknabel/lithia/token"
+import (
+	"github.com/vknabel/lithia/token"
+)
 
 type Lexer struct {
-	module       string
-	fileName     string
-	input        string
-	startPos     int  // start position of this token
-	position     int  // current position in input (points to current char)
-	readPosition int  // current reading position in input (after current char)
-	ch           byte // current char under examination
+	module   string
+	fileName string
+	input    string // TODO: change to io.Reader or *bufio.Reader
+	startPos int    // start position of this token
+	peekPos  int    // current reading position in input (after current char)
+	currPos  int    // current position in input (points to current char)
+	ch       byte   // current char under examination
 }
 
 func New(module, fileName, input string) Lexer {
-	l := Lexer{input: input}
+	l := Lexer{
+		module:   module,
+		fileName: fileName,
+		input:    input,
+	}
 	l.advance()
 	return l
 }
@@ -23,7 +29,7 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.skipWhitespace() // TODO: newlines should be respected
 
-	l.startPos = l.position
+	l.startPos = l.currPos
 
 	switch l.ch {
 	case '!': // BANG, NEQ
@@ -111,6 +117,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = l.newToken(token.LBRACKET, l.ch)
 	case ']': // RBRACKET
 		tok = l.newToken(token.RBRACKET, l.ch)
+	case '@': // AT
+		tok = l.newToken(token.AT, l.ch)
 
 	case '#': // COMMENT
 		tok.Type = token.COMMENT
@@ -138,25 +146,25 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 func (l *Lexer) parseString() string {
-	position := l.position + 1
+	position := l.currPos + 1
 	for {
 		l.advance()
 		if l.ch == '"' || l.ch == 0 {
 			break
 		}
 	}
-	return l.input[position:l.position]
+	return l.input[position:l.currPos]
 }
 
 func (l *Lexer) parseInlineComment() string {
-	position := l.position + 1
+	position := l.currPos + 1
 	for {
 		l.advance()
 		if l.ch == '\n' || l.ch == 0 {
 			break
 		}
 	}
-	return l.input[position:l.position]
+	return l.input[position:l.currPos]
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -166,47 +174,47 @@ func (l *Lexer) skipWhitespace() {
 }
 
 func (l *Lexer) advance() {
-	if l.readPosition >= len(l.input) {
+	if l.peekPos >= len(l.input) {
 		l.ch = 0
 	} else {
-		l.ch = l.input[l.readPosition]
+		l.ch = l.input[l.peekPos]
 	}
-	l.position = l.readPosition
-	l.readPosition += 1
+	l.currPos = l.peekPos
+	l.peekPos += 1
 }
 
 func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input) {
+	if l.peekPos >= len(l.input) {
 		return 0
 	} else {
-		return l.input[l.readPosition]
+		return l.input[l.peekPos]
 	}
 }
 
 func (l *Lexer) parseIdentifier() string {
-	position := l.position
+	position := l.currPos
 	for isLetter(l.ch) || isDigit(l.ch) {
 		l.advance()
 	}
-	return l.input[position:l.position]
+	return l.input[position:l.currPos]
 }
 
 func (l *Lexer) parseNumber() (string, token.TokenType) {
-	position := l.position
+	position := l.currPos
 	for isDigit(l.ch) {
 		l.advance()
 	}
 	if l.ch != '.' {
-		return l.input[position:l.position], token.INT
+		return l.input[position:l.currPos], token.INT
 	}
 	if !isDigit(l.peekChar()) {
-		return l.input[position:l.position], token.INT
+		return l.input[position:l.currPos], token.INT
 	}
 	l.advance()
 	for isDigit(l.ch) {
 		l.advance()
 	}
-	return l.input[position:l.position], token.FLOAT
+	return l.input[position:l.currPos], token.FLOAT
 }
 
 func isLetter(ch byte) bool {
@@ -221,6 +229,6 @@ func (l *Lexer) newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{
 		Type:    tokenType,
 		Literal: string(ch),
-		Source:  token.MakeSource(l.module, l.fileName, l.position),
+		Source:  token.MakeSource(l.module, l.fileName, l.currPos),
 	}
 }
