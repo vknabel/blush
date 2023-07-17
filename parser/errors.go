@@ -10,12 +10,16 @@ type ParseError interface {
 	error
 }
 
-type UnexpectedToken struct {
-	Expected token.TokenType
+type UnexpectedTokenErr struct {
 	Got      token.Token
+	Expected []token.TokenType
 }
 
 // Error implements ParseError.
-func (e UnexpectedToken) Error() string {
+func (e UnexpectedTokenErr) Error() string {
 	return fmt.Sprintf("unexpected %s %q, expected %s", e.Got.Type, e.Got.Literal, e.Expected)
+}
+
+func UnexpectedGot(got token.Token, expected ...token.TokenType) UnexpectedTokenErr {
+	return UnexpectedTokenErr{got, expected}
 }

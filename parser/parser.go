@@ -4,7 +4,6 @@ import (
 	"github.com/vknabel/lithia/ast"
 	"github.com/vknabel/lithia/lexer"
 	"github.com/vknabel/lithia/token"
-	"golang.org/x/text/cases"
 )
 
 type Parser struct {
@@ -44,13 +43,18 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.lex.NextToken()
 }
 
-func (p *Parser) peekIs(tokType token.TokenType) bool {
-	return p.peekToken.Type == tokType
+func (p *Parser) peekIs(tokTypes ...token.TokenType) bool {
+	for _, tok := range tokTypes {
+		if p.peekToken.Type == tok {
+			return true
+		}
+	}
+	return false
 }
 
-func (p *Parser) expectPeek(tokType token.TokenType) bool {
-	if !p.peekIs(tokType) {
-		p.detectError(UnexpectedToken{tokType, p.peekToken})
+func (p *Parser) expectPeek(tokTypes ...token.TokenType) bool {
+	if !p.peekIs(tokTypes...) {
+		p.detectError(UnexpectedGot(p.peekToken, tokTypes...))
 		return false
 	}
 	p.nextToken()
@@ -125,13 +129,12 @@ func (p *Parser) parseDataDecl() *ast.DeclData {
 
 	p.nextToken()
 
-	for {
-		// TODO: allowed tokens:
-		// - identifiers for members
-		// - func and let declarations
-		// - annotations preceding decls
-
-	}
+	// for {
+	// TODO: allowed tokens:
+	// - identifiers for members
+	// - func and let declarations
+	// - annotations preceding decls
+	//}
 
 	return data
 }
@@ -194,6 +197,8 @@ func (p *Parser) parsePropertyDeclarationList() { // TODO: return?
 	case token.FUNCTION:
 	case token.LET:
 	}
+
+	_ = field
 }
 
 func (p *Parser) parseAnnotationChain() *ast.AnnotationChain { // TODO: return?
@@ -206,16 +211,11 @@ func (p *Parser) parseParamList() []ast.DeclParameter {
 	for {
 		annos := p.parseAnnotationChain()
 
-		switch p.curToken.Type {
-		case token.IDENT:
-			ident := ast.MakeIdentifier(p.curToken)
-			params = append(params, *ast.MakeDeclParameter(ident, annos))
-		case token.RPAREN, token.ARROW:
-			return params
-		default:
-			// TODO: Multiple tokens expected!
-			p.detectError(UnexpectedToken{token.IDENT, p.curToken})
+		if !p.peekIs(token.IDENT) {
+			// eventual errors will be triggered by parent
 			return params
 		}
+		ident := ast.MakeIdentifier(p.curToken)
+		params = append(params, *ast.MakeDeclParameter(ident, annos))
 	}
 }

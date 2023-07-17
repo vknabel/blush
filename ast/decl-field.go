@@ -27,6 +27,11 @@ func (d DeclField) TokenLiteral() token.Token {
 // declarationNode implements Decl.
 func (DeclField) declarationNode() {}
 
+// IsConstantMember implements DeclMember.
+func (DeclField) IsConstantMember() bool {
+	return false
+}
+
 func (e DeclField) DeclName() Identifier {
 	return e.Name
 }
