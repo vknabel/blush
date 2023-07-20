@@ -1,0 +1,114 @@
+
+(*
+This file declares the new Lithia syntax starting from v0.1.0 and will be updated.
+It is used as formal reference in EBNF format, but the actual parser is not generated from it.
+
+The names of the productions follow a naming schema to be used within parsing implementations.
+
+All CAPS productions represent tokens and the basic building blocks.
+Productions prefixed with an _underscore are just helper productions and are not standardized.
+Other productions should be treated as the external API of the grammar.
+For example tree-sitter queries which may be written by third parties rely on its naming.
+Some implementations will support fields on the AST.
+In those cases, the corresponding nodes are prefixed with the production name - but in snake_case.
+*)
+
+(* Tokens *)
+
+IDENT = (_letter|"_") {_alpha_num|"_"}; (* special tokens take precedence *)
+STRING = '"',  '"';
+INT = "0" | {"1"..."9", _alpha_num};
+FLOAT = "";
+
+BANG = "!";
+PLUS = "+";
+MINUS = "-";
+ASTERISK = "*";
+SLASH = "/";
+
+LT = "<";
+GT = ">";
+EQ = "==";
+NEQ = "!=";
+GTE = ">=";
+LTE = "<=";
+AND = "&&";
+OR = "||";
+
+ASSIGN = "=";
+ARROW = "=>" | "->";
+COLON = ":";
+DOT = ".";
+COMMA = ",";
+LPAREN = "(";
+RPAREN = ")";
+LBRACE = "{";
+RBRACE = "}";
+LBRACKET = "[";
+RBRACKET = "]";
+AT = "@";
+
+MODULE = "module";
+IMPORT = "import";
+ENUM = "enum";
+DATA = "data";
+EXTERN = "extern";
+FUNCTION = "func";
+LET = "let";
+TYPE = "type";
+RETURN = "return";
+IF = "if";
+ELSE = "else";
+FOR = "for";
+BLANK = "_";
+
+(* declarations and statements *)
+SourceFile = [ _shebang ], [Module], {_topLevelDeclaration} ;
+
+_shebang = "#!", { _anyInlineChar }, "\n";
+Module = MODULE, Identifier;
+module_name = Identifier;
+
+_topLevelDeclaration = Import |
+	Enum |
+	Data |
+	Extern |
+	Function |
+	Let |
+	_complexExpression;
+
+_scopeLevelDeclaration = Function |
+	Let |
+	Enum |
+	Data;
+
+Import = IMPORT,
+	[import_alias, ASSIGN],
+	import_name,
+	[LBRACE, import_members, RBRACE];
+import_alias = Identifier;
+import_name = ImportModule;
+import_members = { Identifier, [_list_separator] };
+ImportModule = Identifier, {DOT, Identifier};
+
+let = LET, let_name, ASSIGN, let_value;
+let_name = identifier;
+let_value = _complex_expression;
+
+function = FUNCTION, function_name, function_function;
+function_name = identifier;
+function_function = function_literal;
+
+data = DATA, data_name, [LBRACE, data_members, RBRACE];
+data_name = identifier;
+
+(* expressions *)
+
+identifier = IDENT;
+
+(* Helpers *)
+_letter = "a"..."z"|"A"..."Z";
+_digit = "0"..."9";
+_alpha_num = _letter|_digit;
+_any_inline_char = _alpha_num|"_"|"/"|".";
+_list_separator = COMMA;

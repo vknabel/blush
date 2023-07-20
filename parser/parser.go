@@ -197,7 +197,6 @@ func (p *Parser) parsePropertyDeclarationList() { // TODO: return?
 	case token.FUNCTION:
 	case token.LET:
 	}
-
 	_ = field
 }
 
