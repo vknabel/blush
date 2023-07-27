@@ -1,4 +1,7 @@
 package ast
 
-type OperatorBinary string
-type OperatorUnary string
+import "github.com/vknabel/lithia/token"
+
+type OperatorBinary token.Token
+
+type OperatorUnary token.Token

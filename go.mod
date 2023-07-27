@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.7.0
-	golang.org/x/text v0.11.0
 )
 
 require (

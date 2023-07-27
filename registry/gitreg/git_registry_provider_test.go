@@ -1,10 +1,8 @@
-//go:build !airplane
-// +build !airplane
-
 package gitreg_test
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
@@ -12,6 +10,14 @@ import (
 )
 
 func TestIntegrationGitRegistryResolveLatestLithiaInMemory(t *testing.T) {
+	resp, err := http.Get("https://github.com")
+	if err != nil {
+		t.Skipf("unable to connect to GitHub. Are you connected to the internet? %s", err)
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		t.Skipf("invalid response from GitHub (%s)", resp.Status)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

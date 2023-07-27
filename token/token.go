@@ -2,70 +2,68 @@ package token
 
 type TokenType string
 
-// TODO: add whitespace and comments to tokens
-// This allows the parser to ignore all comments
-// and the ast may also drop docs completely
 type Token struct {
 	Type    TokenType
 	Literal string
 	Source  *Source
+
+	Leading []DecorativeToken
 }
 
 const (
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
-	COMMENT = "COMMENT"
+	ILLEGAL TokenType = "ILLEGAL"
+	EOF     TokenType = "EOF"
 
 	// Identifiers + literals
-	IDENT  = "IDENT"
-	STRING = "STRING"
-	INT    = "INT"
-	FLOAT  = "FLOAT"
+	IDENT  TokenType = "IDENT"
+	STRING TokenType = "STRING"
+	INT    TokenType = "INT"
+	FLOAT  TokenType = "FLOAT"
 
 	// Operators
-	BANG     = "!"
-	PLUS     = "+"
-	MINUS    = "-"
-	ASTERISK = "*"
-	SLASH    = "/"
+	BANG     TokenType = "!"
+	PLUS     TokenType = "+"
+	MINUS    TokenType = "-"
+	ASTERISK TokenType = "*"
+	SLASH    TokenType = "/"
 
-	LT  = "<"
-	GT  = ">"
-	EQ  = "=="
-	NEQ = "!="
-	GTE = ">="
-	LTE = "<="
-	AND = "&&"
-	OR  = "||"
+	LT  TokenType = "<"
+	GT  TokenType = ">"
+	EQ  TokenType = "=="
+	NEQ TokenType = "!="
+	GTE TokenType = ">="
+	LTE TokenType = "<="
+	AND TokenType = "&&"
+	OR  TokenType = "||"
 
 	// Delimiters
-	ASSIGN   = "="
-	ARROW    = "=>"
-	COLON    = ":"
-	DOT      = "."
-	COMMA    = ","
-	LPAREN   = "("
-	RPAREN   = ")"
-	LBRACE   = "{"
-	RBRACE   = "}"
-	LBRACKET = "["
-	RBRACKET = "]"
-	AT       = "@"
+	ASSIGN   TokenType = "="
+	ARROW    TokenType = "=>"
+	COLON    TokenType = ":"
+	DOT      TokenType = "."
+	COMMA    TokenType = ","
+	LPAREN   TokenType = "("
+	RPAREN   TokenType = ")"
+	LBRACE   TokenType = "{"
+	RBRACE   TokenType = "}"
+	LBRACKET TokenType = "["
+	RBRACKET TokenType = "]"
+	AT       TokenType = "@"
 
 	// KEYWORDS
-	MODULE   = "MODULE"
-	IMPORT   = "IMPORT"
-	ENUM     = "ENUM"
-	DATA     = "DATA"
-	EXTERN   = "EXTERN"
-	FUNCTION = "FUNCTION"
-	LET      = "LET"
-	TYPE     = "TYPE"
-	RETURN   = "RETURN"
-	IF       = "IF"
-	ELSE     = "ELSE"
-	FOR      = "FOR"
-	BLANK    = "BLANK"
+	MODULE   TokenType = "MODULE"
+	IMPORT   TokenType = "IMPORT"
+	ENUM     TokenType = "ENUM"
+	DATA     TokenType = "DATA"
+	EXTERN   TokenType = "EXTERN"
+	FUNCTION TokenType = "FUNCTION"
+	LET      TokenType = "LET"
+	TYPE     TokenType = "TYPE"
+	RETURN   TokenType = "RETURN"
+	IF       TokenType = "IF"
+	ELSE     TokenType = "ELSE"
+	FOR      TokenType = "FOR"
+	BLANK    TokenType = "BLANK"
 )
 
 var keywords = map[string]TokenType{

@@ -27,8 +27,7 @@ func New(module, fileName, input string) Lexer {
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
-	l.skipWhitespace() // TODO: newlines should be respected
-
+	tok.Leading = l.parseLeadingDecorations()
 	l.startPos = l.currPos
 
 	switch l.ch {
@@ -50,14 +49,8 @@ func (l *Lexer) NextToken() token.Token {
 		}
 	case '*': // ASTERISK
 		tok = l.newToken(token.ASTERISK, l.ch)
-	case '/': // SLASH, COMMENT
-		if l.peekChar() == '/' {
-			tok.Type = token.COMMENT
-			l.advance()
-			tok.Literal = l.parseInlineComment()
-		} else {
-			tok = l.newToken(token.SLASH, l.ch)
-		}
+	case '/': // SLASH
+		tok = l.newToken(token.SLASH, l.ch)
 
 	case '<': // LT, LTE
 		if l.peekChar() == '=' {
@@ -120,9 +113,6 @@ func (l *Lexer) NextToken() token.Token {
 	case '@': // AT
 		tok = l.newToken(token.AT, l.ch)
 
-	case '#': // COMMENT
-		tok.Type = token.COMMENT
-		tok.Literal = l.parseInlineComment()
 	case '"': // STRING
 		tok.Type = token.STRING
 		tok.Literal = l.parseString()
@@ -154,23 +144,6 @@ func (l *Lexer) parseString() string {
 		}
 	}
 	return l.input[position:l.currPos]
-}
-
-func (l *Lexer) parseInlineComment() string {
-	position := l.currPos + 1
-	for {
-		l.advance()
-		if l.ch == '\n' || l.ch == 0 {
-			break
-		}
-	}
-	return l.input[position:l.currPos]
-}
-
-func (l *Lexer) skipWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
-		l.advance()
-	}
 }
 
 func (l *Lexer) advance() {

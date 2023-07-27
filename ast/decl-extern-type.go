@@ -12,7 +12,7 @@ var _ Overviewable = DeclExternType{}
 type DeclExternType struct {
 	Token  token.Token
 	Name   Identifier
-	Fields map[Identifier]DeclField
+	Fields map[string]DeclField
 
 	Docs *Docs
 }
@@ -48,13 +48,13 @@ func MakeDeclExternType(tok token.Token, name Identifier, source *Source) *DeclE
 	return &DeclExternType{
 		Token:  tok,
 		Name:   name,
-		Fields: make(map[Identifier]DeclField),
+		Fields: make(map[string]DeclField),
 		Docs:   nil,
 	}
 }
 
 func (e *DeclExternType) AddField(decl DeclField) {
-	e.Fields[decl.Name] = decl
+	e.Fields[decl.Name.Value] = decl
 }
 
 func (decl DeclExternType) ProvidedDocs() *Docs {
