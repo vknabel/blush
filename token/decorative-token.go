@@ -8,6 +8,7 @@ type DecorativeToken struct {
 }
 
 const (
-	COMMENT    DecorativeTokenType = "COMMENT"
-	WHITESPACE DecorativeTokenType = "WHITESPACE"
+	DECO_COMMENT DecorativeTokenType = "COMMENT"
+	DECO_INLINE  DecorativeTokenType = "INLINE_WS"
+	DECO_MULTI   DecorativeTokenType = "MULTILINE_WS"
 )

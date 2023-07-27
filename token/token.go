@@ -7,6 +7,9 @@ type Token struct {
 	Literal string
 	Source  *Source
 
+	// Stores leading decorative tokens.
+	// Trailing decorative tokens belong to the following token.
+	// Comments at the end of the file belong to EOF tokens.
 	Leading []DecorativeToken
 }
 

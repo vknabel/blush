@@ -1,6 +1,7 @@
 package lexer_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/vknabel/lithia/lexer"
@@ -36,7 +37,7 @@ test "any in enums matches all types", { fail =>
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
-		{token.COMMENT, "!/usr/bin/env lithia"},
+		// {token.COMMENT, "!/usr/bin/env lithia"},
 		{token.MODULE, "module"},
 		{token.IDENT, "example"},
 		{token.IMPORT, "import"},
@@ -462,7 +463,7 @@ func TestAllTokens(t *testing.T) {
 				expectedType    token.TokenType
 				expectedLiteral string
 			}{
-				{token.COMMENT, " abc def"},
+				// {token.COMMENT, " abc def"},
 				{token.EOF, ""},
 			},
 		},
@@ -473,7 +474,7 @@ func TestAllTokens(t *testing.T) {
 				expectedType    token.TokenType
 				expectedLiteral string
 			}{
-				{token.COMMENT, " abc def"},
+				// {token.COMMENT, " abc def"},
 				{token.EOF, ""},
 			},
 		},
@@ -781,5 +782,162 @@ func TestAllTokens(t *testing.T) {
 				break
 			}
 		}
+	}
+}
+
+func TestDecorativeLexer(t *testing.T) {
+	type deco struct {
+		decorativeType token.DecorativeTokenType
+		literal        string
+	}
+	type tok struct {
+		tokenType          token.TokenType
+		literal            string
+		leadingDecoratives []deco
+	}
+	testCases := []struct {
+		name  string
+		input string
+		want  []tok
+	}{
+		{
+			"empty",
+			"",
+			[]tok{{token.EOF, "", nil}},
+		},
+		{
+			"empty with trailing ws",
+			"  \t\n ",
+			[]tok{
+				{
+					token.EOF, "", []deco{
+						{token.DECO_MULTI, "  \t\n "},
+					},
+				},
+			},
+		},
+		{
+			"empty with trailing ws and comment",
+			"\t\n// hello\n\t",
+			[]tok{
+				{
+					token.EOF, "", []deco{
+						{token.DECO_MULTI, "\t\n"},
+						{token.DECO_COMMENT, "hello"},
+						{token.DECO_INLINE, "\t"},
+					},
+				},
+			},
+		},
+		{
+			"empty shebang",
+			"#!/usr/bin/env lithia",
+			[]tok{
+				{token.EOF, "", []deco{
+					{token.DECO_COMMENT, "!/usr/bin/env lithia"},
+				}},
+			},
+		},
+		{
+			"comment before data",
+			"// cool stuff\ndata",
+			[]tok{
+				{
+					token.DATA, "data", []deco{
+						{token.DECO_COMMENT, "cool stuff"},
+					},
+				},
+			},
+		},
+		{
+			"comment after data",
+			"data // cool stuff",
+			[]tok{
+				{token.DATA, "data", nil},
+				{token.EOF, "", []deco{
+					{token.DECO_INLINE, " "},
+					{token.DECO_COMMENT, "cool stuff"},
+				}},
+			},
+		},
+		{
+			"comment after data with trailing ws",
+			"data // cool stuff\n\t",
+			[]tok{
+				{token.DATA, "data", nil},
+				{token.EOF, "", []deco{
+					{token.DECO_INLINE, " "},
+					{token.DECO_COMMENT, "cool stuff"},
+					{token.DECO_INLINE, "\t"},
+				}},
+			},
+		},
+		{
+			"comment after data with trailing ws and comment",
+			"data // cool stuff\n\n\t// hello",
+			[]tok{
+				{token.DATA, "data", nil},
+				{token.EOF, "", []deco{
+					{token.DECO_INLINE, " "},
+					{token.DECO_COMMENT, "cool stuff"},
+					{token.DECO_MULTI, "\n\t"},
+					{token.DECO_COMMENT, "hello"},
+				}},
+			},
+		},
+		{
+			"comment after data with trailing ws and comment and trailing ws",
+			"data // cool stuff\n\n\t// hello\n\t",
+			[]tok{
+				{token.DATA, "data", nil},
+				{token.EOF, "", []deco{
+					{token.DECO_INLINE, " "},
+					{token.DECO_COMMENT, "cool stuff"},
+					{token.DECO_MULTI, "\n\t"},
+					{token.DECO_COMMENT, "hello"},
+					{token.DECO_INLINE, "\t"},
+				}},
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			l := lexer.New("TestDecorativeLexer", t.Name(), tt.input)
+
+			for i, want := range tt.want {
+				t.Run(fmt.Sprintf("[%d] %s", i, want.tokenType), func(t *testing.T) {
+					got := l.NextToken()
+					if got.Type != want.tokenType {
+						t.Errorf("want token type %s, got %s", want.tokenType, got.Type)
+					}
+					if got.Literal != want.literal {
+						t.Errorf("want literal %q, got %q", want.literal, got.Literal)
+					}
+					if len(got.Leading) != len(want.leadingDecoratives) {
+						t.Errorf(
+							"want leading tokens %d, got %d: (\n\twant %q\n\n\tgot %q\n)",
+							len(want.leadingDecoratives),
+							len(got.Leading),
+							want.leadingDecoratives,
+							got.Leading,
+						)
+					}
+
+					for j, wantdeco := range want.leadingDecoratives {
+						t.Run(fmt.Sprintf("[%d] %s", j, wantdeco.decorativeType), func(t *testing.T) {
+							gotdeco := got.Leading[j]
+
+							if gotdeco.Type != wantdeco.decorativeType {
+								t.Errorf("want token type %s, got %s", wantdeco.decorativeType, gotdeco.Type)
+							}
+							if gotdeco.Literal != wantdeco.literal {
+								t.Errorf("want literal %q, got %q", wantdeco.literal, gotdeco.Literal)
+							}
+						})
+					}
+				})
+			}
+		})
 	}
 }
