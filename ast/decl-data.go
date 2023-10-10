@@ -7,8 +7,8 @@ import (
 	"github.com/vknabel/lithia/token"
 )
 
-var _ Decl = DeclData{}
-var _ Overviewable = DeclData{}
+var _ Decl = &DeclData{}
+var _ Overviewable = &DeclData{}
 
 type DeclData struct {
 	Token  token.Token
@@ -65,6 +65,10 @@ func (decl DeclData) ProvidedDocs() *Docs {
 	return decl.Docs
 }
 
-func (DeclData) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls
+// EnumerateChildNodes implements Decl.
+func (d DeclData) EnumerateChildNodes(action func(child Node)) {
+	action(d.Name)
+	for _, node := range d.Fields {
+		action(node)
+	}
 }

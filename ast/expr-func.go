@@ -1,16 +1,22 @@
 package ast
 
+import (
+	"github.com/vknabel/lithia/token"
+)
+
 var _ Expr = ExprFunc{}
 
 type ExprFunc struct {
+	Token        token.Token
 	Name         string
 	Parameters   []DeclParameter
 	Declarations []Decl
 	Expressions  []Expr
 }
 
-func MakeExprFunc(name string, parameters []DeclParameter, source *Source) *ExprFunc {
+func MakeExprFunc(name string, parameters []DeclParameter, token token.Token) *ExprFunc {
 	return &ExprFunc{
+		Token:        token,
 		Name:         name,
 		Parameters:   parameters,
 		Declarations: []Decl{},
@@ -26,18 +32,20 @@ func (e *ExprFunc) AddExpr(expr Expr) {
 	e.Expressions = append(e.Expressions, expr)
 }
 
-func (e ExprFunc) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	enumeratedDecls := make([]Decl, len(e.Parameters)+len(e.Declarations))
-	for i, param := range e.Parameters {
-		enumeratedDecls[i] = param
+// EnumerateChildNodes implements Expr.
+func (n ExprFunc) EnumerateChildNodes(action func(child Node)) {
+	for _, node := range n.Parameters {
+		action(node)
 	}
-	for i, decl := range e.Declarations {
-		decl.EnumerateNestedDecls(enumerate)
-		enumeratedDecls[len(e.Parameters)+i] = decl
+	for _, node := range n.Declarations {
+		action(node)
 	}
-	enumerate(e, enumeratedDecls)
+	for _, node := range n.Expressions {
+		action(node)
+	}
+}
 
-	for _, expr := range e.Expressions {
-		expr.EnumerateNestedDecls(enumerate)
-	}
+// TokenLiteral implements Expr.
+func (e ExprFunc) TokenLiteral() token.Token {
+	return e.Token
 }

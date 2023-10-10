@@ -52,6 +52,8 @@ func (e DeclVariable) ProvidedDocs() *Docs {
 	return e.Docs
 }
 
-func (e DeclVariable) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	e.Value.EnumerateNestedDecls(enumerate)
+// EnumerateChildNodes implements Decl.
+func (n DeclVariable) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
+	action(n.Value)
 }

@@ -38,6 +38,6 @@ func (decl DeclEnumCase) ProvidedDocs() *Docs {
 	return decl.Docs
 }
 
-func (DeclEnumCase) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls
+func (n DeclEnumCase) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
 }

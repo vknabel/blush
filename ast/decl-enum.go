@@ -76,6 +76,10 @@ func (decl DeclEnum) ProvidedDocs() *Docs {
 	return decl.Docs
 }
 
-func (decl DeclEnum) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls - will be handled by the parser
+// EnumerateChildNodes implements Decl.
+func (n DeclEnum) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
+	for _, node := range n.Cases {
+		action(node)
+	}
 }

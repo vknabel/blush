@@ -1,6 +1,8 @@
 package ast
 
-import "github.com/vknabel/lithia/token"
+import (
+	"github.com/vknabel/lithia/token"
+)
 
 type Identifier struct {
 	Token token.Token
@@ -20,3 +22,6 @@ func (n Identifier) String() string {
 func (n Identifier) TokenLiteral() token.Token {
 	return n.Token
 }
+
+// EnumerateChildNodes implements Node.
+func (n Identifier) EnumerateChildNodes(action func(child Node)) {}

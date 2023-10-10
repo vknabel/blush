@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+
 	"github.com/vknabel/lithia/token"
 )
 
@@ -42,6 +43,7 @@ func MakeDeclImportMember(tok token.Token, moduleName ModuleName, name Identifie
 	}
 }
 
-func (DeclImportMember) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls
+// EnumerateChildNodes implements Decl.
+func (n DeclImportMember) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
 }

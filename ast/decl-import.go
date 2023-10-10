@@ -79,6 +79,9 @@ func MakeDeclAliasImport(tok token.Token, alias Identifier, name ModuleName, sou
 	}
 }
 
-func (DeclImport) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls
+func (n DeclImport) EnumerateChildNodes(action func(child Node)) {
+	action(n.Alias)
+	for _, node := range n.Members {
+		action(node)
+	}
 }

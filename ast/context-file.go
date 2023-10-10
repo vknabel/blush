@@ -52,12 +52,11 @@ func (sf *SourceFile) ExportedDeclarations() []Decl {
 	return decls
 }
 
-// Enumerate all declarations in this source file.
-func (sf SourceFile) EnumerateNestedDecls(enumerate func(declaredAt any, decl []Decl)) {
-	for _, decl := range sf.Declarations {
-		decl.EnumerateNestedDecls(enumerate)
+func (sf SourceFile) EnumerateChildNodes(action func(child Node)) {
+	for _, node := range sf.Declarations {
+		action(node)
 	}
-	for _, stmt := range sf.Statements {
-		stmt.EnumerateNestedDecls(enumerate)
+	for _, node := range sf.Statements {
+		action(node)
 	}
 }

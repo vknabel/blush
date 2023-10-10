@@ -47,6 +47,7 @@ func (decl DeclModule) ProvidedDocs() *Docs {
 	return decl.Docs
 }
 
-func (DeclModule) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls
+// EnumerateChildNodes implements Decl.
+func (n DeclModule) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
 }

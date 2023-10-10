@@ -13,6 +13,7 @@ import (
 // Negation with `!`
 // Test lines will stripped from the output.
 
+// TODO: migrate to offset based assertions
 type Assertion struct {
 	Line       int
 	Column     int

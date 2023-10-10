@@ -2,8 +2,9 @@ package ast
 
 import (
 	"fmt"
-	"github.com/vknabel/lithia/token"
 	"strings"
+
+	"github.com/vknabel/lithia/token"
 )
 
 var _ Decl = DeclFunc{}
@@ -59,6 +60,10 @@ func (decl DeclFunc) ProvidedDocs() *Docs {
 	return decl.Docs
 }
 
-func (decl DeclFunc) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	decl.Impl.EnumerateNestedDecls(enumerate)
+// EnumerateChildNodes implements Decl.
+func (n DeclFunc) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
+	if n.Impl != nil {
+		action(n.Impl)
+	}
 }

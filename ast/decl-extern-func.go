@@ -60,6 +60,10 @@ func (decl DeclExternFunc) ProvidedDocs() *Docs {
 	return decl.Docs
 }
 
-func (DeclExternFunc) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	// no nested decls
+// EnumerateChildNodes implements Decl.
+func (n DeclExternFunc) EnumerateChildNodes(action func(child Node)) {
+	action(n.Name)
+	for _, node := range n.Parameters {
+		action(node)
+	}
 }

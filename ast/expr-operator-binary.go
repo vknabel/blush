@@ -1,5 +1,9 @@
 package ast
 
+import (
+	"github.com/vknabel/lithia/token"
+)
+
 var _ Expr = ExprOperatorBinary{}
 
 type ExprOperatorBinary struct {
@@ -8,7 +12,7 @@ type ExprOperatorBinary struct {
 	Right    Expr
 }
 
-func MakeExprOperatorBinary(operator OperatorBinary, left, right Expr, source *Source) *ExprOperatorBinary {
+func MakeExprOperatorBinary(operator OperatorBinary, left, right Expr) *ExprOperatorBinary {
 	return &ExprOperatorBinary{
 		Operator: operator,
 		Left:     left,
@@ -16,7 +20,14 @@ func MakeExprOperatorBinary(operator OperatorBinary, left, right Expr, source *S
 	}
 }
 
-func (e ExprOperatorBinary) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	e.Left.EnumerateNestedDecls(enumerate)
-	e.Right.EnumerateNestedDecls(enumerate)
+// EnumerateChildNodes implements Expr.
+func (n ExprOperatorBinary) EnumerateChildNodes(action func(child Node)) {
+	action(n.Left)
+	action(n.Operator)
+	action(n.Right)
+}
+
+// TokenLiteral implements Expr.
+func (n ExprOperatorBinary) TokenLiteral() token.Token {
+	return n.Left.TokenLiteral()
 }

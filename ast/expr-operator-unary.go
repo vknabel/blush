@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/vknabel/lithia/token"
+
 var _ Expr = ExprOperatorUnary{}
 
 type ExprOperatorUnary struct {
@@ -7,13 +9,20 @@ type ExprOperatorUnary struct {
 	Expr     Expr
 }
 
-func MakeExprOperatorUnary(operator OperatorUnary, expr Expr, source *Source) *ExprOperatorUnary {
+func MakeExprOperatorUnary(operator OperatorUnary, expr Expr) *ExprOperatorUnary {
 	return &ExprOperatorUnary{
 		Operator: operator,
 		Expr:     expr,
 	}
 }
 
-func (e ExprOperatorUnary) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	e.Expr.EnumerateNestedDecls(enumerate)
+// EnumerateChildNodes implements Expr.
+func (n ExprOperatorUnary) EnumerateChildNodes(action func(child Node)) {
+	action(n.Operator)
+	action(n.Expr)
+}
+
+// TokenLiteral implements Expr.
+func (n ExprOperatorUnary) TokenLiteral() token.Token {
+	return n.Operator.TokenLiteral()
 }

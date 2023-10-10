@@ -4,6 +4,7 @@ import "github.com/vknabel/lithia/token"
 
 type Node interface {
 	TokenLiteral() token.Token
+	EnumerateChildNodes(func(child Node))
 	// String() string
 }
 

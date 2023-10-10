@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/vknabel/lithia/token"
+
 var _ Expr = ExprMemberAccess{}
 
 type ExprMemberAccess struct {
@@ -7,13 +9,22 @@ type ExprMemberAccess struct {
 	AccessPath []Identifier
 }
 
-func MakeExprMemberAccess(target Expr, accessPath []Identifier, source *Source) *ExprMemberAccess {
+func MakeExprMemberAccess(target Expr, accessPath []Identifier) *ExprMemberAccess {
 	return &ExprMemberAccess{
 		Target:     target,
 		AccessPath: accessPath,
 	}
 }
 
-func (e ExprMemberAccess) EnumerateNestedDecls(enumerate func(interface{}, []Decl)) {
-	e.Target.EnumerateNestedDecls(enumerate)
+// EnumerateChildNodes implements Expr.
+func (n ExprMemberAccess) EnumerateChildNodes(action func(child Node)) {
+	action(n.Target)
+	for _, child := range n.AccessPath {
+		action(child)
+	}
+}
+
+// TokenLiteral implements Expr.
+func (n ExprMemberAccess) TokenLiteral() token.Token {
+	return n.Target.TokenLiteral()
 }
