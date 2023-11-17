@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type SyntaxMatcher func(line string, assert Assertion) bool
+type SyntaxMatcher func(lineOffset int, line string, assert Assertion) bool
 
 type Harness struct {
 	match SyntaxMatcher
@@ -18,12 +18,15 @@ func NewHarness(matcher SyntaxMatcher) Harness {
 func (h *Harness) Test(doc string) error {
 	asserts := ParseAssertions(doc)
 	lines := strings.Split(doc, "\n")
+	offset := 0
 	var failures []Assertion
 	for _, a := range asserts {
-		matched := h.match(lines[a.Line-1], a)
+		line := lines[a.Line-1] // this might be wrong
+		matched := h.match(offset, line, a)
 		if matched == a.Negated {
 			failures = append(failures, a)
 		}
+		offset += len(line) + 1
 	}
 
 	if len(failures) == 0 {

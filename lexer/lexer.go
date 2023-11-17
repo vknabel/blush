@@ -29,6 +29,7 @@ func (l *Lexer) NextToken() token.Token {
 
 	tok.Leading = l.parseLeadingDecorations()
 	l.startPos = l.currPos
+	tok.Source = token.MakeSource(l.module, l.fileName, l.currPos)
 
 	switch l.ch {
 	case '!': // BANG, NEQ

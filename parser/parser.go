@@ -7,14 +7,14 @@ import (
 )
 
 type Parser struct {
-	lex    *lexer.Lexer
+	lex    lexer.Lexer
 	errors []ParseError
 
 	curToken  token.Token
 	peekToken token.Token
 }
 
-func New(lex *lexer.Lexer) *Parser {
+func New(lex lexer.Lexer) *Parser {
 	p := &Parser{lex: lex}
 	p.nextToken()
 	p.nextToken()

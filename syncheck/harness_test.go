@@ -8,7 +8,7 @@ import (
 )
 
 func TestHarness(t *testing.T) {
-	h := syncheck.NewHarness(func(line string, assert syncheck.Assertion) bool {
+	h := syncheck.NewHarness(func(lineOffset int, line string, assert syncheck.Assertion) bool {
 		identifier := line[assert.Column-1:]
 		identifier, _, _ = strings.Cut(identifier, " ")
 		return strings.ToUpper(identifier) == assert.Value

@@ -2,6 +2,7 @@ package syncheck
 
 import (
 	"bufio"
+	"fmt"
 	"strings"
 )
 
@@ -15,23 +16,33 @@ import (
 
 // TODO: migrate to offset based assertions
 type Assertion struct {
-	Line       int
-	Column     int
-	Value      string
-	Negated    bool
-	SourceLine int
+	Line         int
+	Column       int
+	Value        string
+	Negated      bool
+	SourceOffset int
+	SourceLine   int
 }
 
 func ParseAssertions(str string) []Assertion {
 	var assertions []Assertion
 	scanner := bufio.NewScanner(strings.NewReader(str))
-	var lineUnderTest int
+	var (
+		currentOffset   int = 1
+		previousOffset  int = 1
+		offsetUnderTest int = 1
+		lineUnderTest   int
+	)
 	for i := 1; scanner.Scan(); i++ {
 		line := scanner.Text()
+		currentOffset += len(line) + 1
+		fmt.Printf("l%d o%d t%d %s\n", i, currentOffset, offsetUnderTest, line)
 
 		assert := extractBeginAssertionFromLine(lineUnderTest, line)
 		if assert != nil {
 			assert.SourceLine = i
+			assert.SourceOffset = offsetUnderTest
+			fmt.Printf("assertion: %+v\n", assert)
 			assertions = append(assertions, *assert)
 			continue
 		}
@@ -39,11 +50,14 @@ func ParseAssertions(str string) []Assertion {
 		assert = extractCarotAssertionFromLine(lineUnderTest, line)
 		if assert != nil {
 			assert.SourceLine = i
+			assert.SourceOffset = offsetUnderTest
 			assertions = append(assertions, *assert)
 			continue
 		}
 
 		lineUnderTest = i
+		offsetUnderTest = previousOffset
+		previousOffset = currentOffset
 	}
 	return assertions
 }
