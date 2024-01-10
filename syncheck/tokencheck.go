@@ -28,15 +28,14 @@ func ParseAssertions(str string) []Assertion {
 	var assertions []Assertion
 	scanner := bufio.NewScanner(strings.NewReader(str))
 	var (
-		currentOffset   int = 1
-		previousOffset  int = 1
-		offsetUnderTest int = 1
+		beginOfNextLine int = 0
+		offsetUnderTest int = 0
 		lineUnderTest   int
 	)
 	for i := 1; scanner.Scan(); i++ {
 		line := scanner.Text()
-		currentOffset += len(line) + 1
-		fmt.Printf("l%d o%d t%d %s\n", i, currentOffset, offsetUnderTest, line)
+		beginOfNextLine += len(line) + 1
+		fmt.Printf("l%d o%d t%d %s\n", i, beginOfNextLine, offsetUnderTest, line)
 
 		assert := extractBeginAssertionFromLine(lineUnderTest, line)
 		if assert != nil {
@@ -56,8 +55,7 @@ func ParseAssertions(str string) []Assertion {
 		}
 
 		lineUnderTest = i
-		offsetUnderTest = previousOffset
-		previousOffset = currentOffset
+		offsetUnderTest = beginOfNextLine - len(line)
 	}
 	return assertions
 }

@@ -62,6 +62,15 @@ func (p *Parser) peekIs(tokTypes ...token.TokenType) bool {
 	return false
 }
 
+func (p *Parser) curIs(tokTypes ...token.TokenType) bool {
+	for _, tok := range tokTypes {
+		if p.curToken.Type == tok {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Parser) inlinePeekIs(tokTypes ...token.TokenType) bool {
 	for _, deco := range p.peekToken.Leading {
 		if deco.Type != token.DECO_INLINE {
@@ -71,14 +80,23 @@ func (p *Parser) inlinePeekIs(tokTypes ...token.TokenType) bool {
 	return p.peekIs(tokTypes...)
 }
 
-func (p *Parser) expectPeekToken(tokTypes ...token.TokenType) (token.Token, bool) {
-	if !p.peekIs(tokTypes...) {
+func (p *Parser) expectCurToken(tokTypes ...token.TokenType) (token.Token, bool) {
+	if !p.curIs(tokTypes...) {
 		p.detectError(UnexpectedGot(p.peekToken, tokTypes...))
 		return p.errorToken(), false
 	}
 	cur := p.curToken
 	p.nextToken()
 	return cur, true
+}
+
+func (p *Parser) expectPeekToken(tokTypes ...token.TokenType) (token.Token, bool) {
+	if !p.peekIs(tokTypes...) {
+		p.detectError(UnexpectedGot(p.peekToken, tokTypes...))
+		return p.errorToken(), false
+	}
+	p.nextToken()
+	return p.curToken, true
 }
 
 func (p *Parser) errorToken() token.Token {
@@ -91,6 +109,7 @@ func (p *Parser) errorToken() token.Token {
 }
 
 func (p *Parser) detectError(err ParseError) {
+	panic(err.Error())
 	p.errors = append(p.errors, err)
 }
 
@@ -232,24 +251,21 @@ func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 //	  <optional:annotations> <var_decl>
 //	}
 func (p *Parser) parseDataDecl(annos *ast.AnnotationChain) *ast.DeclData {
-	declToken := p.curToken
-	if _, ok := p.expectPeekToken(token.IDENT); !ok {
-		return nil
-	}
-	ident := ast.MakeIdentifier(p.curToken)
+	declToken, _ := p.expectCurToken(token.DATA)
+	identToken, _ := p.expectCurToken(token.IDENT)
+	ident := ast.MakeIdentifier(identToken)
 	data := ast.MakeDeclData(declToken, ident)
 	data.Annotations = annos
-	p.expectPeekToken(token.IDENT)
 
-	if p.curToken.Type != token.LBRACE {
+	if !p.curIs(token.LBRACE) {
 		return data
 	}
-	p.expectPeekToken(token.LBRACE)
+	p.expectCurToken(token.LBRACE)
 	fields := p.parsePropertyDeclarationList()
 	for _, f := range fields {
 		data.AddField(f)
 	}
-	p.expectPeekToken(token.RBRACE)
+	p.expectCurToken(token.RBRACE)
 	return data
 }
 
@@ -340,7 +356,6 @@ func (p *Parser) parsePropertyDeclarationList() []ast.DeclField {
 	for {
 		// p.nextToken()
 		if p.curToken.Type == token.RBRACE {
-			p.nextToken()
 			return fields
 		}
 		field := p.parseDataDeclField()
