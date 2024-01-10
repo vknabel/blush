@@ -21,6 +21,11 @@ data Some {
    value
 // ^ ast.DeclField
 }
+
+enum Optional {
+	None
+	Some
+}
 `
 
 	lex := lexer.New("testmodule", "testfile.lithia", contents)

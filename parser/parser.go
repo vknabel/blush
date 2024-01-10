@@ -82,7 +82,7 @@ func (p *Parser) inlinePeekIs(tokTypes ...token.TokenType) bool {
 
 func (p *Parser) expectCurToken(tokTypes ...token.TokenType) (token.Token, bool) {
 	if !p.curIs(tokTypes...) {
-		p.detectError(UnexpectedGot(p.peekToken, tokTypes...))
+		p.detectError(UnexpectedGot(p.curToken, tokTypes...))
 		return p.errorToken(), false
 	}
 	cur := p.curToken
@@ -171,27 +171,25 @@ func (p *Parser) parseStatementDeclaration() (ast.StatementDeclaration, []ast.De
 //		  <optional:annotations> <enum_decl>
 //	 	}
 func (p *Parser) parseEnumDecl(annos *ast.AnnotationChain) (*ast.DeclEnum, []ast.Decl) {
-	enumToken, _ := p.expectPeekToken(token.ENUM)
-	if _, ok := p.expectPeekToken(token.IDENT); !ok {
-		return nil, nil
-	}
-	ident := ast.MakeIdentifier(p.curToken)
+	enumToken, _ := p.expectCurToken(token.ENUM)
+	identToken, _ := p.expectCurToken(token.IDENT)
+	ident := ast.MakeIdentifier(identToken)
 	enum := ast.MakeDeclEnum(enumToken, ident)
 	enum.Annotations = annos
 
-	if !p.peekIs(token.LBRACE) {
+	if !p.curIs(token.LBRACE) {
 		return enum, nil
 	}
 
-	p.nextToken()
+	p.expectCurToken(token.LBRACE)
 
 	var childDecls []ast.Decl
-	for !p.peekIs(token.RBRACE) {
+	for !p.curIs(token.RBRACE) {
 		enumCase, children := p.parseEnumDeclCase()
 		childDecls = append(childDecls, children...)
 		enum.AddCase(enumCase)
 	}
-	p.nextToken()
+	p.expectCurToken(token.RBRACE)
 
 	return enum, childDecls
 }
@@ -223,14 +221,21 @@ func (p *Parser) parseEnumDeclCase() (*ast.DeclEnumCase, []ast.Decl) {
 
 func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 	var ref ast.StaticReference
-	for p.peekIs(token.DOT) {
-		id := ast.MakeIdentifier(p.curToken)
+	for {
+		identTok, ok := p.expectCurToken(token.IDENT)
+		if !ok {
+			break
+		}
+		id := ast.MakeIdentifier(identTok)
 		ref = append(ref, id)
-		p.nextToken()
+
+		if !p.peekIs(token.DOT) {
+			break
+		}
 	}
 	if len(ref) == 0 {
 		if _, ok := p.expectPeekToken(token.IDENT); ok {
-			panic("broken invariant")
+			panic(fmt.Sprintf("invariant error: empty static reference, token:%+v", p.curToken))
 		}
 		return ast.StaticReference{ast.MakeIdentifier(p.errorToken())}
 	}

@@ -22,6 +22,8 @@ func (sf *SourceFile) Add(globalStmt Statement) {
 	switch node := globalStmt.(type) {
 	case *DeclData:
 		sf.Declarations = append(sf.Declarations, node)
+	case *DeclEnum:
+		sf.Declarations = append(sf.Declarations, node)
 	default:
 		panic(fmt.Sprintf("TODO: unknown global statement %T", node))
 	}
