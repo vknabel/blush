@@ -10,8 +10,9 @@ var _ Decl = DeclModule{}
 var _ Overviewable = DeclModule{}
 
 type DeclModule struct {
-	Token token.Token
-	Name  Identifier
+	Token       token.Token
+	Name        Identifier
+	Annotations *AnnotationChain
 
 	Docs *Docs
 }
@@ -39,7 +40,7 @@ func (e DeclModule) IsExportedDecl() bool {
 	return false
 }
 
-func MakeDeclModule(tok token.Token, internalName Identifier, source *Source) *DeclModule {
+func MakeDeclModule(tok token.Token, internalName Identifier) *DeclModule {
 	return &DeclModule{Token: tok, Name: internalName}
 }
 

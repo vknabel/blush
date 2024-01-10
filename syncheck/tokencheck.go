@@ -50,7 +50,7 @@ func ParseAssertions(str string) []Assertion {
 		assert = extractCarotAssertionFromLine(lineUnderTest, line)
 		if assert != nil {
 			assert.SourceLine = i
-			assert.SourceOffset = offsetUnderTest
+			assert.SourceOffset = offsetUnderTest + assert.Column
 			assertions = append(assertions, *assert)
 			continue
 		}
@@ -92,6 +92,7 @@ func extractCarotAssertionFromLine(lnum int, line string) *Assertion {
 		Line:   lnum,
 		Column: col,
 	}
+	fmt.Println("COLUMN:", col)
 	value = strings.TrimSpace(value)
 	if strings.HasPrefix(value, "!") {
 		assert.Negated = true

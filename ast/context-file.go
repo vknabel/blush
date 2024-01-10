@@ -57,8 +57,10 @@ func (sf *SourceFile) ExportedDeclarations() []Decl {
 func (sf SourceFile) EnumerateChildNodes(action func(child Node)) {
 	for _, node := range sf.Declarations {
 		action(node)
+		node.EnumerateChildNodes(action)
 	}
 	for _, node := range sf.Statements {
 		action(node)
+		node.EnumerateChildNodes(action)
 	}
 }

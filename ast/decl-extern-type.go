@@ -11,9 +11,10 @@ var _ Decl = DeclExternType{}
 var _ Overviewable = DeclExternType{}
 
 type DeclExternType struct {
-	Token  token.Token
-	Name   Identifier
-	Fields map[string]DeclField
+	Token       token.Token
+	Name        Identifier
+	Fields      map[string]DeclField
+	Annotations *AnnotationChain
 
 	Docs *Docs
 }
@@ -25,6 +26,9 @@ func (d DeclExternType) TokenLiteral() token.Token {
 
 // declarationNode implements Decl.
 func (DeclExternType) declarationNode() {}
+
+// statementNode implements StatementDeclaration.
+func (DeclExternType) statementNode() {}
 
 func (e DeclExternType) DeclName() Identifier {
 	return e.Name
@@ -45,7 +49,7 @@ func (e DeclExternType) IsExportedDecl() bool {
 	return true
 }
 
-func MakeDeclExternType(tok token.Token, name Identifier, source *Source) *DeclExternType {
+func MakeDeclExternType(tok token.Token, name Identifier) *DeclExternType {
 	return &DeclExternType{
 		Token:  tok,
 		Name:   name,

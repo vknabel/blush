@@ -11,7 +11,6 @@ var _ Decl = DeclField{}
 var _ Overviewable = DeclField{}
 
 type DeclField struct {
-	Token      token.Token
 	Name       Identifier
 	Parameters []DeclParameter
 
@@ -22,7 +21,7 @@ type DeclField struct {
 
 // TokenLiteral implements Decl.
 func (d DeclField) TokenLiteral() token.Token {
-	return d.Token
+	return d.Name.Token
 }
 
 // declarationNode implements Decl.

@@ -24,4 +24,4 @@ func (n Identifier) TokenLiteral() token.Token {
 }
 
 // EnumerateChildNodes implements Node.
-func (n Identifier) EnumerateChildNodes(action func(child Node)) {}
+func (Identifier) EnumerateChildNodes(action func(child Node)) {}

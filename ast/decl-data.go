@@ -11,9 +11,10 @@ var _ Decl = &DeclData{}
 var _ Overviewable = &DeclData{}
 
 type DeclData struct {
-	Token  token.Token
-	Name   Identifier
-	Fields []DeclField
+	Token       token.Token
+	Name        Identifier
+	Fields      []DeclField
+	Annotations *AnnotationChain
 
 	Docs *Docs
 }

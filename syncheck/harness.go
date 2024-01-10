@@ -38,8 +38,8 @@ func (h *Harness) Test(doc string) error {
 	for i, a := range failures {
 		out.WriteString("\n")
 		out.WriteString(fmt.Sprintf("%d. error:\n", i+1))
-		out.WriteString("\t" + lines[a.Line-1] + "\n")
-		out.WriteString("\t" + lines[a.SourceLine-1] + "\n")
+		out.WriteString(lines[a.Line-1] + "\n")
+		out.WriteString(lines[a.SourceLine-1] + "\n")
 	}
 	return fmt.Errorf(out.String())
 }

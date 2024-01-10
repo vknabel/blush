@@ -11,9 +11,10 @@ var _ Decl = DeclEnum{}
 var _ Overviewable = DeclEnum{}
 
 type DeclEnum struct {
-	Token token.Token
-	Name  Identifier
-	Cases []*DeclEnumCase
+	Token       token.Token
+	Name        Identifier
+	Cases       []*DeclEnumCase
+	Annotations *AnnotationChain
 
 	Docs *Docs
 }
@@ -39,7 +40,7 @@ func (e DeclEnum) DeclOverview() string {
 	}
 	caseLines := make([]string, 0)
 	for _, cs := range e.Cases {
-		caseLines = append(caseLines, "    "+string(cs.Name.Value))
+		caseLines = append(caseLines, "    "+cs.Case.String())
 	}
 	return fmt.Sprintf("enum %s {\n%s\n}", e.Name, strings.Join(caseLines, "\n"))
 }
@@ -48,8 +49,9 @@ func (e DeclEnum) IsExportedDecl() bool {
 	return true
 }
 
-func MakeDeclEnum(name Identifier, source *Source) *DeclEnum {
+func MakeDeclEnum(tok token.Token, name Identifier) *DeclEnum {
 	return &DeclEnum{
+		Token: tok,
 		Name:  name,
 		Cases: []*DeclEnumCase{},
 		Docs:  MakeDocs([]string{}),
@@ -67,7 +69,7 @@ func (e DeclEnum) String() string {
 	}
 	declarationClause += " { "
 	for _, caseDecl := range e.Cases {
-		declarationClause += string(caseDecl.Name.Value) + "; "
+		declarationClause += caseDecl.Case.String() + "; "
 	}
 	return declarationClause + "}"
 }

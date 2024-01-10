@@ -11,9 +11,10 @@ var _ Decl = DeclExternFunc{}
 var _ Overviewable = DeclExternFunc{}
 
 type DeclExternFunc struct {
-	Token      token.Token
-	Name       Identifier
-	Parameters []DeclParameter
+	Token       token.Token
+	Name        Identifier
+	Parameters  []DeclParameter
+	Annotations *AnnotationChain
 
 	Docs *Docs
 }
@@ -48,7 +49,7 @@ func (e DeclExternFunc) DeclOverview() string {
 	return fmt.Sprintf("extern %s { %s => }", e.Name, strings.Join(paramNames, ", "))
 }
 
-func MakeDeclExternFunc(tok token.Token, name Identifier, params []DeclParameter, source *Source) *DeclExternFunc {
+func MakeDeclExternFunc(tok token.Token, name Identifier, params []DeclParameter) *DeclExternFunc {
 	return &DeclExternFunc{
 		Token:      tok,
 		Name:       name,
