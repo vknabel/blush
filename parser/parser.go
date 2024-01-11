@@ -109,7 +109,6 @@ func (p *Parser) errorToken() token.Token {
 }
 
 func (p *Parser) detectError(err ParseError) {
-	panic(err.Error())
 	p.errors = append(p.errors, err)
 }
 
