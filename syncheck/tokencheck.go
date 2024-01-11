@@ -2,7 +2,6 @@ package syncheck
 
 import (
 	"bufio"
-	"fmt"
 	"strings"
 )
 
@@ -35,13 +34,11 @@ func ParseAssertions(str string) []Assertion {
 	for i := 1; scanner.Scan(); i++ {
 		line := scanner.Text()
 		beginOfNextLine += len(line) + 1
-		fmt.Printf("l%d o%d t%d %s\n", i, beginOfNextLine, offsetUnderTest, line)
 
 		assert := extractBeginAssertionFromLine(lineUnderTest, line)
 		if assert != nil {
 			assert.SourceLine = i
 			assert.SourceOffset = offsetUnderTest
-			fmt.Printf("assertion: %+v\n", assert)
 			assertions = append(assertions, *assert)
 			continue
 		}
@@ -90,7 +87,6 @@ func extractCarotAssertionFromLine(lnum int, line string) *Assertion {
 		Line:   lnum,
 		Column: col,
 	}
-	fmt.Println("COLUMN:", col)
 	value = strings.TrimSpace(value)
 	if strings.HasPrefix(value, "!") {
 		assert.Negated = true

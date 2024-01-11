@@ -48,10 +48,8 @@ func (p *Parser) ParseSourceFile(filePath, moduleName string, input string) *ast
 }
 
 func (p *Parser) nextToken() {
-	prev := fmt.Sprintf("%s(%s)", p.curToken.Type, p.peekToken.Type)
 	p.curToken = p.peekToken
 	p.peekToken = p.lex.NextToken()
-	fmt.Printf("%s -> %s(%s)\n", prev, p.curToken.Type, p.peekToken.Type)
 }
 
 func (p *Parser) peekIs(tokTypes ...token.TokenType) bool {
