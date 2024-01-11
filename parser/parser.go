@@ -316,27 +316,27 @@ func (p *Parser) parseModuleDecl(annos *ast.AnnotationChain) *ast.DeclModule {
 //	  // see data declarations
 //	}
 func (p *Parser) parseExternDecl(annos *ast.AnnotationChain) ast.StatementDeclaration {
-	externTok, _ := p.expectPeekToken(token.EXTERN)
-	nameTok, _ := p.expectPeekToken(token.IDENT)
+	externTok, _ := p.expectCurToken(token.EXTERN)
+	nameTok, _ := p.expectCurToken(token.IDENT)
 	nameIdent := ast.MakeIdentifier(nameTok)
 
-	if p.peekIs(token.LBRACE) {
+	if p.curIs(token.LBRACE) {
 		// TODO: parse properties
-		p.expectPeekToken(token.LBRACE)
+		p.expectCurToken(token.LBRACE)
 		extern := ast.MakeDeclExternType(externTok, nameIdent)
 		extern.Annotations = annos
 		fields := p.parsePropertyDeclarationList()
 		for _, f := range fields {
 			extern.AddField(f)
 		}
-		p.expectPeekToken(token.RBRACE)
+		p.expectCurToken(token.RBRACE)
 		return extern
 	}
 	var params []ast.DeclParameter
-	if p.peekIs(token.LPAREN) {
-		p.expectPeekToken(token.LPAREN)
+	if p.curIs(token.LPAREN) {
+		p.expectCurToken(token.LPAREN)
 		params = p.parseParamList()
-		p.expectPeekToken(token.RPAREN)
+		p.expectCurToken(token.RPAREN)
 	}
 	extern := ast.MakeDeclExternFunc(externTok, nameIdent, params)
 	extern.Annotations = annos
@@ -399,12 +399,12 @@ func (p *Parser) parseParamList() []ast.DeclParameter {
 	for {
 		annos := p.parseOptionalAnnotationChain()
 
-		if !p.peekIs(token.IDENT) {
+		if !p.curIs(token.IDENT) {
 			// eventual errors will be triggered by parent
 			return params
 		}
-		p.nextToken()
 		ident := ast.MakeIdentifier(p.curToken)
 		params = append(params, *ast.MakeDeclParameter(ident, annos))
+		p.nextToken()
 	}
 }

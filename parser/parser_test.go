@@ -26,13 +26,43 @@ enum Optional {
 	None
 	Some
 }
+
+extern blank // this is an extern constant
+// <- ast.DeclExternFunc
+
+extern doSomething()
+// <- ast.DeclExternFunc
+	
+extern doSomething(argument)
+// <- ast.DeclExternFunc
+//     ^ ast.Identifier
+//                 ^ ast.DeclParameter
+
+extern SomeType {
+// <- ast.DeclExternType
+    name
+//  ^ ast.DeclField
+}
+
+extern SomeEmptyType {}
+// <- ast.DeclExternType
+//     ^ ast.Identifier
 `
 
 	lex := lexer.New("testmodule", "testfile.lithia", contents)
 	p := parser.New(lex)
 	sourceFile := p.ParseSourceFile("testfile.lithia", "testmodule", contents)
 	if len(p.Errors()) > 0 {
-		t.Error(p.Errors())
+		for _, err := range p.Errors() {
+			src := err.Source()
+			contentsBeforeOffset := contents[:src.Offset]
+			loc := strings.Count(contentsBeforeOffset, "\n")
+			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
+			col := src.Offset - lastLineIndex
+			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
+
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Source().FileName, loc, col, err.Summary(), relevantLine, strings.Repeat(" ", col-1), err.Details())
+		}
 	}
 
 	h := syncheck.NewHarness(func(lineOffset int, line string, assert syncheck.Assertion) bool {
@@ -45,10 +75,16 @@ enum Optional {
 			}
 		})
 		for _, child := range relevantChildren {
-			if strings.TrimPrefix(fmt.Sprintf("%T", child), "*") == assert.Value {
+			candidate := strings.TrimPrefix(fmt.Sprintf("%T", child), "*")
+			if candidate == assert.Value {
 				return !assert.Negated
 			}
 		}
+		childTypes := make([]string, len(relevantChildren))
+		for i, child := range relevantChildren {
+			childTypes[i] = strings.TrimPrefix(fmt.Sprintf("%T", child), "*")
+		}
+		t.Errorf("no alternative found, want %q, got one of %q", assert.Value, childTypes)
 		return false
 	})
 	err := h.Test(contents)

@@ -1,6 +1,8 @@
 package ast
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type SourceFile struct {
 	Path         string
@@ -20,10 +22,9 @@ func MakeSourceFile(path string) *SourceFile {
 
 func (sf *SourceFile) Add(globalStmt Statement) {
 	switch node := globalStmt.(type) {
-	case *DeclData:
+	case Decl:
 		sf.Declarations = append(sf.Declarations, node)
-	case *DeclEnum:
-		sf.Declarations = append(sf.Declarations, node)
+
 	default:
 		panic(fmt.Sprintf("TODO: unknown global statement %T", node))
 	}
