@@ -4,28 +4,19 @@ import (
 	"github.com/vknabel/lithia/token"
 )
 
-type AnnotationChain struct {
-	Token     token.Token
-	Reference StaticReference
-	Arguments []Expr
+type AnnotationChain []*AnnotationInstance
+
+func MakeAnnotationChain(instances ...*AnnotationInstance) AnnotationChain {
+	return instances
 }
 
 // TokenLiteral implements Node
 func (n AnnotationChain) TokenLiteral() token.Token {
-	return n.Token
-}
-
-func MakeAnnotationChain(tok token.Token, ref StaticReference) *AnnotationChain {
-	return &AnnotationChain{tok, ref, nil}
-}
-
-func (n AnnotationChain) AddArgument(arg Expr) {
-	n.Arguments = append(n.Arguments, arg)
+	return n[0].TokenLiteral()
 }
 
 func (n AnnotationChain) EnumerateChildNodes(action func(child Node)) {
-	action(n.Reference)
-	for _, argument := range n.Arguments {
-		action(argument)
+	for _, c := range n {
+		action(c)
 	}
 }

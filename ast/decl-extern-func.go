@@ -14,7 +14,7 @@ type DeclExternFunc struct {
 	Token       token.Token
 	Name        Identifier
 	Parameters  []DeclParameter
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }

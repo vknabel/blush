@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/vknabel/lithia/ast"
 	"github.com/vknabel/lithia/lexer"
@@ -31,10 +32,10 @@ func (p *Parser) ParseSourceFile(filePath, moduleName string, input string) *ast
 	srcFile := ast.MakeSourceFile(filePath)
 
 	for p.curToken.Type != token.EOF {
-		stmt, decls := p.parseGlobalStatement()
+		stmt, childDecls := p.parseGlobalStatement()
 		if stmt != nil {
 			srcFile.Add(stmt)
-			for _, d := range decls {
+			for _, d := range childDecls {
 				srcFile.AddDecl(d)
 			}
 		} else {
@@ -131,7 +132,7 @@ func (p *Parser) parseGlobalStatement() (ast.Statement, []ast.Decl) {
 	case token.IMPORT:
 		return p.parseImportDecl(), nil
 	case token.AT:
-		return p.parseStatementDeclaration()
+		return p.parseAnnotatedStatementDeclaration()
 	default:
 		err := UnexpectedGot(p.curToken, token.ENUM, token.DATA, token.MODULE, token.EXTERN, token.FUNCTION, token.IMPORT, token.AT, token.LET, token.IDENT, token.BLANK, token.IF, token.STRING, token.FLOAT, token.INT, token.LPAREN, token.LBRACKET, token.FOR, token.BANG)
 		p.detectError(err)
@@ -139,7 +140,7 @@ func (p *Parser) parseGlobalStatement() (ast.Statement, []ast.Decl) {
 	}
 }
 
-func (p *Parser) parseStatementDeclaration() (ast.StatementDeclaration, []ast.Decl) {
+func (p *Parser) parseAnnotatedStatementDeclaration() (ast.StatementDeclaration, []ast.Decl) {
 	annos := p.parseAnnotationChain()
 	switch p.curToken.Type {
 	case token.ENUM:
@@ -171,7 +172,7 @@ func (p *Parser) parseStatementDeclaration() (ast.StatementDeclaration, []ast.De
 //		  <optional:annotations> <data_decl>
 //		  <optional:annotations> <enum_decl>
 //	 	}
-func (p *Parser) parseEnumDecl(annos *ast.AnnotationChain) (*ast.DeclEnum, []ast.Decl) {
+func (p *Parser) parseEnumDecl(annos ast.AnnotationChain) (*ast.DeclEnum, []ast.Decl) {
 	enumToken, _ := p.expectCurToken(token.ENUM)
 	identToken, _ := p.expectCurToken(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -206,7 +207,7 @@ func (p *Parser) parseEnumDeclCase() (*ast.DeclEnumCase, []ast.Decl) {
 		ref := p.parseStaticIdentifierReference()
 		return ast.MakeDeclEnumCase(ref.TokenLiteral(), ref), nil
 	}
-	annotations := p.parseOptionalAnnotationChain()
+	annotations := p.parseAnnotationChain()
 	switch p.curToken.Type {
 	case token.DATA:
 		dataDecl := p.parseDataDecl(annotations)
@@ -230,9 +231,10 @@ func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 		id := ast.MakeIdentifier(identTok)
 		ref = append(ref, id)
 
-		if !p.peekIs(token.DOT) {
+		if !p.curIs(token.DOT) {
 			break
 		}
+		p.expectCurToken(token.DOT)
 	}
 	if len(ref) == 0 {
 		if _, ok := p.expectPeekToken(token.IDENT); ok {
@@ -256,7 +258,7 @@ func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 //	  <optional:annotations> <func_decl>
 //	  <optional:annotations> <var_decl>
 //	}
-func (p *Parser) parseDataDecl(annos *ast.AnnotationChain) *ast.DeclData {
+func (p *Parser) parseDataDecl(annos ast.AnnotationChain) *ast.DeclData {
 	declToken, _ := p.expectCurToken(token.DATA)
 	identToken, _ := p.expectCurToken(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -276,7 +278,7 @@ func (p *Parser) parseDataDecl(annos *ast.AnnotationChain) *ast.DeclData {
 }
 
 func (p *Parser) parseDataDeclField() *ast.DeclField {
-	annotations := p.parseOptionalAnnotationChain()
+	annotations := p.parseAnnotationChain()
 	identTok, _ := p.expectCurToken(token.IDENT)
 	name := ast.MakeIdentifier(identTok)
 
@@ -285,7 +287,7 @@ func (p *Parser) parseDataDeclField() *ast.DeclField {
 	}
 
 	p.expectCurToken(token.LPAREN)
-	params := p.parseParamList()
+	params := p.parseDeclParameterList()
 	p.expectCurToken(token.RPAREN)
 	return ast.MakeDeclField(name, params, annotations)
 }
@@ -309,7 +311,7 @@ func (p *Parser) parseAnnotationDecl(annos *ast.AnnotationChain) *ast.DeclAnnota
 	return declAnno
 }
 
-func (p *Parser) parseModuleDecl(annos *ast.AnnotationChain) *ast.DeclModule {
+func (p *Parser) parseModuleDecl(annos ast.AnnotationChain) *ast.DeclModule {
 	modToken := p.curToken
 	p.expectPeekToken(token.MODULE)
 
@@ -330,7 +332,7 @@ func (p *Parser) parseModuleDecl(annos *ast.AnnotationChain) *ast.DeclModule {
 //	extern <identifier> { // type
 //	  // see data declarations
 //	}
-func (p *Parser) parseExternDecl(annos *ast.AnnotationChain) ast.StatementDeclaration {
+func (p *Parser) parseExternDecl(annos ast.AnnotationChain) ast.StatementDeclaration {
 	externTok, _ := p.expectCurToken(token.EXTERN)
 	nameTok, _ := p.expectCurToken(token.IDENT)
 	nameIdent := ast.MakeIdentifier(nameTok)
@@ -350,7 +352,7 @@ func (p *Parser) parseExternDecl(annos *ast.AnnotationChain) ast.StatementDeclar
 	var params []ast.DeclParameter
 	if p.curIs(token.LPAREN) {
 		p.expectCurToken(token.LPAREN)
-		params = p.parseParamList()
+		params = p.parseDeclParameterList()
 		p.expectCurToken(token.RPAREN)
 	}
 	extern := ast.MakeDeclExternFunc(externTok, nameIdent, params)
@@ -358,16 +360,43 @@ func (p *Parser) parseExternDecl(annos *ast.AnnotationChain) ast.StatementDeclar
 	return extern
 }
 
-func (p *Parser) parseFunctionDecl(annos *ast.AnnotationChain) *ast.DeclFunc {
-	return nil
+func (p *Parser) parseFunctionDecl(annos ast.AnnotationChain) *ast.DeclFunc {
+	panic("unimplemented")
 }
 
 func (p *Parser) parseImportDecl() *ast.DeclImport {
-	return nil
+	importTok, _ := p.expectCurToken(token.IMPORT)
+
+	var importDecl *ast.DeclImport
+	if p.peekIs(token.ASSIGN) {
+		aliasTok, _ := p.expectCurToken(token.IDENT)
+		p.expectCurToken(token.ASSIGN)
+		moduleName := p.parseStaticIdentifierReference()
+		importDecl = ast.MakeDeclAliasImport(importTok, ast.MakeIdentifier(aliasTok), moduleName)
+	} else {
+		moduleName := p.parseStaticIdentifierReference()
+		importDecl = ast.MakeDeclImport(importTok, moduleName)
+	}
+
+	if !p.curIs(token.LBRACE) {
+		return importDecl
+	}
+	p.expectCurToken(token.LBRACE)
+	for !p.curIs(token.RBRACE) {
+		memberTok, _ := p.expectCurToken(token.IDENT)
+		member := ast.MakeDeclImportMember(memberTok, importDecl.ModuleName, ast.MakeIdentifier(memberTok))
+		importDecl.AddMember(member)
+
+		if p.curIs(token.COMMA) {
+			p.expectCurToken(token.COMMA)
+		}
+	}
+	p.expectCurToken(token.RBRACE)
+	return importDecl
 }
 
-func (p *Parser) parseVariableDecl(annos *ast.AnnotationChain) *ast.DeclVariable {
-	return nil
+func (p *Parser) parseVariableDecl(annos ast.AnnotationChain) *ast.DeclVariable {
+	panic("unimplemented")
 }
 
 func (p *Parser) parsePropertyDeclarationList() []ast.DeclField {
@@ -383,35 +412,38 @@ func (p *Parser) parsePropertyDeclarationList() []ast.DeclField {
 	}
 }
 
-func (p *Parser) parseOptionalAnnotationChain() *ast.AnnotationChain { // TODO: return?
-	if p.curToken.Type != token.AT {
-		return nil
+func (p *Parser) parseAnnotationChain() ast.AnnotationChain {
+	var annotationChain ast.AnnotationChain
+	for p.curIs(token.AT) {
+		anno := p.parseAnnotationInstance()
+		annotationChain = append(annotationChain, anno)
 	}
-	return p.parseAnnotationChain()
+	return annotationChain
 }
 
-func (p *Parser) parseAnnotationChain() *ast.AnnotationChain {
-	atTok := p.curToken
-	p.expectPeekToken(token.AT)
-
+func (p *Parser) parseAnnotationInstance() *ast.AnnotationInstance {
+	atTok, _ := p.expectCurToken(token.AT)
 	ref := p.parseStaticIdentifierReference()
 
-	chain := ast.MakeAnnotationChain(atTok, ref)
+	anno := ast.MakeAnnotationInstance(atTok, ref)
 
-	if p.peekToken.Type != token.LPAREN {
-		return chain
+	if !p.curIs(token.LPAREN) {
+		return anno
 	}
-	p.expectPeekToken(token.LPAREN)
-	// TODO: parameters
-	p.expectPeekToken(token.RPAREN)
-	return chain
+	p.expectCurToken(token.LPAREN)
+	args := p.parseExprArgumentList()
+	for _, arg := range args {
+		anno.AddArgument(arg)
+	}
+	p.expectCurToken(token.RPAREN)
+	return anno
 }
 
-func (p *Parser) parseParamList() []ast.DeclParameter {
+func (p *Parser) parseDeclParameterList() []ast.DeclParameter {
 	params := make([]ast.DeclParameter, 0)
 
 	for {
-		annos := p.parseOptionalAnnotationChain()
+		annos := p.parseAnnotationChain()
 
 		if !p.curIs(token.IDENT) {
 			// eventual errors will be triggered by parent
@@ -421,4 +453,113 @@ func (p *Parser) parseParamList() []ast.DeclParameter {
 		ident := ast.MakeIdentifier(identTok)
 		params = append(params, *ast.MakeDeclParameter(ident, annos))
 	}
+}
+
+func (p *Parser) parseStatementReturn() ast.StmtReturn {
+	retTok, _ := p.expectCurToken(token.RETURN)
+	expr := p.parseExpr()
+	return ast.MakeStmtReturn(retTok, expr)
+}
+
+func (p *Parser) parseStatementIf() ast.StmtIf {
+	ifTok, _ := p.expectCurToken(token.IF)
+	cond := p.parseExpr()
+	p.expectCurToken(token.LBRACE)
+	ifBlock := p.parseStmtBlock()
+	p.expectCurToken(token.RBRACE)
+
+	ifStmt := ast.MakeStmtIf(ifTok, cond, ifBlock)
+
+	for p.curIs(token.ELSE) {
+		if p.peekIs(token.IF) {
+			elseIf := p.parseStatementElseIf()
+			ifStmt.AddElseIf(elseIf)
+			continue
+		}
+		p.expectCurToken(token.ELSE)
+		p.expectCurToken(token.LBRACE)
+		elseBlock := p.parseStmtBlock()
+		p.expectCurToken(token.RBRACE)
+		ifStmt.SetElse(elseBlock)
+		break
+	}
+	return ifStmt
+}
+
+func (p *Parser) parseStatementElseIf() ast.StmtElseIf {
+	elseTok, _ := p.expectCurToken(token.ELSE)
+	p.expectCurToken(token.IF)
+	cond := p.parseExpr()
+	p.expectCurToken(token.LBRACE)
+	block := p.parseStmtBlock()
+	p.expectCurToken(token.RBRACE)
+
+	return ast.MakeStmtIfElse(elseTok, cond, block)
+}
+
+func (p *Parser) parseExprArgumentList() []ast.Expr {
+	var args []ast.Expr
+	for !p.curIs(token.RPAREN) {
+		args = append(args, p.parseExpr())
+		if !p.curIs(token.COMMA) {
+			return args
+		}
+		p.expectCurToken(token.COMMA)
+	}
+	return args
+}
+
+func (p *Parser) parseExpr() ast.Expr {
+	switch p.curToken.Type {
+	case token.IDENT:
+		// TODO: implement more complex expressions based on this!
+		identTok, _ := p.expectCurToken(token.IDENT)
+		ident := ast.MakeIdentifier(identTok)
+		identExpr := ast.MakeExprIdentifier(ident)
+
+		var accessPath []ast.Identifier
+		for p.curIs(token.DOT) {
+			p.nextToken()
+			memTok, _ := p.expectCurToken(token.IDENT)
+			accessPath = append(accessPath, ast.MakeIdentifier(memTok))
+		}
+		if len(accessPath) == 0 {
+			return identExpr
+		}
+		return ast.MakeExprMemberAccess(identExpr, accessPath)
+	case token.INT:
+		intTok, _ := p.expectCurToken(token.INT)
+		int, err := strconv.ParseInt(intTok.Literal, 10, 64)
+		if err != nil {
+			p.detectError(UnderlyingErr{intTok, err})
+		}
+		return ast.MakeExprInt(int, intTok)
+	case token.FLOAT:
+		floatTok, _ := p.expectCurToken(token.INT)
+		float, err := strconv.ParseFloat(floatTok.Literal, 64)
+		if err != nil {
+			p.detectError(UnderlyingErr{floatTok, err})
+		}
+		return ast.MakeExprFloat(float, floatTok)
+	case token.STRING:
+		tok, _ := p.expectCurToken(token.STRING)
+		return ast.MakeExprString(tok.Literal, tok)
+	case token.BANG:
+		tok, _ := p.expectCurToken(token.BANG)
+		expr := p.parseExpr()
+		return ast.MakeExprOperatorUnary(ast.OperatorUnary(tok), expr)
+	case token.LPAREN:
+		tok, _ := p.expectCurToken(token.LPAREN)
+		expr := p.parseExpr()
+		p.expectCurToken(token.RPAREN)
+		return ast.MakeExprGroup(tok, expr)
+	default:
+		panic("TODO: implement expr " + p.curToken.Type)
+	}
+}
+
+func (p *Parser) parseStmtBlock() ast.Block {
+	block := make([]ast.Statement, 0)
+	// TODO: parse statements and local decls
+	return block
 }

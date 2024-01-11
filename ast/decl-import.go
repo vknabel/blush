@@ -2,7 +2,6 @@ package ast
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/vknabel/lithia/token"
 )
@@ -48,20 +47,11 @@ func (e *DeclImport) AddMember(member DeclImportMember) {
 	e.Members = append(e.Members, member)
 }
 
-func MakeDeclImport(tok token.Token, segments []Identifier) *DeclImport {
-	if len(segments) == 0 {
-		panic("TODO: import declarations must consist of at least one identifier")
-	}
-
-	var nameBuilder strings.Builder
-	for _, seg := range segments {
-		nameBuilder.WriteString(seg.Value)
-		nameBuilder.WriteRune('.')
-	}
-	moduleName := ModuleName(nameBuilder.String())
+func MakeDeclImport(tok token.Token, name StaticReference) *DeclImport {
+	moduleName := ModuleName(name)
 	moduleName = moduleName[:len(moduleName)-1]
 
-	alias := Identifier(segments[len(segments)-1])
+	alias := Identifier(name[len(name)-1])
 	return &DeclImport{
 		Token:      tok,
 		Alias:      alias,
@@ -70,11 +60,11 @@ func MakeDeclImport(tok token.Token, segments []Identifier) *DeclImport {
 	}
 }
 
-func MakeDeclAliasImport(tok token.Token, alias Identifier, name ModuleName, source *Source) *DeclImport {
+func MakeDeclAliasImport(tok token.Token, alias Identifier, name StaticReference) *DeclImport {
 	return &DeclImport{
 		Token:      tok,
 		Alias:      alias,
-		ModuleName: name,
+		ModuleName: ModuleName(name),
 		Members:    make([]DeclImportMember, 0),
 	}
 }

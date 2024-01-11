@@ -12,7 +12,7 @@ var _ Overviewable = DeclModule{}
 type DeclModule struct {
 	Token       token.Token
 	Name        Identifier
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }

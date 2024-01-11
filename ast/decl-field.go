@@ -14,7 +14,7 @@ type DeclField struct {
 	Name       Identifier
 	Parameters []DeclParameter
 
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }
@@ -51,7 +51,7 @@ func (e DeclField) IsExportedDecl() bool {
 	return true
 }
 
-func MakeDeclField(name Identifier, params []DeclParameter, annotations *AnnotationChain) *DeclField {
+func MakeDeclField(name Identifier, params []DeclParameter, annotations AnnotationChain) *DeclField {
 	return &DeclField{
 		Name:        name,
 		Parameters:  params,

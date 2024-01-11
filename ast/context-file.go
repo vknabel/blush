@@ -8,7 +8,7 @@ type SourceFile struct {
 	Path         string
 	Imports      []ModuleName
 	Declarations []Decl
-	Statements   []Expr
+	Statements   []Statement
 }
 
 func MakeSourceFile(path string) *SourceFile {
@@ -16,7 +16,7 @@ func MakeSourceFile(path string) *SourceFile {
 		Path:         path,
 		Imports:      make([]ModuleName, 0),
 		Declarations: make([]Decl, 0),
-		Statements:   make([]Expr, 0),
+		Statements:   make([]Statement, 0),
 	}
 }
 
@@ -24,6 +24,8 @@ func (sf *SourceFile) Add(globalStmt Statement) {
 	switch node := globalStmt.(type) {
 	case Decl:
 		sf.Declarations = append(sf.Declarations, node)
+	case Statement:
+		sf.Statements = append(sf.Statements, node)
 
 	default:
 		panic(fmt.Sprintf("TODO: unknown global statement %T", node))
@@ -38,13 +40,6 @@ func (sf *SourceFile) AddDecl(decl Decl) {
 		sf.Imports = append(sf.Imports, importDecl.ModuleName)
 	}
 	sf.Declarations = append(sf.Declarations, decl)
-}
-
-func (sf *SourceFile) AddExpr(expr Expr) {
-	if expr == nil {
-		return
-	}
-	sf.Statements = append(sf.Statements, expr)
 }
 
 func (sf *SourceFile) ExportedDeclarations() []Decl {

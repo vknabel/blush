@@ -13,15 +13,20 @@ import (
 
 func TestParseSourceFile(t *testing.T) {
 	contents := `
+import json
+
+@json.Type(json.Null)
 data None
 // <- ast.DeclData
 
+@json.Inline
 data Some {
 // <- ast.DeclData
    value
 // ^ ast.DeclField
 }
 
+@json.Inline()
 enum Optional {
 	None
 	Some
@@ -50,11 +55,13 @@ extern SomeEmptyType {}
 
 annotation Type {
 // <- ast.DeclAnnotation
+	@AnyType
 	value
 //  ^ ast.DeclField
 }
 
 annotation ValidationRule {
+	@Type(Function)
     isValid(value)
 //  ^ ast.DeclField
 //          ^ ast.DeclParameter

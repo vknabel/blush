@@ -1,6 +1,6 @@
 package ast
 
-type ModuleName string
+type ModuleName StaticReference
 
 type ContextModule struct {
 	Name ModuleName

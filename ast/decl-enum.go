@@ -14,7 +14,7 @@ type DeclEnum struct {
 	Token       token.Token
 	Name        Identifier
 	Cases       []*DeclEnumCase
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }

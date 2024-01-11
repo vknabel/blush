@@ -11,7 +11,7 @@ type ExprGroup struct {
 	Expr  Expr
 }
 
-func MakeExprGroup(expr Expr, token token.Token) *ExprGroup {
+func MakeExprGroup(token token.Token, expr Expr) *ExprGroup {
 	return &ExprGroup{
 		Token: token,
 		Expr:  expr,

@@ -14,7 +14,7 @@ type DeclExternType struct {
 	Token       token.Token
 	Name        Identifier
 	Fields      map[string]DeclField
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }

@@ -8,7 +8,7 @@ var _ Decl = DeclParameter{}
 
 type DeclParameter struct {
 	Name        Identifier
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }
@@ -29,7 +29,7 @@ func (e DeclParameter) IsExportedDecl() bool {
 	return true
 }
 
-func MakeDeclParameter(name Identifier, annotations *AnnotationChain) *DeclParameter {
+func MakeDeclParameter(name Identifier, annotations AnnotationChain) *DeclParameter {
 	return &DeclParameter{
 		Name:        name,
 		Annotations: annotations,
