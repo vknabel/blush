@@ -69,5 +69,6 @@ func (f DeclField) EnumerateChildNodes(action func(child Node)) {
 	action(f.Name)
 	for _, node := range f.Parameters {
 		action(node)
+		node.EnumerateChildNodes(action)
 	}
 }

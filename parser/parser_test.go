@@ -47,6 +47,18 @@ extern SomeType {
 extern SomeEmptyType {}
 // <- ast.DeclExternType
 //     ^ ast.Identifier
+
+annotation Type {
+// <- ast.DeclAnnotation
+	value
+//  ^ ast.DeclField
+}
+
+annotation ValidationRule {
+    isValid(value)
+//  ^ ast.DeclField
+//          ^ ast.DeclParameter
+}
 `
 
 	lex := lexer.New("testmodule", "testfile.lithia", contents)

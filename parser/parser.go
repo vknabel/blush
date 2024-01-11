@@ -120,6 +120,8 @@ func (p *Parser) parseGlobalStatement() (ast.Statement, []ast.Decl) {
 		return p.parseDataDecl(nil), nil
 	case token.MODULE:
 		return p.parseModuleDecl(nil), nil
+	case token.ANNOTATION:
+		return p.parseAnnotationDecl(nil), nil
 	case token.EXTERN:
 		return p.parseExternDecl(nil), nil
 	case token.FUNCTION:
@@ -275,23 +277,36 @@ func (p *Parser) parseDataDecl(annos *ast.AnnotationChain) *ast.DeclData {
 
 func (p *Parser) parseDataDeclField() *ast.DeclField {
 	annotations := p.parseOptionalAnnotationChain()
-	if p.curToken.Type != token.IDENT {
-		p.detectError(UnexpectedGot(p.curToken, token.IDENT))
-		return nil
-	}
-	name := ast.MakeIdentifier(p.curToken)
-	p.nextToken()
+	identTok, _ := p.expectCurToken(token.IDENT)
+	name := ast.MakeIdentifier(identTok)
 
-	if !p.peekIs(token.LPAREN) {
+	if !p.curIs(token.LPAREN) {
 		return ast.MakeDeclField(name, nil, annotations)
 	}
 
-	p.nextToken()
-
+	p.expectCurToken(token.LPAREN)
 	params := p.parseParamList()
-
-	p.expectPeekToken(token.RPAREN)
+	p.expectCurToken(token.RPAREN)
 	return ast.MakeDeclField(name, params, annotations)
+}
+
+func (p *Parser) parseAnnotationDecl(annos *ast.AnnotationChain) *ast.DeclAnnotation {
+	declToken, _ := p.expectCurToken(token.ANNOTATION)
+	identToken, _ := p.expectCurToken(token.IDENT)
+	ident := ast.MakeIdentifier(identToken)
+	declAnno := ast.MakeDeclAnnotation(declToken, ident)
+	declAnno.Annotations = annos
+
+	if !p.curIs(token.LBRACE) {
+		return declAnno
+	}
+	p.expectCurToken(token.LBRACE)
+	fields := p.parsePropertyDeclarationList()
+	for _, f := range fields {
+		declAnno.AddField(f)
+	}
+	p.expectCurToken(token.RBRACE)
+	return declAnno
 }
 
 func (p *Parser) parseModuleDecl(annos *ast.AnnotationChain) *ast.DeclModule {
@@ -358,7 +373,6 @@ func (p *Parser) parseVariableDecl(annos *ast.AnnotationChain) *ast.DeclVariable
 func (p *Parser) parsePropertyDeclarationList() []ast.DeclField {
 	var fields []ast.DeclField
 	for {
-		// p.nextToken()
 		if p.curToken.Type == token.RBRACE {
 			return fields
 		}
@@ -403,8 +417,8 @@ func (p *Parser) parseParamList() []ast.DeclParameter {
 			// eventual errors will be triggered by parent
 			return params
 		}
-		ident := ast.MakeIdentifier(p.curToken)
+		identTok, _ := p.expectCurToken(token.IDENT)
+		ident := ast.MakeIdentifier(identTok)
 		params = append(params, *ast.MakeDeclParameter(ident, annos))
-		p.nextToken()
 	}
 }

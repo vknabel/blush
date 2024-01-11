@@ -54,35 +54,37 @@ const (
 	AT       TokenType = "@"
 
 	// KEYWORDS
-	MODULE   TokenType = "MODULE"
-	IMPORT   TokenType = "IMPORT"
-	ENUM     TokenType = "ENUM"
-	DATA     TokenType = "DATA"
-	EXTERN   TokenType = "EXTERN"
-	FUNCTION TokenType = "FUNCTION"
-	LET      TokenType = "LET"
-	TYPE     TokenType = "TYPE"
-	RETURN   TokenType = "RETURN"
-	IF       TokenType = "IF"
-	ELSE     TokenType = "ELSE"
-	FOR      TokenType = "FOR"
-	BLANK    TokenType = "BLANK"
+	MODULE     TokenType = "MODULE"
+	IMPORT     TokenType = "IMPORT"
+	ENUM       TokenType = "ENUM"
+	DATA       TokenType = "DATA"
+	ANNOTATION TokenType = "ANNOTATION"
+	EXTERN     TokenType = "EXTERN"
+	FUNCTION   TokenType = "FUNCTION"
+	LET        TokenType = "LET"
+	TYPE       TokenType = "TYPE"
+	RETURN     TokenType = "RETURN"
+	IF         TokenType = "IF"
+	ELSE       TokenType = "ELSE"
+	FOR        TokenType = "FOR"
+	BLANK      TokenType = "BLANK"
 )
 
 var keywords = map[string]TokenType{
-	"module": MODULE,
-	"import": IMPORT,
-	"enum":   ENUM,
-	"data":   DATA,
-	"extern": EXTERN,
-	"func":   FUNCTION,
-	"let":    LET,
-	"type":   TYPE,
-	"return": RETURN,
-	"if":     IF,
-	"else":   ELSE,
-	"for":    FOR,
-	"_":      BLANK,
+	"module":     MODULE,
+	"import":     IMPORT,
+	"enum":       ENUM,
+	"data":       DATA,
+	"annotation": ANNOTATION,
+	"extern":     EXTERN,
+	"func":       FUNCTION,
+	"let":        LET,
+	"type":       TYPE,
+	"return":     RETURN,
+	"if":         IF,
+	"else":       ELSE,
+	"for":        FOR,
+	"_":          BLANK,
 }
 
 func LookupIdent(ident string) TokenType {
