@@ -10,9 +10,10 @@ var _ Decl = DeclVariable{}
 var _ Overviewable = DeclVariable{}
 
 type DeclVariable struct {
-	Name  Identifier
-	Value Expr
-	Token token.Token
+	Name        Identifier
+	Value       Expr
+	Token       token.Token
+	Annotations AnnotationChain
 
 	Docs *Docs
 }

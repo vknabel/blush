@@ -4,9 +4,9 @@ import (
 	"github.com/vknabel/lithia/token"
 )
 
-type AnnotationChain []*AnnotationInstance
+type AnnotationChain []*DeclAnnotationInstance
 
-func MakeAnnotationChain(instances ...*AnnotationInstance) AnnotationChain {
+func MakeAnnotationChain(instances ...*DeclAnnotationInstance) AnnotationChain {
 	return instances
 }
 

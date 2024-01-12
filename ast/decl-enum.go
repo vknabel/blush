@@ -80,6 +80,10 @@ func (decl DeclEnum) ProvidedDocs() *Docs {
 
 // EnumerateChildNodes implements Decl.
 func (n DeclEnum) EnumerateChildNodes(action func(child Node)) {
+	if len(n.Annotations) > 0 {
+		action(n.Annotations)
+		n.Annotations.EnumerateChildNodes(action)
+	}
 	action(n.Name)
 	for _, node := range n.Cases {
 		action(node)

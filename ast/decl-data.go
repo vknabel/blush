@@ -68,6 +68,10 @@ func (decl DeclData) ProvidedDocs() *Docs {
 
 // EnumerateChildNodes implements Decl.
 func (d DeclData) EnumerateChildNodes(action func(child Node)) {
+	if len(d.Annotations) > 0 {
+		action(d.Annotations)
+		d.Annotations.EnumerateChildNodes(action)
+	}
 	action(d.Name)
 	for _, node := range d.Fields {
 		action(node)

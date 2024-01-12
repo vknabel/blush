@@ -7,41 +7,30 @@ import (
 var _ Expr = ExprFunc{}
 
 type ExprFunc struct {
-	Token        token.Token
-	Name         string
-	Parameters   []DeclParameter
-	Declarations []Decl
-	Expressions  []Expr
+	Token      token.Token
+	Name       string
+	Parameters []DeclParameter
+	Impl       Block
 }
 
-func MakeExprFunc(name string, parameters []DeclParameter, token token.Token) *ExprFunc {
+func MakeExprFunc(token token.Token, name string, parameters []DeclParameter, impl Block) *ExprFunc {
 	return &ExprFunc{
-		Token:        token,
-		Name:         name,
-		Parameters:   parameters,
-		Declarations: []Decl{},
-		Expressions:  []Expr{},
+		Token:      token,
+		Name:       name,
+		Parameters: parameters,
+		Impl:       impl,
 	}
-}
-
-func (e *ExprFunc) AddDecl(decl Decl) {
-	e.Declarations = append(e.Declarations, decl)
-}
-
-func (e *ExprFunc) AddExpr(expr Expr) {
-	e.Expressions = append(e.Expressions, expr)
 }
 
 // EnumerateChildNodes implements Expr.
 func (n ExprFunc) EnumerateChildNodes(action func(child Node)) {
 	for _, node := range n.Parameters {
 		action(node)
+		node.EnumerateChildNodes(action)
 	}
-	for _, node := range n.Declarations {
+	for _, node := range n.Impl {
 		action(node)
-	}
-	for _, node := range n.Expressions {
-		action(node)
+		node.EnumerateChildNodes(action)
 	}
 }
 

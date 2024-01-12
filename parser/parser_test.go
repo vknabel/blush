@@ -13,9 +13,13 @@ import (
 
 func TestParseSourceFile(t *testing.T) {
 	contents := `
+module testingmodule
+
 import json
+import big
 
 @json.Type(json.Null)
+// <- ast.DeclAnnotationInstance
 data None
 // <- ast.DeclData
 
@@ -32,8 +36,9 @@ enum Optional {
 	Some
 }
 
-extern blank // this is an extern constant
+extern b // this is an extern constant
 // <- ast.DeclExternFunc
+//     ^ ast.Identifier
 
 extern doSomething()
 // <- ast.DeclExternFunc
@@ -66,6 +71,25 @@ annotation ValidationRule {
 //  ^ ast.DeclField
 //          ^ ast.DeclParameter
 }
+
+func doNothingWithNothing {}
+// <- ast.DeclFunc
+//   ^ ast.Identifier
+//                        ^ ast.ExprFunc
+func doNothingWithSomething(some, thing) {}
+// <- ast.DeclFunc
+//                          ^ ast.DeclParameter
+//                                ^ ast.DeclParameter
+//                                       ^ ast.ExprFunc
+
+@Returns(None)
+// <- ast.DeclAnnotationInstance
+@big.O("constant")
+func greet(@String name) {}
+// <- ast.DeclFunc
+//         ^ ast.DeclAnnotationInstance
+//                 ^ ast.DeclParameter
+//                       ^ ast.ExprFunc
 `
 
 	lex := lexer.New("testmodule", "testfile.lithia", contents)
@@ -89,7 +113,7 @@ annotation ValidationRule {
 		sourceFile.EnumerateChildNodes(func(child ast.Node) {
 			tok := child.TokenLiteral()
 
-			if tok.Source.Offset <= assert.SourceOffset && assert.SourceOffset <= tok.Source.Offset+len(tok.Literal) {
+			if tok.Source.Offset <= assert.SourceOffset-1 && assert.SourceOffset <= tok.Source.Offset+len(tok.Literal)+1 {
 				relevantChildren = append(relevantChildren, child)
 			}
 		})

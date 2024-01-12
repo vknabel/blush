@@ -17,6 +17,9 @@ func TestHarness(t *testing.T) {
 data value {
 //   ^ VALUE
 }
+data v {
+//   ^ V
+}
 var
 // <- VAR
 

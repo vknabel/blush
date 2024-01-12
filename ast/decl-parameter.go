@@ -42,9 +42,8 @@ func (decl DeclParameter) ProvidedDocs() *Docs {
 
 // EnumerateChildNodes implements Decl.
 func (n DeclParameter) EnumerateChildNodes(action func(child Node)) {
-	action(n.Name)
-	if n.Annotations == nil {
-		return
+	if n.Annotations != nil {
+		n.Annotations.EnumerateChildNodes(action)
 	}
-	n.Annotations.EnumerateChildNodes(action)
+	action(n.Name)
 }

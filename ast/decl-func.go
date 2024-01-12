@@ -11,9 +11,10 @@ var _ Decl = DeclFunc{}
 var _ Overviewable = DeclFunc{}
 
 type DeclFunc struct {
-	Token token.Token
-	Name  Identifier
-	Impl  *ExprFunc
+	Token       token.Token
+	Name        Identifier
+	Impl        *ExprFunc
+	Annotations AnnotationChain
 
 	Docs *Docs
 }
@@ -48,7 +49,7 @@ func (e DeclFunc) IsExportedDecl() bool {
 	return true
 }
 
-func MakeDeclFunc(tok token.Token, name Identifier, impl *ExprFunc, source *Source) *DeclFunc {
+func MakeDeclFunc(tok token.Token, name Identifier, impl *ExprFunc) *DeclFunc {
 	return &DeclFunc{
 		Token: tok,
 		Name:  name,
@@ -62,8 +63,11 @@ func (decl DeclFunc) ProvidedDocs() *Docs {
 
 // EnumerateChildNodes implements Decl.
 func (n DeclFunc) EnumerateChildNodes(action func(child Node)) {
-	action(n.Name)
-	if n.Impl != nil {
-		action(n.Impl)
+	if len(n.Annotations) > 0 {
+		action(n.Annotations)
+		n.Annotations.EnumerateChildNodes(action)
 	}
+	action(n.Name)
+	action(n.Impl)
+	n.Impl.EnumerateChildNodes(action)
 }
