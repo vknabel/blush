@@ -106,6 +106,7 @@ func greet(@String name) {}
 
 			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Source().FileName, loc, col, err.Summary(), relevantLine, strings.Repeat(" ", col-1), err.Details())
 		}
+		t.FailNow()
 	}
 
 	h := syncheck.NewHarness(func(lineOffset int, line string, assert syncheck.Assertion) bool {

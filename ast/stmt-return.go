@@ -6,7 +6,7 @@ var _ Statement = StmtReturn{}
 
 type StmtReturn struct {
 	Token token.Token
-	Expr  Expr
+	Expr  Expr // an optional expr, if omitted `None` is assumed
 }
 
 func MakeStmtReturn(t token.Token, expr Expr) StmtReturn {
@@ -18,7 +18,9 @@ func MakeStmtReturn(t token.Token, expr Expr) StmtReturn {
 
 // EnumerateChildNodes implements Statement.
 func (s StmtReturn) EnumerateChildNodes(action func(child Node)) {
-	action(s.Expr)
+	if s.Expr != nil {
+		action(s.Expr)
+	}
 }
 
 // TokenLiteral implements Statement.

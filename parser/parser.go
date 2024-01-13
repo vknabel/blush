@@ -489,6 +489,11 @@ func (p *Parser) parseDeclParameterList() []ast.DeclParameter {
 
 func (p *Parser) parseStatementReturn() ast.StmtReturn {
 	retTok, _ := p.expect(token.RETURN)
+	for _, dec := range p.curToken.Leading {
+		if dec.Type != token.DECO_INLINE {
+			return ast.MakeStmtReturn(retTok, nil)
+		}
+	}
 	expr := p.parseExpr()
 	return ast.MakeStmtReturn(retTok, expr)
 }
