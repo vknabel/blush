@@ -80,9 +80,11 @@ func (p *Parser) ParseSourceFile(filePath, moduleName string, input string) *ast
 	return srcFile
 }
 
-func (p *Parser) nextToken() {
+func (p *Parser) nextToken() token.Token {
+	cur := p.curToken
 	p.curToken = p.peekToken
 	p.peekToken = p.lex.NextToken()
+	return cur
 }
 
 func (p *Parser) peekIs(tokTypes ...token.TokenType) bool {
@@ -591,7 +593,6 @@ func (p *Parser) parseExprArgumentList() []ast.Expr {
 
 func (p *Parser) parseExpr() ast.Expr {
 	expr := p.parsePrattExpr(LOWEST)
-	p.nextToken() // is pratt really required to consume late?
 	return expr
 }
 

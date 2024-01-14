@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/vknabel/lithia/ast"
@@ -90,7 +89,6 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParser) {
 func (p *Parser) parseExprStmt() *ast.StmtExpr {
 	stmtTok := p.curToken
 	expr := p.parsePrattExpr(LOWEST)
-	p.nextToken()
 	return ast.MakeStmtExpr(stmtTok, expr)
 }
 
@@ -106,53 +104,54 @@ func (p *Parser) parsePrattExpr(precedence Precedence) ast.Expr {
 	}
 	lhs := prefix()
 
-	for precedence < p.peekPrecedence() {
-		infix := p.infixParsers[p.peekToken.Type]
+	for precedence < p.curPrecendence() {
+		infix := p.infixParsers[p.curToken.Type]
 		if infix == nil {
 			return lhs
 		}
-		p.nextToken()
 		lhs = infix(lhs)
 	}
 	return lhs
 }
 
 func (p *Parser) parsePrattExprIdentifier() ast.Expr {
-	return ast.MakeExprIdentifier(ast.MakeIdentifier(p.curToken))
+	tok, _ := p.expect(token.IDENT)
+	return ast.MakeExprIdentifier(ast.MakeIdentifier(tok))
 }
 
 func (p *Parser) parsePrattExprInt() ast.Expr {
-	int, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	tok, _ := p.expect(token.INT)
+	int, err := strconv.ParseInt(tok.Literal, 0, 64)
 	if err != nil {
-		p.detectError(UnderlyingErr{p.curToken, err})
+		p.detectError(UnderlyingErr{tok, err})
 	}
-	return ast.MakeExprInt(int, p.curToken)
+	return ast.MakeExprInt(int, tok)
 }
 
 func (p *Parser) parsePrattExprFloat() ast.Expr {
-	float, err := strconv.ParseFloat(p.curToken.Literal, 64)
+	tok, _ := p.expect(token.FLOAT)
+	float, err := strconv.ParseFloat(tok.Literal, 64)
 	if err != nil {
-		p.detectError(UnderlyingErr{p.curToken, err})
+		p.detectError(UnderlyingErr{tok, err})
 	}
-	return ast.MakeExprFloat(float, p.curToken)
+	return ast.MakeExprFloat(float, tok)
 }
 
 func (p *Parser) parsePrattExprPrefix() ast.Expr {
-	op := ast.OperatorUnary(p.curToken)
-	p.nextToken()
+	tok := p.nextToken()
+	op := ast.OperatorUnary(tok)
 	expr := p.parsePrattExpr(PREFIX)
 	return ast.MakeExprOperatorUnary(op, expr)
 }
 
 func (p *Parser) parsePrattExprInfix(lhs ast.Expr) ast.Expr {
-	op := ast.OperatorBinary(p.curToken)
-
 	prec := p.curPrecendence()
 	asso := associativities[p.curPrecendence()]
 	if asso == A_RIGHT {
 		prec -= 1
 	}
-	p.nextToken()
+	tok := p.nextToken()
+	op := ast.OperatorBinary(tok)
 	rhs := p.parsePrattExpr(prec)
 	return ast.MakeExprOperatorBinary(op, lhs, rhs)
 }
@@ -161,7 +160,7 @@ func (p *Parser) parsePrattExprGroup() ast.Expr {
 	p.expect(token.LPAREN)
 	expr := p.parsePrattExpr(LOWEST)
 
-	_, ok := p.expectPeekToken(token.RPAREN)
+	_, ok := p.expect(token.RPAREN)
 	if !ok {
 		return nil
 	}
@@ -169,70 +168,55 @@ func (p *Parser) parsePrattExprGroup() ast.Expr {
 }
 
 func (p *Parser) parsePrattExprIfElse() ast.Expr {
-	ifTok := p.curToken
-	p.nextToken()
+	ifTok := p.nextToken()
 
 	condition := p.parsePrattExpr(LOWEST)
 	if condition == nil {
 		return nil
 	}
 
-	_, ok := p.expectPeekToken(token.LBRACE)
+	_, ok := p.expect(token.LBRACE)
 	if !ok {
 		return nil
 	}
-	p.nextToken()
 	then := p.parsePrattExpr(LOWEST)
 	if then == nil {
 		return nil
 	}
 
-	_, ok = p.expectPeekToken(token.RBRACE)
+	_, ok = p.expect(token.RBRACE)
 	if !ok {
 		return nil
 	}
 
-	elseTok, ok := p.expectPeekToken(token.ELSE)
+	elseTok, ok := p.expect(token.ELSE)
 	if !ok {
 		return nil
 	}
 
 	ifExpr := ast.MakeExprIf(ifTok, condition, then)
 
-	var i int
-	for p.curIs(token.ELSE) && p.peekIs(token.IF) {
-		i++
-		fmt.Printf("%d:%d %q -> %q\n", i, 1, p.curToken.Type, p.peekToken.Type)
+	for p.curIs(token.IF) {
 		p.nextToken()
-		p.nextToken()
-		fmt.Printf("%d:%d %q -> %q\n", i, 2, p.curToken.Type, p.peekToken.Type)
 		elseCond := p.parsePrattExpr(LOWEST)
-		fmt.Printf("%T\n", elseCond)
-		fmt.Printf("%d:%d %q -> %q\n", i, 3, p.curToken.Type, p.peekToken.Type)
-		p.expectPeekToken(token.LBRACE)
-		p.nextToken()
-		fmt.Printf("%d:%d %q -> %q\n", i, 4, p.curToken.Type, p.peekToken.Type)
+		p.expect(token.LBRACE)
 		elseExpr := p.parsePrattExpr(LOWEST)
-		fmt.Printf("%d:%d %q -> %q\n", i, 5, p.curToken.Type, p.peekToken.Type)
-		p.expectPeekToken(token.RBRACE)
-		fmt.Printf("%d:%d %q -> %q\n", i, 6, p.curToken.Type, p.peekToken.Type)
+		p.expect(token.RBRACE)
 		elif := ast.MakeExprElseIf(elseTok, elseCond, elseExpr)
 		ifExpr.AddElseIf(elif)
-		p.expectPeekToken(token.ELSE)
-		fmt.Printf("%d:%d %q -> %q\n", i, 7, p.curToken.Type, p.peekToken.Type)
+		p.expect(token.ELSE)
 	}
 
-	_, ok = p.expectPeekToken(token.LBRACE)
+	_, ok = p.expect(token.LBRACE)
 	if !ok {
 		return nil
 	}
-	p.nextToken()
 	els := p.parsePrattExpr(LOWEST)
 	if els == nil {
 		return nil
 	}
 
-	_, ok = p.expectPeekToken(token.RBRACE)
+	_, ok = p.expect(token.RBRACE)
 	if !ok {
 		return nil
 	}
@@ -242,7 +226,7 @@ func (p *Parser) parsePrattExprIfElse() ast.Expr {
 }
 
 func (p *Parser) parsePrattExprFunc() ast.Expr {
-	tok := p.curToken
+	tok := p.nextToken()
 	params := p.parseDeclParameterList()
 	p.expect(token.ARROW)
 	impl := p.parseStmtBlock()
@@ -254,21 +238,20 @@ func (p *Parser) parsePrattExprFunc() ast.Expr {
 
 func (p *Parser) parsePrattExprCall(fn ast.Expr) ast.Expr {
 	fnExpr := ast.MakeExprInvocation(fn)
+	p.nextToken()
 
-	if p.peekIs(token.RPAREN) {
+	if p.curIs(token.RPAREN) {
 		p.nextToken()
 		return fnExpr
 	}
-	p.nextToken()
 	fnExpr.AddArgument(p.parsePrattExpr(LOWEST))
 
-	for p.peekIs(token.COMMA) {
-		p.nextToken()
+	for p.curIs(token.COMMA) {
 		p.nextToken()
 		fnExpr.AddArgument(p.parsePrattExpr(LOWEST))
 	}
 
-	_, ok := p.expectPeekToken(token.RPAREN)
+	_, ok := p.expect(token.RPAREN)
 	if !ok {
 		return nil
 	}
@@ -277,8 +260,8 @@ func (p *Parser) parsePrattExprCall(fn ast.Expr) ast.Expr {
 }
 
 func (p *Parser) parsePrattExprMember(owner ast.Expr) ast.Expr {
-	dotTok := p.curToken
-	identTok, ok := p.expectPeekToken(token.IDENT)
+	dotTok := p.nextToken()
+	identTok, ok := p.expect(token.IDENT)
 	if !ok {
 		return nil
 	}
@@ -286,9 +269,9 @@ func (p *Parser) parsePrattExprMember(owner ast.Expr) ast.Expr {
 }
 
 func (p *Parser) parsePrattExprIndex(owner ast.Expr) ast.Expr {
-	indexTok := p.curToken
+	indexTok := p.nextToken()
 	indexExpr := p.parsePrattExpr(LOWEST)
-	_, ok := p.expectPeekToken(token.RBRACKET)
+	_, ok := p.expect(token.RBRACKET)
 	if !ok {
 		return nil
 	}
@@ -296,38 +279,39 @@ func (p *Parser) parsePrattExprIndex(owner ast.Expr) ast.Expr {
 }
 
 func (p *Parser) parsePrattExprString() ast.Expr {
-	tok := p.curToken
+	tok := p.nextToken()
 	return ast.MakeExprString(tok, tok.Literal)
 }
 
 func (p *Parser) parseExprListOrDict() ast.Expr {
-	tok := p.curToken
+	tok := p.nextToken()
 
-	if p.peekIs(token.RBRACKET) {
+	if p.curIs(token.RBRACKET) {
 		p.nextToken()
 		return ast.MakeExprArray(nil, tok)
 	}
-	if p.peekIs(token.COLON) {
+	if p.curIs(token.COLON) {
 		p.nextToken()
+		p.expect(token.RBRACKET)
 		return ast.MakeExprDict(nil, tok)
 	}
 
 	initialExpr := p.parsePrattExpr(LOWEST)
 
-	if p.peekIs(token.COMMA) {
+	if p.curIs(token.COMMA) {
 		rest := p.parsePrattExprArrayElements()
 		if rest == nil {
 			return nil
 		}
 		elements := append([]ast.Expr{initialExpr}, rest...)
-		_, ok := p.expectPeekToken(token.RBRACKET)
+		_, ok := p.expect(token.RBRACKET)
 		if !ok {
 			return nil
 		}
 		return ast.MakeExprArray(elements, tok)
 	}
 
-	_, ok := p.expectPeekToken(token.COLON)
+	_, ok := p.expect(token.COLON)
 	if !ok {
 		return nil
 	}
@@ -335,7 +319,7 @@ func (p *Parser) parseExprListOrDict() ast.Expr {
 	initialEntry := ast.MakeExprDictEntry(initialExpr, valueExpr)
 	entries := []ast.ExprDictEntry{initialEntry}
 
-	if p.peekIs(token.RBRACKET) {
+	if p.curIs(token.RBRACKET) {
 		p.nextToken()
 		return ast.MakeExprDict(entries, tok)
 	}
@@ -349,7 +333,7 @@ func (p *Parser) parseExprListOrDict() ast.Expr {
 
 func (p *Parser) parsePrattExprArrayElements() []ast.Expr {
 	var elements []ast.Expr
-	for p.peekIs(token.COMMA) {
+	for p.curIs(token.COMMA) {
 		p.nextToken()
 
 		expr := p.parsePrattExpr(LOWEST)
@@ -363,14 +347,14 @@ func (p *Parser) parsePrattExprArrayElements() []ast.Expr {
 
 func (p *Parser) parsePrattExprDictEntries() []ast.ExprDictEntry {
 	var elements []ast.ExprDictEntry
-	for p.peekIs(token.COMMA) {
+	for p.curIs(token.COMMA) {
 		p.nextToken()
 
 		key := p.parsePrattExpr(LOWEST)
 		if key == nil {
 			return nil
 		}
-		_, ok := p.expectPeekToken(token.COLON)
+		_, ok := p.expect(token.COLON)
 		if !ok {
 			return nil
 		}
