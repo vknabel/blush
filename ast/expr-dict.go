@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"bytes"
+
 	"github.com/vknabel/lithia/token"
 )
 
@@ -36,9 +38,29 @@ type ExprDictEntry struct {
 	Value Expr
 }
 
-func MakeExprDictEntry(key Expr, value Expr) *ExprDictEntry {
-	return &ExprDictEntry{
+func MakeExprDictEntry(key Expr, value Expr) ExprDictEntry {
+	return ExprDictEntry{
 		Key:   key,
 		Value: value,
 	}
+}
+
+// Expression implements Expr.
+func (e ExprDict) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString("[")
+	for i, v := range e.Entries {
+		out.WriteString(v.Key.Expression())
+		out.WriteString(": ")
+		out.WriteString(v.Value.Expression())
+
+		if i+1 < len(e.Entries) {
+			out.WriteString(", ")
+		}
+		i += 1
+	}
+	out.WriteString("]")
+
+	return out.String()
 }

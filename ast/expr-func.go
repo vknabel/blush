@@ -1,6 +1,9 @@
 package ast
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/vknabel/lithia/token"
 )
 
@@ -37,4 +40,23 @@ func (n ExprFunc) EnumerateChildNodes(action func(child Node)) {
 // TokenLiteral implements Expr.
 func (e ExprFunc) TokenLiteral() token.Token {
 	return e.Token
+}
+
+// Expression implements Expr.
+func (e ExprFunc) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString("{")
+	for i, p := range e.Parameters {
+		out.WriteString(p.Name.String())
+
+		if i+1 < len(e.Parameters) {
+			out.WriteString(", ")
+		}
+	}
+	out.WriteString("->")
+	out.WriteString(fmt.Sprintf("/* %d stmts */", len(e.Impl)))
+	out.WriteString("}")
+
+	return out.String()
 }

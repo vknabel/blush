@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/vknabel/lithia/token"
+import (
+	"fmt"
+
+	"github.com/vknabel/lithia/token"
+)
 
 var _ Expr = ExprFloat{}
 
@@ -22,4 +26,9 @@ func (e ExprFloat) TokenLiteral() token.Token {
 
 func (e ExprFloat) EnumerateChildNodes(enumerate func(Node)) {
 	// No child nodes.
+}
+
+// Expression implements Expr.
+func (e ExprFloat) Expression() string {
+	return fmt.Sprintf("%f", e.Literal)
 }

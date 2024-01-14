@@ -36,3 +36,8 @@ func (e ExprTypeSwitch) EnumerateChildNodes(enumerate func(Node)) {
 		enumerate(e.Cases[key.Value])
 	}
 }
+
+// Expression implements Expr.
+func (ExprTypeSwitch) Expression() string {
+	panic("unimplemented") // TODO
+}

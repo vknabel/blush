@@ -1,14 +1,16 @@
 package ast
 
 import (
+	"fmt"
+
 	"github.com/vknabel/lithia/token"
 )
 
 var _ Expr = ExprInt{}
 
 type ExprInt struct {
-	Literal int64
 	Token   token.Token
+	Literal int64
 }
 
 func MakeExprInt(literal int64, token token.Token) *ExprInt {
@@ -26,4 +28,9 @@ func (ExprInt) EnumerateChildNodes(func(child Node)) {
 // TokenLiteral implements Expr.
 func (n ExprInt) TokenLiteral() token.Token {
 	return n.Token
+}
+
+// Expression implements Expr.
+func (e ExprInt) Expression() string {
+	return fmt.Sprintf("%d", e.Literal)
 }

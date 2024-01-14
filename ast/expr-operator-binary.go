@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"bytes"
+
 	"github.com/vknabel/lithia/token"
 )
 
@@ -30,4 +32,17 @@ func (n ExprOperatorBinary) EnumerateChildNodes(action func(child Node)) {
 // TokenLiteral implements Expr.
 func (n ExprOperatorBinary) TokenLiteral() token.Token {
 	return n.Left.TokenLiteral()
+}
+
+// Expression implements Expr.
+func (e ExprOperatorBinary) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(e.Left.Expression())
+	out.WriteString(e.Operator.Literal)
+	out.WriteString(e.Right.Expression())
+	out.WriteString(")")
+
+	return out.String()
 }

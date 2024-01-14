@@ -25,3 +25,8 @@ func (ExprIdentifier) EnumerateChildNodes(func(child Node)) {
 func (n ExprIdentifier) TokenLiteral() token.Token {
 	return n.Name.TokenLiteral()
 }
+
+// Expression implements Expr.
+func (e ExprIdentifier) Expression() string {
+	return e.Name.Value
+}

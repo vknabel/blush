@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/vknabel/lithia/ast"
 	"github.com/vknabel/lithia/lexer"
@@ -15,12 +14,46 @@ type Parser struct {
 
 	curToken  token.Token
 	peekToken token.Token
+
+	prefixParsers map[token.TokenType]prefixParser
+	infixParsers  map[token.TokenType]infixParser
 }
 
 func New(lex lexer.Lexer) *Parser {
 	p := &Parser{lex: lex}
 	p.nextToken()
 	p.nextToken()
+
+	p.prefixParsers = make(map[token.TokenType]prefixParser)
+	p.registerPrefix(token.IDENT, p.parsePrattExprIdentifier)
+	p.registerPrefix(token.MINUS, p.parsePrattExprPrefix)
+	p.registerPrefix(token.INT, p.parsePrattExprInt)
+	p.registerPrefix(token.FLOAT, p.parsePrattExprFloat)
+	p.registerPrefix(token.BANG, p.parsePrattExprPrefix)
+	p.registerPrefix(token.MINUS, p.parsePrattExprPrefix)
+	p.registerPrefix(token.LPAREN, p.parsePrattExprGroup)
+	p.registerPrefix(token.IF, p.parsePrattExprIfElse) // only exactly one expr per if / else if / else, else mandatory, later we eventually want to allow assignments and local vars
+	p.registerPrefix(token.LBRACE, p.parsePrattExprFunc)
+	// p.registerPrefix(token.TYPE, p.parseExprType) // only exactly one expr per case
+	// p.registerPrefix(token.SWITCH / MATCH, p.parseExprSwitch) // only exactly one expr per case
+	p.registerPrefix(token.LBRACKET, p.parseExprListOrDict)
+	p.registerPrefix(token.STRING, p.parsePrattExprString)
+
+	p.infixParsers = make(map[token.TokenType]infixParser)
+	p.registerInfix(token.EQ, p.parsePrattExprInfix)
+	p.registerInfix(token.NEQ, p.parsePrattExprInfix)
+	p.registerInfix(token.LTE, p.parsePrattExprInfix)
+	p.registerInfix(token.GTE, p.parsePrattExprInfix)
+	p.registerInfix(token.LT, p.parsePrattExprInfix)
+	p.registerInfix(token.GT, p.parsePrattExprInfix)
+	p.registerInfix(token.PLUS, p.parsePrattExprInfix)
+	p.registerInfix(token.MINUS, p.parsePrattExprInfix)
+	p.registerInfix(token.SLASH, p.parsePrattExprInfix)
+	p.registerInfix(token.ASTERISK, p.parsePrattExprInfix)
+	p.registerInfix(token.LPAREN, p.parsePrattExprCall)
+	p.registerInfix(token.DOT, p.parsePrattExprMember)
+	p.registerInfix(token.LBRACKET, p.parsePrattExprIndex)
+
 	return p
 }
 
@@ -139,7 +172,17 @@ func (p *Parser) parseGlobalStatement() (ast.Statement, []ast.Decl) {
 	case token.AT:
 		return p.parseAnnotatedStatementDeclaration()
 	default:
-		err := UnexpectedGot(p.curToken, token.ENUM, token.DATA, token.MODULE, token.EXTERN, token.FUNCTION, token.IMPORT, token.AT, token.LET, token.IDENT, token.BLANK, token.IF, token.STRING, token.FLOAT, token.INT, token.LPAREN, token.LBRACKET, token.FOR, token.BANG)
+		if _, ok := p.prefixParsers[p.curToken.Type]; ok {
+			return p.parseExprStmt(), nil
+		}
+
+		prefixes := []token.TokenType{
+			token.ENUM, token.DATA, token.MODULE, token.EXTERN, token.FUNCTION, token.IMPORT, token.AT, token.LET, token.IF, token.FOR,
+		}
+		for t := range p.prefixParsers {
+			prefixes = append(prefixes, t)
+		}
+		err := UnexpectedGot(p.curToken, prefixes...)
 		p.detectError(err)
 		return nil, nil
 	}
@@ -547,52 +590,9 @@ func (p *Parser) parseExprArgumentList() []ast.Expr {
 }
 
 func (p *Parser) parseExpr() ast.Expr {
-	switch p.curToken.Type {
-	case token.IDENT:
-		// TODO: implement more complex expressions based on this!
-		identTok, _ := p.expect(token.IDENT)
-		ident := ast.MakeIdentifier(identTok)
-		identExpr := ast.MakeExprIdentifier(ident)
-
-		var accessPath []ast.Identifier
-		for p.curIs(token.DOT) {
-			p.nextToken()
-			memTok, _ := p.expect(token.IDENT)
-			accessPath = append(accessPath, ast.MakeIdentifier(memTok))
-		}
-		if len(accessPath) == 0 {
-			return identExpr
-		}
-		return ast.MakeExprMemberAccess(identExpr, accessPath)
-	case token.INT:
-		intTok, _ := p.expect(token.INT)
-		int, err := strconv.ParseInt(intTok.Literal, 10, 64)
-		if err != nil {
-			p.detectError(UnderlyingErr{intTok, err})
-		}
-		return ast.MakeExprInt(int, intTok)
-	case token.FLOAT:
-		floatTok, _ := p.expect(token.INT)
-		float, err := strconv.ParseFloat(floatTok.Literal, 64)
-		if err != nil {
-			p.detectError(UnderlyingErr{floatTok, err})
-		}
-		return ast.MakeExprFloat(float, floatTok)
-	case token.STRING:
-		tok, _ := p.expect(token.STRING)
-		return ast.MakeExprString(tok.Literal, tok)
-	case token.BANG:
-		tok, _ := p.expect(token.BANG)
-		expr := p.parseExpr()
-		return ast.MakeExprOperatorUnary(ast.OperatorUnary(tok), expr)
-	case token.LPAREN:
-		tok, _ := p.expect(token.LPAREN)
-		expr := p.parseExpr()
-		p.expect(token.RPAREN)
-		return ast.MakeExprGroup(tok, expr)
-	default:
-		panic("TODO: implement expr " + p.curToken.Type)
-	}
+	expr := p.parsePrattExpr(LOWEST)
+	p.nextToken() // is pratt really required to consume late?
+	return expr
 }
 
 func (p *Parser) parseStmtBlock() ast.Block {

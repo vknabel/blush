@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"bytes"
+
 	"github.com/vknabel/lithia/token"
 )
 
@@ -11,7 +13,7 @@ type ExprInvocation struct {
 	Arguments []Expr
 }
 
-func MakeExprInvocation(function Expr, source *Source) *ExprInvocation {
+func MakeExprInvocation(function Expr) *ExprInvocation {
 	return &ExprInvocation{
 		Function: function,
 	}
@@ -32,4 +34,23 @@ func (n ExprInvocation) EnumerateChildNodes(action func(child Node)) {
 // TokenLiteral implements Expr.
 func (n ExprInvocation) TokenLiteral() token.Token {
 	return n.Function.TokenLiteral()
+}
+
+// Expression implements Expr.
+func (e ExprInvocation) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString(e.Function.Expression())
+	out.WriteString("(")
+	for i, arg := range e.Arguments {
+		out.WriteString(arg.Expression())
+
+		if i+1 < len(e.Arguments) {
+			out.WriteString(", ")
+		}
+	}
+	out.WriteString(e.Function.Expression())
+	out.WriteString(")")
+
+	return out.String()
 }

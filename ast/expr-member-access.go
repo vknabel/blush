@@ -1,30 +1,47 @@
 package ast
 
-import "github.com/vknabel/lithia/token"
+import (
+	"bytes"
+
+	"github.com/vknabel/lithia/token"
+)
 
 var _ Expr = ExprMemberAccess{}
 
 type ExprMemberAccess struct {
-	Target     Expr
-	AccessPath []Identifier
+	Token    token.Token
+	Target   Expr
+	Property Identifier
 }
 
-func MakeExprMemberAccess(target Expr, accessPath []Identifier) *ExprMemberAccess {
+func MakeExprMemberAccess(tok token.Token, target Expr, prop Identifier) *ExprMemberAccess {
 	return &ExprMemberAccess{
-		Target:     target,
-		AccessPath: accessPath,
+		Token:    tok,
+		Target:   target,
+		Property: prop,
 	}
 }
 
 // EnumerateChildNodes implements Expr.
 func (n ExprMemberAccess) EnumerateChildNodes(action func(child Node)) {
 	action(n.Target)
-	for _, child := range n.AccessPath {
-		action(child)
-	}
+	n.Target.EnumerateChildNodes(action)
+
+	action(n.Property)
 }
 
 // TokenLiteral implements Expr.
 func (n ExprMemberAccess) TokenLiteral() token.Token {
-	return n.Target.TokenLiteral()
+	return n.Token
+}
+
+// Expression implements Expr.
+func (e ExprMemberAccess) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString(e.Target.Expression())
+	out.WriteString(".")
+	out.WriteString(e.Property.Value)
+
+	return out.String()
 }

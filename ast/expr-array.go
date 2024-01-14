@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/vknabel/lithia/token"
+import (
+	"bytes"
+
+	"github.com/vknabel/lithia/token"
+)
 
 var _ Expr = ExprArray{}
 
@@ -25,4 +29,20 @@ func (e ExprArray) EnumerateChildNodes(enumerate func(Node)) {
 	for _, el := range e.Elements {
 		enumerate(el)
 	}
+}
+
+// Expression implements Expr.
+func (e ExprArray) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString("[")
+	for i, el := range e.Elements {
+		out.WriteString(el.Expression())
+		if i+1 < len(e.Elements) {
+			out.WriteString(", ")
+		}
+	}
+	out.WriteString("]")
+
+	return out.String()
 }

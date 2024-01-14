@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/vknabel/lithia/token"
+import (
+	"bytes"
+
+	"github.com/vknabel/lithia/token"
+)
 
 var _ Expr = ExprOperatorUnary{}
 
@@ -25,4 +29,16 @@ func (n ExprOperatorUnary) EnumerateChildNodes(action func(child Node)) {
 // TokenLiteral implements Expr.
 func (n ExprOperatorUnary) TokenLiteral() token.Token {
 	return n.Operator.TokenLiteral()
+}
+
+// Expression implements Expr.
+func (e ExprOperatorUnary) Expression() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(e.Operator.Literal)
+	out.WriteString(e.Expr.Expression())
+	out.WriteString(")")
+
+	return out.String()
 }

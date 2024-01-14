@@ -136,3 +136,27 @@ func greet(@String name) {}
 		t.Error(err)
 	}
 }
+
+func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
+	l := lexer.New("testing", "test.lithia", input)
+	p := parser.New(l)
+	srcFile := p.ParseSourceFile("test.lithia", "testing", input)
+	checkParserErrors(t, p, input)
+	return srcFile
+}
+
+func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
+	if len(p.Errors()) > 0 {
+		for _, err := range p.Errors() {
+			src := err.Source()
+			contentsBeforeOffset := contents[:src.Offset]
+			loc := strings.Count(contentsBeforeOffset, "\n")
+			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
+			col := src.Offset - lastLineIndex
+			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
+
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Source().FileName, loc, col, err.Summary(), relevantLine, strings.Repeat(" ", col-1), err.Details())
+		}
+		t.FailNow()
+	}
+}
