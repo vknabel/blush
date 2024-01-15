@@ -64,18 +64,18 @@ func (p *Parser) Errors() []ParseError {
 func (p *Parser) ParseSourceFile(filePath, moduleName string, input string) *ast.SourceFile {
 	srcFile := ast.MakeSourceFile(filePath)
 
+	inPosition := IN_INITIAL
 	for p.curToken.Type != token.EOF {
-		stmt, childDecls := p.parseGlobalStatement()
+		stmt, childDecls := p.parseStatementInContext(inPosition, nil)
+		inPosition = IN_GLOBAL
 		if stmt != nil {
 			srcFile.Add(stmt)
 			for _, d := range childDecls {
 				srcFile.AddDecl(d)
 			}
 		} else {
-			p.detectError(UnexpectedGot(p.curToken))
 			p.nextToken()
 		}
-		// TODO: prevent infinite loop!
 	}
 	return srcFile
 }
@@ -116,7 +116,7 @@ func (p *Parser) inlinePeekIs(tokTypes ...token.TokenType) bool {
 
 func (p *Parser) expect(tokTypes ...token.TokenType) (token.Token, bool) {
 	if !p.curIs(tokTypes...) {
-		p.detectError(UnexpectedGot(p.curToken, tokTypes...))
+		p.errUnexpectedToken(tokTypes...)
 		return p.errorToken(), false
 	}
 	cur := p.curToken
@@ -133,7 +133,7 @@ func (p *Parser) skip(tokTypes ...token.TokenType) {
 
 func (p *Parser) expectPeekToken(tokTypes ...token.TokenType) (token.Token, bool) {
 	if !p.peekIs(tokTypes...) {
-		p.detectError(UnexpectedGot(p.peekToken, tokTypes...))
+		p.errUnexpectedPeekToken(tokTypes...)
 		return p.errorToken(), false
 	}
 	p.nextToken()
@@ -153,63 +153,9 @@ func (p *Parser) detectError(err ParseError) {
 	p.errors = append(p.errors, err)
 }
 
-func (p *Parser) parseGlobalStatement() (ast.Statement, []ast.Decl) {
-	switch p.curToken.Type {
-	case token.ENUM:
-		return p.parseEnumDecl(nil)
-	case token.DATA:
-		return p.parseDataDecl(nil), nil
-	case token.MODULE:
-		return p.parseModuleDecl(nil), nil
-	case token.ANNOTATION:
-		return p.parseAnnotationDecl(nil), nil
-	case token.EXTERN:
-		return p.parseExternDecl(nil), nil
-	case token.FUNCTION:
-		return p.parseFunctionDecl(nil), nil
-	case token.LET:
-		return p.parseVariableDecl(nil), nil
-	case token.IMPORT:
-		return p.parseImportDecl(), nil
-	case token.AT:
-		return p.parseAnnotatedStatementDeclaration()
-	default:
-		if _, ok := p.prefixParsers[p.curToken.Type]; ok {
-			return p.parseExprStmt(), nil
-		}
-
-		prefixes := []token.TokenType{
-			token.ENUM, token.DATA, token.MODULE, token.EXTERN, token.FUNCTION, token.IMPORT, token.AT, token.LET, token.IF, token.FOR,
-		}
-		for t := range p.prefixParsers {
-			prefixes = append(prefixes, t)
-		}
-		err := UnexpectedGot(p.curToken, prefixes...)
-		p.detectError(err)
-		return nil, nil
-	}
-}
-
-func (p *Parser) parseAnnotatedStatementDeclaration() (ast.StatementDeclaration, []ast.Decl) {
+func (p *Parser) parseAnnotatedStatementDeclaration(pos StatementPosition) (ast.Statement, []ast.Decl) {
 	annos := p.parseAnnotationChain()
-	switch p.curToken.Type {
-	case token.ENUM:
-		return p.parseEnumDecl(annos)
-	case token.DATA:
-		return p.parseDataDecl(annos), nil
-	case token.MODULE:
-		return p.parseModuleDecl(annos), nil
-	case token.EXTERN:
-		return p.parseExternDecl(annos), nil
-	case token.FUNCTION:
-		return p.parseFunctionDecl(annos), nil
-	case token.LET:
-		return p.parseVariableDecl(annos), nil
-	default:
-		err := UnexpectedGot(p.curToken, token.ENUM, token.DATA, token.MODULE, token.EXTERN, token.FUNCTION, token.LET)
-		p.detectError(err)
-		return nil, nil
-	}
+	return p.parseStatementInContext(pos, annos)
 }
 
 // parseEnumDecl parsed enum declarations in various forms:
@@ -222,7 +168,7 @@ func (p *Parser) parseAnnotatedStatementDeclaration() (ast.StatementDeclaration,
 //		  <optional:annotations> <data_decl>
 //		  <optional:annotations> <enum_decl>
 //	 	}
-func (p *Parser) parseEnumDecl(annos ast.AnnotationChain) (*ast.DeclEnum, []ast.Decl) {
+func (p *Parser) parseEnumDecl(pos StatementPosition, annos ast.AnnotationChain) (*ast.DeclEnum, []ast.Decl) {
 	enumToken, _ := p.expect(token.ENUM)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -237,7 +183,7 @@ func (p *Parser) parseEnumDecl(annos ast.AnnotationChain) (*ast.DeclEnum, []ast.
 
 	var childDecls []ast.Decl
 	for !p.curIs(token.RBRACE) {
-		enumCase, children := p.parseEnumDeclCase()
+		enumCase, children := p.parseEnumDeclCase(pos)
 		childDecls = append(childDecls, children...)
 		enum.AddCase(enumCase)
 	}
@@ -252,7 +198,7 @@ func (p *Parser) parseEnumDecl(annos ast.AnnotationChain) (*ast.DeclEnum, []ast.
 //	<fully-qualified-identifier> // global reference
 //	<optional:annotations> <data_decl>
 //	<optional:annotations> <enum_decl>
-func (p *Parser) parseEnumDeclCase() (*ast.DeclEnumCase, []ast.Decl) {
+func (p *Parser) parseEnumDeclCase(pos StatementPosition) (*ast.DeclEnumCase, []ast.Decl) {
 	if p.curToken.Type == token.IDENT {
 		ref := p.parseStaticIdentifierReference()
 		return ast.MakeDeclEnumCase(ref.TokenLiteral(), ref), nil
@@ -260,13 +206,13 @@ func (p *Parser) parseEnumDeclCase() (*ast.DeclEnumCase, []ast.Decl) {
 	annotations := p.parseAnnotationChain()
 	switch p.curToken.Type {
 	case token.DATA:
-		dataDecl := p.parseDataDecl(annotations)
+		dataDecl := p.parseDataDecl(pos, annotations)
 		return ast.MakeDeclEnumCase(dataDecl.Token, ast.StaticReference{dataDecl.DeclName()}), []ast.Decl{dataDecl}
 	case token.ENUM:
-		enumDecl, childDecls := p.parseEnumDecl(annotations)
+		enumDecl, childDecls := p.parseEnumDecl(pos, annotations)
 		return ast.MakeDeclEnumCase(enumDecl.Token, ast.StaticReference{enumDecl.DeclName()}), append(childDecls, enumDecl)
 	default:
-		p.detectError(UnexpectedGot(p.curToken, token.DATA, token.ENUM))
+		p.errUnexpectedToken(token.DATA, token.ENUM)
 		return nil, nil
 	}
 }
@@ -308,7 +254,7 @@ func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 //	  <optional:annotations> <func_decl>
 //	  <optional:annotations> <var_decl>
 //	}
-func (p *Parser) parseDataDecl(annos ast.AnnotationChain) *ast.DeclData {
+func (p *Parser) parseDataDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclData {
 	declToken, _ := p.expect(token.DATA)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -342,7 +288,7 @@ func (p *Parser) parseDataDeclField() *ast.DeclField {
 	return ast.MakeDeclField(name, params, annotations)
 }
 
-func (p *Parser) parseAnnotationDecl(annos *ast.AnnotationChain) *ast.DeclAnnotation {
+func (p *Parser) parseAnnotationDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclAnnotation {
 	declToken, _ := p.expect(token.ANNOTATION)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -361,7 +307,10 @@ func (p *Parser) parseAnnotationDecl(annos *ast.AnnotationChain) *ast.DeclAnnota
 	return declAnno
 }
 
-func (p *Parser) parseModuleDecl(annos ast.AnnotationChain) *ast.DeclModule {
+func (p *Parser) parseModuleDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclModule {
+	if pos != IN_INITIAL {
+		p.errStatementMisplaced(pos)
+	}
 	modToken, _ := p.expect(token.MODULE)
 	nameTok, _ := p.expect(token.IDENT)
 	name := ast.MakeIdentifier(nameTok)
@@ -380,7 +329,10 @@ func (p *Parser) parseModuleDecl(annos ast.AnnotationChain) *ast.DeclModule {
 //	extern <identifier> { // type
 //	  // see data declarations
 //	}
-func (p *Parser) parseExternDecl(annos ast.AnnotationChain) ast.StatementDeclaration {
+func (p *Parser) parseExternDecl(pos StatementPosition, annos ast.AnnotationChain) ast.StatementDeclaration {
+	if pos != IN_INITIAL && pos != IN_GLOBAL {
+		p.errStatementMisplaced(pos)
+	}
 	externTok, _ := p.expect(token.EXTERN)
 	nameTok, _ := p.expect(token.IDENT)
 	nameIdent := ast.MakeIdentifier(nameTok)
@@ -408,7 +360,7 @@ func (p *Parser) parseExternDecl(annos ast.AnnotationChain) ast.StatementDeclara
 	return extern
 }
 
-func (p *Parser) parseFunctionDecl(annos ast.AnnotationChain) *ast.DeclFunc {
+func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclFunc {
 	funcTok, _ := p.expect(token.FUNCTION)
 	nameTok, _ := p.expect(token.IDENT)
 
@@ -430,7 +382,13 @@ func (p *Parser) parseFunctionDecl(annos ast.AnnotationChain) *ast.DeclFunc {
 	return decl
 }
 
-func (p *Parser) parseImportDecl() *ast.DeclImport {
+func (p *Parser) parseImportDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclImport {
+	if pos != IN_INITIAL && pos != IN_GLOBAL {
+		p.errStatementMisplaced(pos)
+	}
+	if annos != nil {
+		p.errCannotBeAnnotated()
+	}
 	importTok, _ := p.expect(token.IMPORT)
 
 	var importDecl *ast.DeclImport
@@ -461,7 +419,7 @@ func (p *Parser) parseImportDecl() *ast.DeclImport {
 	return importDecl
 }
 
-func (p *Parser) parseVariableDecl(annos ast.AnnotationChain) *ast.DeclVariable {
+func (p *Parser) parseVariableDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclVariable {
 	letTok, _ := p.expect(token.LET)
 	nameTok, _ := p.expect(token.IDENT)
 	name := ast.MakeIdentifier(nameTok)

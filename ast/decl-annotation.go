@@ -14,7 +14,7 @@ type DeclAnnotation struct {
 	Token       token.Token
 	Name        Identifier
 	Fields      []DeclField
-	Annotations *AnnotationChain
+	Annotations AnnotationChain
 
 	Docs *Docs
 }

@@ -92,23 +92,7 @@ func greet(@String name) {}
 //                       ^ ast.ExprFunc
 `
 
-	lex := lexer.New("testmodule", "testfile.lithia", contents)
-	p := parser.New(lex)
-	sourceFile := p.ParseSourceFile("testfile.lithia", "testmodule", contents)
-	if len(p.Errors()) > 0 {
-		for _, err := range p.Errors() {
-			src := err.Source()
-			contentsBeforeOffset := contents[:src.Offset]
-			loc := strings.Count(contentsBeforeOffset, "\n")
-			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
-			col := src.Offset - lastLineIndex
-			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
-
-			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Source().FileName, loc, col, err.Summary(), relevantLine, strings.Repeat(" ", col-1), err.Details())
-		}
-		t.FailNow()
-	}
-
+	sourceFile := prepareSourceFileParsing(t, contents)
 	h := syncheck.NewHarness(func(lineOffset int, line string, assert syncheck.Assertion) bool {
 		var relevantChildren []ast.Node
 		sourceFile.EnumerateChildNodes(func(child ast.Node) {
@@ -148,14 +132,14 @@ func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
 func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
 	if len(p.Errors()) > 0 {
 		for _, err := range p.Errors() {
-			src := err.Source()
+			src := err.Token.Source
 			contentsBeforeOffset := contents[:src.Offset]
 			loc := strings.Count(contentsBeforeOffset, "\n")
 			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
 			col := src.Offset - lastLineIndex
 			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
 
-			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Source().FileName, loc, col, err.Summary(), relevantLine, strings.Repeat(" ", col-1), err.Details())
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Token.Source.FileName, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
 		}
 		t.FailNow()
 	}

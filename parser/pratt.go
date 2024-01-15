@@ -123,7 +123,7 @@ func (p *Parser) parsePrattExprInt() ast.Expr {
 	tok, _ := p.expect(token.INT)
 	int, err := strconv.ParseInt(tok.Literal, 0, 64)
 	if err != nil {
-		p.detectError(UnderlyingErr{tok, err})
+		p.errUnderlyingErrorf(err, "invalid int literal %q", tok.Literal)
 	}
 	return ast.MakeExprInt(int, tok)
 }
@@ -132,7 +132,7 @@ func (p *Parser) parsePrattExprFloat() ast.Expr {
 	tok, _ := p.expect(token.FLOAT)
 	float, err := strconv.ParseFloat(tok.Literal, 64)
 	if err != nil {
-		p.detectError(UnderlyingErr{tok, err})
+		p.errUnderlyingErrorf(err, "invalid float literal %q", tok.Literal)
 	}
 	return ast.MakeExprFloat(float, tok)
 }

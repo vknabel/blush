@@ -1,65 +1,109 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/vknabel/lithia/token"
 )
 
-type ParseError interface {
-	error
-	Source() *token.Source
-	Summary() string
-	Details() string
+type ParseError struct {
+	Token   token.Token
+	Summary string
+	Details string
 }
 
-type UnexpectedTokenErr struct {
-	Got      token.Token
-	Expected []token.TokenType
+// Error implements error.
+func (e ParseError) Error() string {
+	return fmt.Sprintf("syntax error: %s, %s", e.Summary, e.Details)
 }
 
-// Error implements ParseError.
-func (e UnexpectedTokenErr) Error() string {
-	return fmt.Sprintf("unexpected %s %q, expected %s", e.Got.Type, e.Got.Literal, e.Expected)
+func (p *Parser) errUnexpectedToken(want ...token.TokenType) {
+	var wanted bytes.Buffer
+	for i, t := range want {
+		wanted.WriteString(strings.ToLower(string(t)))
+		if i < len(want)-1 {
+			wanted.WriteString(", ")
+		}
+	}
+	p.detectError(ParseError{
+		Token:   p.curToken,
+		Summary: fmt.Sprintf("unexpected %q", p.curToken.Literal),
+		Details: fmt.Sprintf("want one of [%s]", wanted.String()),
+	})
 }
 
-func (e UnexpectedTokenErr) Summary() string {
-	return fmt.Sprintf("syntax error")
+func (p *Parser) errUnexpectedPeekToken(want ...token.TokenType) {
+	var wanted bytes.Buffer
+	for i, t := range want {
+		wanted.WriteString(strings.ToLower(string(t)))
+		if i < len(want)-1 {
+			wanted.WriteString(", ")
+		}
+	}
+	p.detectError(ParseError{
+		Token:   p.peekToken,
+		Summary: fmt.Sprintf("unexpected %s %q", p.peekToken.Type, p.peekToken.Literal),
+		Details: fmt.Sprintf("want one of [%s]", wanted.String()),
+	})
 }
 
-func (e UnexpectedTokenErr) Details() string {
-	return fmt.Sprintf("unexpected %s %q, expected %s", e.Got.Type, e.Got.Literal, e.Expected)
+func (p *Parser) errUnderlyingErrorf(err error, format string, a ...any) {
+	p.detectError(ParseError{
+		Token:   p.curToken,
+		Summary: fmt.Sprintf(format, a...),
+		Details: err.Error(),
+	})
 }
 
-func (e UnexpectedTokenErr) Source() *token.Source {
-	return e.Got.Source
-}
+func (p *Parser) errStatementMisplaced(pos StatementPosition) {
+	summary := fmt.Sprintf("statement %s misplaced", strings.ToLower(string(p.curToken.Type)))
+	switch p.curToken.Type {
+	case token.RETURN:
+		summary = "return must be inside function"
+	case token.IMPORT:
+		summary = "imports must be global"
+	case token.EXTERN:
+		summary = "extern must be global"
+	case token.MODULE:
+		summary = "module may only appear first"
+	}
 
-func UnexpectedGot(got token.Token, expected ...token.TokenType) UnexpectedTokenErr {
-	return UnexpectedTokenErr{got, expected}
+	details := "here"
+	switch pos {
+	case IN_INITIAL:
+		details = "not allowed as first global statement"
+	case IN_GLOBAL:
+		if p.curToken.Type == token.MODULE {
+			details = "another statement precedes it"
+		} else {
+			details = "not allowed as global statement"
+		}
+	case IN_ENUM:
+		details = "not allowed inside enum"
+	case IN_DATA:
+		details = "not allowed as part of data"
+	case IN_EXTERN:
+		details = "not allowed as part of extern"
+	case IN_FUNC:
+		details = "not allowed inside function"
+	case IN_FOR:
+		details = "not allowed in for loop"
+	case IN_IF:
+		details = "not allowed in if statement"
+	case IN_SWITCH:
+		details = "not allowed in switch statement"
+	}
+	p.detectError(ParseError{
+		Token:   p.curToken,
+		Summary: summary,
+		Details: details,
+	})
 }
-
-type UnderlyingErr struct {
-	Token token.Token
-	Err   error
-}
-
-// Details implements ParseError.
-func (e UnderlyingErr) Details() string {
-	return e.Err.Error()
-}
-
-// Error implements ParseError.
-func (e UnderlyingErr) Error() string {
-	return fmt.Sprintf("parsing error %s", e.Err)
-}
-
-// Source implements ParseError.
-func (e UnderlyingErr) Source() *token.Source {
-	return e.Token.Source
-}
-
-// Summary implements ParseError.
-func (UnderlyingErr) Summary() string {
-	return "parsing error"
+func (p *Parser) errCannotBeAnnotated() {
+	p.detectError(ParseError{
+		Token:   p.curToken,
+		Summary: fmt.Sprintf("%s cannot be annotated", strings.ToLower(string(p.curToken.Type))),
+	})
 }
