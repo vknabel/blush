@@ -226,14 +226,7 @@ func (p *Parser) parsePrattExprIfElse() ast.Expr {
 }
 
 func (p *Parser) parsePrattExprFunc() ast.Expr {
-	tok := p.nextToken()
-	params := p.parseDeclParameterList()
-	p.expect(token.ARROW)
-	impl := p.parseStmtBlock()
-	if !p.curIs(token.RBRACE) {
-		p.expect(token.RBRACE)
-	}
-	return ast.MakeExprFunc(tok, "TODO", params, impl)
+	return p.parseExprFunction()
 }
 
 func (p *Parser) parsePrattExprCall(fn ast.Expr) ast.Expr {

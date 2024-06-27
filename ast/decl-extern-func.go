@@ -49,12 +49,15 @@ func (e DeclExternFunc) DeclOverview() string {
 	return fmt.Sprintf("extern %s { %s => }", e.Name, strings.Join(paramNames, ", "))
 }
 
-func MakeDeclExternFunc(tok token.Token, name Identifier, params []DeclParameter) *DeclExternFunc {
+func MakeDeclExternFunc(tok token.Token, name Identifier) *DeclExternFunc {
 	return &DeclExternFunc{
-		Token:      tok,
-		Name:       name,
-		Parameters: params,
+		Token: tok,
+		Name:  name,
 	}
+}
+
+func (ef *DeclExternFunc) SetParams(params []DeclParameter) {
+	ef.Parameters = params
 }
 
 func (decl DeclExternFunc) ProvidedDocs() *Docs {

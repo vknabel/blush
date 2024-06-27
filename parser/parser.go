@@ -15,6 +15,8 @@ type Parser struct {
 	curToken  token.Token
 	peekToken token.Token
 
+	curSymbolTable *ast.SymbolTable
+
 	prefixParsers map[token.TokenType]prefixParser
 	infixParsers  map[token.TokenType]infixParser
 }
@@ -61,8 +63,55 @@ func (p *Parser) Errors() []ParseError {
 	return p.errors
 }
 
-func (p *Parser) ParseSourceFile(filePath, moduleName string, input string) *ast.SourceFile {
-	srcFile := ast.MakeSourceFile(filePath)
+func (p *Parser) SymbolErrors() []ParseError {
+	return symerrs(symroot(p.curSymbolTable))
+}
+
+func symroot(st *ast.SymbolTable) *ast.SymbolTable {
+	if st.Parent == nil {
+		return st
+	}
+	return symroot(st.Parent)
+}
+
+func symerrs(st *ast.SymbolTable) []ParseError {
+	var errs []ParseError
+	for _, s := range st.Symbols {
+		var tok token.Token
+		if s.Decl != nil {
+			tok = s.Decl.TokenLiteral()
+		} else {
+			tok = st.OpenedBy.TokenLiteral()
+		}
+		for _, err := range s.Errs {
+			errs = append(errs, ParseError{
+				Token:   tok,
+				Summary: "declaration error",
+				Details: err.Error(),
+			})
+		}
+
+		for _, usage := range s.Usages {
+			for _, err := range usage.Errs {
+				errs = append(errs, ParseError{
+					Token:   usage.Node.TokenLiteral(),
+					Summary: "usage error",
+					Details: err.Error(),
+					// TODO: declared here...
+				})
+			}
+		}
+
+		if s.ChildTable != nil {
+			errs = append(errs, symerrs(s.ChildTable)...)
+		}
+	}
+	return errs
+}
+
+func (p *Parser) ParseSourceFile(filePath, moduleName string, parent *ast.SymbolTable, input string) *ast.SourceFile {
+	srcFile := ast.MakeSourceFile(parent, filePath, p.curToken)
+	p.curSymbolTable = srcFile.Symbols
 
 	inPosition := IN_INITIAL
 	for p.curToken.Type != token.EOF {
@@ -71,12 +120,13 @@ func (p *Parser) ParseSourceFile(filePath, moduleName string, input string) *ast
 		if stmt != nil {
 			srcFile.Add(stmt)
 			for _, d := range childDecls {
-				srcFile.AddDecl(d)
+				srcFile.Add(d)
 			}
 		} else {
 			p.nextToken()
 		}
 	}
+
 	return srcFile
 }
 
@@ -153,7 +203,13 @@ func (p *Parser) detectError(err ParseError) {
 	p.errors = append(p.errors, err)
 }
 
-func (p *Parser) parseAnnotatedStatementDeclaration(pos StatementPosition) (ast.Statement, []ast.Decl) {
+func (p *Parser) popSymbolTable() *ast.SymbolTable {
+	old := p.curSymbolTable
+	p.curSymbolTable = old.Parent
+	return old
+}
+
+func (p *Parser) parseAnnotatedStatementDeclaration(pos StatementPosition) (ast.Statement, []ast.StatementDeclaration) {
 	annos := p.parseAnnotationChain()
 	return p.parseStatementInContext(pos, annos)
 }
@@ -168,7 +224,7 @@ func (p *Parser) parseAnnotatedStatementDeclaration(pos StatementPosition) (ast.
 //		  <optional:annotations> <data_decl>
 //		  <optional:annotations> <enum_decl>
 //	 	}
-func (p *Parser) parseEnumDecl(pos StatementPosition, annos ast.AnnotationChain) (*ast.DeclEnum, []ast.Decl) {
+func (p *Parser) parseEnumDecl(pos StatementPosition, annos ast.AnnotationChain) (*ast.DeclEnum, []ast.StatementDeclaration) {
 	enumToken, _ := p.expect(token.ENUM)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -181,7 +237,7 @@ func (p *Parser) parseEnumDecl(pos StatementPosition, annos ast.AnnotationChain)
 
 	p.expect(token.LBRACE)
 
-	var childDecls []ast.Decl
+	var childDecls []ast.StatementDeclaration
 	for !p.curIs(token.RBRACE) {
 		enumCase, children := p.parseEnumDeclCase(pos)
 		childDecls = append(childDecls, children...)
@@ -198,7 +254,7 @@ func (p *Parser) parseEnumDecl(pos StatementPosition, annos ast.AnnotationChain)
 //	<fully-qualified-identifier> // global reference
 //	<optional:annotations> <data_decl>
 //	<optional:annotations> <enum_decl>
-func (p *Parser) parseEnumDeclCase(pos StatementPosition) (*ast.DeclEnumCase, []ast.Decl) {
+func (p *Parser) parseEnumDeclCase(pos StatementPosition) (*ast.DeclEnumCase, []ast.StatementDeclaration) {
 	if p.curToken.Type == token.IDENT {
 		ref := p.parseStaticIdentifierReference()
 		return ast.MakeDeclEnumCase(ref.TokenLiteral(), ref), nil
@@ -207,7 +263,7 @@ func (p *Parser) parseEnumDeclCase(pos StatementPosition) (*ast.DeclEnumCase, []
 	switch p.curToken.Type {
 	case token.DATA:
 		dataDecl := p.parseDataDecl(pos, annotations)
-		return ast.MakeDeclEnumCase(dataDecl.Token, ast.StaticReference{dataDecl.DeclName()}), []ast.Decl{dataDecl}
+		return ast.MakeDeclEnumCase(dataDecl.Token, ast.StaticReference{dataDecl.DeclName()}), []ast.StatementDeclaration{dataDecl}
 	case token.ENUM:
 		enumDecl, childDecls := p.parseEnumDecl(pos, annotations)
 		return ast.MakeDeclEnumCase(enumDecl.Token, ast.StaticReference{enumDecl.DeclName()}), append(childDecls, enumDecl)
@@ -260,6 +316,11 @@ func (p *Parser) parseDataDecl(pos StatementPosition, annos ast.AnnotationChain)
 	ident := ast.MakeIdentifier(identToken)
 	data := ast.MakeDeclData(declToken, ident)
 	data.Annotations = annos
+
+	p.curSymbolTable.Insert(data)
+
+	p.curSymbolTable = ast.MakeSymbolTable(p.curSymbolTable, data)
+	defer func() { p.popSymbolTable() }()
 
 	if !p.curIs(token.LBRACE) {
 		return data
@@ -341,22 +402,33 @@ func (p *Parser) parseExternDecl(pos StatementPosition, annos ast.AnnotationChai
 		// TODO: parse properties
 		p.expect(token.LBRACE)
 		extern := ast.MakeDeclExternType(externTok, nameIdent)
+		p.curSymbolTable = ast.MakeSymbolTable(p.curSymbolTable, extern)
+
 		extern.Annotations = annos
 		fields := p.parsePropertyDeclarationList()
 		for _, f := range fields {
 			extern.AddField(f)
 		}
 		p.expect(token.RBRACE)
+
+		p.popSymbolTable()
+		p.curSymbolTable.Insert(extern)
 		return extern
 	}
-	var params []ast.DeclParameter
+	extern := ast.MakeDeclExternFunc(externTok, nameIdent)
+	extern.Annotations = annos
+	p.curSymbolTable = ast.MakeSymbolTable(p.curSymbolTable, extern)
+
 	if p.curIs(token.LPAREN) {
 		p.expect(token.LPAREN)
-		params = p.parseDeclParameterList()
+		params := p.parseDeclParameterList()
 		p.expect(token.RPAREN)
+
+		extern.SetParams(params)
 	}
-	extern := ast.MakeDeclExternFunc(externTok, nameIdent, params)
-	extern.Annotations = annos
+
+	p.popSymbolTable()
+	p.curSymbolTable.Insert(extern)
 	return extern
 }
 
@@ -365,20 +437,31 @@ func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationCh
 	nameTok, _ := p.expect(token.IDENT)
 
 	var impl *ast.ExprFunc
+
 	if p.curIs(token.LPAREN) {
+		impl, p.curSymbolTable = ast.MakeExprFunc(funcTok, nameTok.Literal, p.curSymbolTable)
+
 		p.expect(token.LPAREN)
 		params := p.parseDeclParameterList()
+		impl.SetParams(params)
 		p.expect(token.RPAREN)
-		implTok, _ := p.expect(token.LBRACE)
+
+		fexprTok, _ := p.expect(token.LBRACE)
 		block := p.parseStmtBlock()
 		p.expect(token.RBRACE)
-		impl = ast.MakeExprFunc(implTok, nameTok.Literal, params, block)
+
+		impl.SetImplBlock(block)
+		impl.Token = fexprTok
+
+		p.popSymbolTable()
+
 	} else {
 		impl = p.parseExprFunction()
 	}
 
 	decl := ast.MakeDeclFunc(funcTok, ast.MakeIdentifier(nameTok), impl)
 	decl.Annotations = annos
+	p.curSymbolTable.Insert(decl)
 	return decl
 }
 
@@ -457,6 +540,7 @@ func (p *Parser) parseAnnotationInstance() *ast.DeclAnnotationInstance {
 	ref := p.parseStaticIdentifierReference()
 
 	anno := ast.MakeAnnotationInstance(atTok, ref)
+	p.curSymbolTable.LookupRef(ref, ast.RequireAnnotation(anno))
 
 	if !p.curIs(token.LPAREN) {
 		return anno
@@ -481,7 +565,10 @@ func (p *Parser) parseDeclParameterList() []ast.DeclParameter {
 		}
 		identTok, _ := p.expect(token.IDENT)
 		ident := ast.MakeIdentifier(identTok)
-		params = append(params, *ast.MakeDeclParameter(ident, annos))
+		decl := ast.MakeDeclParameter(ident, annos)
+		p.curSymbolTable.Insert(decl)
+
+		params = append(params, *decl)
 
 		if !p.curIs(token.COMMA) {
 			return params
@@ -562,13 +649,18 @@ func (p *Parser) parseStmtBlock() ast.Block {
 
 func (p *Parser) parseExprFunction() *ast.ExprFunc {
 	tok, _ := p.expect(token.LBRACE)
+	var fun *ast.ExprFunc
+	fun, p.curSymbolTable = ast.MakeExprFunc(tok, p.curSymbolTable.NextAnonymousFunctionName(), p.curSymbolTable)
+
 	params := p.parseDeclParameterList()
+	fun.SetParams(params)
+
 	if len(params) == 0 {
 		p.skip(token.ARROW)
 	} else {
 		p.expect(token.ARROW)
 	}
-	impl := p.parseStmtBlock()
+	fun.SetImplBlock(p.parseStmtBlock())
 	p.expect(token.RBRACE)
-	return ast.MakeExprFunc(tok, "TODO", params, impl)
+	return fun
 }

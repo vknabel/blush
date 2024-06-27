@@ -5,3 +5,8 @@ type Decl interface {
 	DeclName() Identifier
 	IsExportedDecl() bool
 }
+
+type DeclWithSymbols interface {
+	Decl
+	Symbols() *SymbolTable
+}

@@ -1,0 +1,28 @@
+package runtime
+
+import "github.com/vknabel/lithia/ast"
+
+var _ RuntimeValue = &AnyType{}
+
+type AnyType struct {
+	symbol *ast.Symbol
+}
+
+func MakeAnyType(module *ast.SymbolTable, symbol *ast.Symbol) (*AnyType, error) {
+	return &AnyType{symbol}, nil
+}
+
+// Inspect implements RuntimeValue.
+func (*AnyType) Inspect() string {
+	return "extern Any"
+}
+
+// Lookup implements RuntimeValue.
+func (*AnyType) Lookup(name string) RuntimeValue {
+	return nil
+}
+
+// TypeConstantId implements RuntimeValue.
+func (at *AnyType) TypeConstantId() TypeId {
+	return TypeId(at.symbol.ConstantId)
+}

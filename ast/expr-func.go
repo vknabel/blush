@@ -14,15 +14,23 @@ type ExprFunc struct {
 	Name       string
 	Parameters []DeclParameter
 	Impl       Block
+	Symbols    *SymbolTable
 }
 
-func MakeExprFunc(token token.Token, name string, parameters []DeclParameter, impl Block) *ExprFunc {
-	return &ExprFunc{
-		Token:      token,
-		Name:       name,
-		Parameters: parameters,
-		Impl:       impl,
+func MakeExprFunc(token token.Token, name string, parent *SymbolTable) (*ExprFunc, *SymbolTable) {
+	f := &ExprFunc{
+		Token: token,
+		Name:  name,
 	}
+	f.Symbols = MakeSymbolTable(parent, f)
+	return f, f.Symbols
+}
+
+func (f *ExprFunc) SetParams(ps []DeclParameter) {
+	f.Parameters = ps
+}
+func (f *ExprFunc) SetImplBlock(impl Block) {
+	f.Impl = impl
 }
 
 // EnumerateChildNodes implements Expr.

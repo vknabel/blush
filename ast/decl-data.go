@@ -15,8 +15,14 @@ type DeclData struct {
 	Name        Identifier
 	Fields      []DeclField
 	Annotations AnnotationChain
+}
 
-	Docs *Docs
+func MakeDeclData(tok token.Token, name Identifier) *DeclData {
+	return &DeclData{
+		Token:  tok,
+		Name:   name,
+		Fields: []DeclField{},
+	}
 }
 
 // TokenLiteral implements Node
@@ -49,21 +55,8 @@ func (e DeclData) IsExportedDecl() bool {
 	return true
 }
 
-func MakeDeclData(tok token.Token, name Identifier) *DeclData {
-	return &DeclData{
-		Token:  tok,
-		Name:   name,
-		Fields: []DeclField{},
-		Docs:   MakeDocs([]string{}),
-	}
-}
-
 func (e *DeclData) AddField(field DeclField) {
 	e.Fields = append(e.Fields, field)
-}
-
-func (decl DeclData) ProvidedDocs() *Docs {
-	return decl.Docs
 }
 
 // EnumerateChildNodes implements Decl.

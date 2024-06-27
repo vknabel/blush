@@ -2,63 +2,62 @@ package ast
 
 import (
 	"fmt"
+
+	"github.com/vknabel/lithia/token"
 )
 
+var _ Node = &SourceFile{}
+
 type SourceFile struct {
-	Path         string
-	Imports      []ModuleName
-	Declarations []Decl
-	Statements   []Statement
+	Token      token.Token
+	Path       string
+	Statements []Statement
+	Symbols    *SymbolTable
 }
 
-func MakeSourceFile(path string) *SourceFile {
-	return &SourceFile{
-		Path:         path,
-		Imports:      make([]ModuleName, 0),
-		Declarations: make([]Decl, 0),
-		Statements:   make([]Statement, 0),
+func MakeSourceFile(parent *SymbolTable, path string, token token.Token) *SourceFile {
+	sf := &SourceFile{
+		Token:      token,
+		Path:       path,
+		Statements: make([]Statement, 0),
 	}
+	sf.Symbols = MakeSymbolTable(parent, sf)
+	sf.Symbols.delegatesExports = true
+	return sf
 }
 
 func (sf *SourceFile) Add(globalStmt Statement) {
-	switch node := globalStmt.(type) {
-	case Decl:
-		sf.Declarations = append(sf.Declarations, node)
-	case Statement:
-		sf.Statements = append(sf.Statements, node)
-
-	default:
-		panic(fmt.Sprintf("TODO: unknown global statement %T", node))
-	}
-}
-
-func (sf *SourceFile) AddDecl(decl Decl) {
-	if decl == nil {
+	if decl, ok := globalStmt.(Decl); ok {
+		if sym := sf.Symbols.resolve(decl.DeclName().Value); sym == nil {
+			sf.Symbols.Insert(decl)
+		}
 		return
 	}
-	if importDecl, ok := decl.(DeclImport); ok {
-		sf.Imports = append(sf.Imports, importDecl.ModuleName)
-	}
-	sf.Declarations = append(sf.Declarations, decl)
-}
-
-func (sf *SourceFile) ExportedDeclarations() []Decl {
-	decls := make([]Decl, 0)
-	for _, decl := range sf.Declarations {
-		if decl.IsExportedDecl() {
-			decls = append(decls, decl)
-		}
-	}
-	return decls
+	sf.Statements = append(sf.Statements, globalStmt)
 }
 
 func (sf SourceFile) EnumerateChildNodes(action func(child Node)) {
-	for _, node := range sf.Declarations {
-		action(node)
-		node.EnumerateChildNodes(action)
+	for _, sym := range sf.Symbols.Symbols {
+		action(sym.Decl)
+		sym.Decl.EnumerateChildNodes(action)
 	}
+	for _, sym := range sf.Symbols.Parent.Symbols {
+		if sym.Decl == nil {
+			fmt.Printf("SKIPPING UNDEFINED SYMBOL %+v", sym)
+			continue
+		}
+		fmt.Printf("SYMBOL: %+v\nDECL: %T\n\n", sym, sym.Decl)
+		action(sym.Decl)
+		sym.Decl.EnumerateChildNodes(action)
+	}
+
 	for _, node := range sf.Statements {
 		action(node)
 		node.EnumerateChildNodes(action)
 	}
+}
+
+// TokenLiteral implements Node.
+func (sf *SourceFile) TokenLiteral() token.Token {
+	return sf.Token
 }

@@ -14,9 +14,12 @@ import (
 func TestParseSourceFile(t *testing.T) {
 	contents := `
 module testingmodule
+// <- ast.DeclModule
 
 import json
+// <- ast.DeclImport
 import big
+// <- ast.DeclImport
 
 @json.Type(json.Null)
 // <- ast.DeclAnnotationInstance
@@ -43,10 +46,10 @@ extern b // this is an extern constant
 extern doSomething()
 // <- ast.DeclExternFunc
 	
-extern doSomething(argument)
+extern doSomethingWith(argument)
 // <- ast.DeclExternFunc
 //     ^ ast.Identifier
-//                 ^ ast.DeclParameter
+//                     ^ ast.DeclParameter
 
 extern SomeType {
 // <- ast.DeclExternType
@@ -122,14 +125,23 @@ func greet(@String name) {}
 }
 
 func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
+	t.Helper()
+
 	l := lexer.New("testing", "test.lithia", input)
 	p := parser.New(l)
-	srcFile := p.ParseSourceFile("test.lithia", "testing", input)
+
+	parentTable := ast.MakeSymbolTable(nil, ast.Identifier{
+		Value: "test",
+	})
+	srcFile := p.ParseSourceFile("test.lithia", "testing", parentTable, input)
 	checkParserErrors(t, p, input)
+	checkSymbolErrors(t, p, input)
 	return srcFile
 }
 
 func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
+	t.Helper()
+
 	if len(p.Errors()) > 0 {
 		for _, err := range p.Errors() {
 			src := err.Token.Source
@@ -139,7 +151,26 @@ func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
 			col := src.Offset - lastLineIndex
 			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
 
-			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Token.Source.FileName, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s\n\n", err.Token.Source.FileName, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
+		}
+		t.FailNow()
+	}
+}
+
+func checkSymbolErrors(t *testing.T, p *parser.Parser, contents string) {
+	t.Helper()
+
+	symerrs := p.SymbolErrors()
+	if len(symerrs) > 0 {
+		for _, err := range symerrs {
+			src := err.Token.Source
+			contentsBeforeOffset := contents[:src.Offset]
+			loc := strings.Count(contentsBeforeOffset, "\n")
+			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
+			col := src.Offset - lastLineIndex
+			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
+
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s\n\n", err.Token.Source.FileName, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
 		}
 		t.FailNow()
 	}
