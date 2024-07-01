@@ -12,7 +12,7 @@ func TestMake(t *testing.T) {
 		operands []int
 		want     []byte
 	}{
-		{CONST, []int{65534}, []byte{byte(CONST), 255, 254}},
+		{Const, []int{65534}, []byte{byte(Const), 255, 254}},
 	}
 	for _, tt := range tests {
 		instruction := Make(tt.op, tt.operands...)

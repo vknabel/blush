@@ -8,8 +8,8 @@ type AnyType struct {
 	symbol *ast.Symbol
 }
 
-func MakeAnyType(module *ast.SymbolTable, symbol *ast.Symbol) (*AnyType, error) {
-	return &AnyType{symbol}, nil
+func MakeAnyType(symbol *ast.Symbol) *AnyType {
+	return &AnyType{symbol}
 }
 
 // Inspect implements RuntimeValue.
