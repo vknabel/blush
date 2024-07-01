@@ -1,0 +1,144 @@
+package vm_test
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/vknabel/lithia/ast"
+	"github.com/vknabel/lithia/compiler"
+	"github.com/vknabel/lithia/lexer"
+	"github.com/vknabel/lithia/parser"
+	"github.com/vknabel/lithia/runtime"
+	"github.com/vknabel/lithia/vm"
+)
+
+type vmTestCase struct {
+	input    string
+	expected any
+}
+
+func TestBasicOperations(t *testing.T) {
+	tests := []vmTestCase{
+		{input: "1", expected: 1},
+		{input: "1+2", expected: 3},
+		{input: "(if 1 { 2 } else { 3 })", expected: 2},
+		{input: "(if 1 { 2*3 } else { 3 })", expected: 6},
+	}
+
+	runVmTests(t, tests)
+}
+func runVmTests(t *testing.T, tests []vmTestCase) {
+	t.Helper()
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d.", i), func(t *testing.T) {
+			program := prepareSourceFileParsing(t, tt.input)
+
+			comp := compiler.New()
+			err := comp.Compile(program)
+			if err != nil {
+				t.Fatalf("compiler error: %s", err)
+			}
+
+			vm := vm.New(comp.Bytecode())
+			err = vm.Run()
+			if err != nil {
+				t.Fatalf("vm error: %s", err)
+			}
+
+			stackElem := vm.LastPoppedStackElem()
+
+			testExpectedValue(t, tt.expected, stackElem)
+		})
+	}
+
+}
+func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
+	l := lexer.New("testing", "test.lithia", input)
+	p := parser.New(l)
+	srcFile := p.ParseSourceFile("test.lithia", "testing", nil, input)
+	checkParserErrors(t, p, input)
+	return srcFile
+}
+
+func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
+	if len(p.Errors()) > 0 {
+		for _, err := range p.Errors() {
+			src := err.Token.Source
+			contentsBeforeOffset := contents[:src.Offset]
+			loc := strings.Count(contentsBeforeOffset, "\n")
+			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
+			col := src.Offset - lastLineIndex
+			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
+
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Token.Source.FileName, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
+		}
+		t.FailNow()
+	}
+}
+
+func testExpectedValue(t *testing.T, expected interface{}, actual runtime.RuntimeValue) {
+	t.Helper()
+
+	switch expected := expected.(type) {
+	case int:
+		err := testInt(int64(expected), actual)
+		if err != nil {
+			t.Errorf("testInt failed: %s", err)
+		}
+	case bool:
+		err := testBool(bool(expected), actual)
+		if err != nil {
+			t.Errorf("testBool failed: %s", err)
+		}
+	case string:
+		err := testString(expected, actual)
+		if err != nil {
+			t.Errorf("testStringObject failed: %s", err)
+		}
+	default:
+		t.Errorf("unhandled type %T", expected)
+	}
+}
+
+func testInt(expected int64, actual runtime.RuntimeValue) error {
+	result, ok := actual.(runtime.Int)
+	if !ok {
+		return fmt.Errorf("object is not Integer. got=%T (%+v)", actual, actual)
+	}
+
+	if int64(result) != expected {
+		return fmt.Errorf("object has wrong value. got=%d, want=%d",
+			result, expected)
+	}
+
+	return nil
+}
+
+func testBool(expected bool, actual runtime.RuntimeValue) error {
+	result, ok := actual.(runtime.Bool)
+	if !ok {
+		return fmt.Errorf("object is not Bool. got=%T (%+v)", actual, actual)
+	}
+
+	if bool(result) != expected {
+		return fmt.Errorf("object has wrong value. got=%t, want=%t",
+			result, expected)
+	}
+
+	return nil
+}
+
+func testString(expected string, actual runtime.RuntimeValue) error {
+	result, ok := actual.(runtime.String)
+	if !ok {
+		return fmt.Errorf("object is not String. got=%T (%+v)", actual, actual)
+	}
+
+	if string(result) != expected {
+		return fmt.Errorf("object has wrong value. got=%q, want=%q", result, expected)
+	}
+
+	return nil
+}
