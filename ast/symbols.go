@@ -11,10 +11,14 @@ var (
 
 type Symbol struct {
 	Name       string
-	Decl       Decl
 	Usages     []SymbolUsage
 	ChildTable *SymbolTable
 	Errs       []error
+
+	// Filled on declaration
+
+	Decl  Decl
+	Index int
 
 	// Filled by later phases
 
@@ -40,6 +44,7 @@ type SymbolTable struct {
 	OpenedBy Node
 	Symbols  map[string]*Symbol
 
+	symbolCounter    int
 	functionCounter  int
 	delegatesExports bool
 }
@@ -88,10 +93,12 @@ func (st *SymbolTable) Insert(decl Decl) *Symbol {
 		return sym
 	}
 	sym := &Symbol{
-		Name: decl.DeclName().Value,
-		Decl: decl,
+		Name:  decl.DeclName().Value,
+		Decl:  decl,
+		Index: st.symbolCounter,
 	}
 	st.Symbols[name] = sym
+	st.symbolCounter++
 	return sym
 }
 
