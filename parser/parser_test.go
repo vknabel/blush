@@ -93,6 +93,23 @@ func greet(@String name) {}
 //         ^ ast.DeclAnnotationInstance
 //                 ^ ast.DeclParameter
 //                       ^ ast.ExprFunc
+
+func example() {
+    let x = 4
+//  ^ ast.DeclVariable
+//      ^ ast.Identifier
+//          ^ ast.ExprInt
+    if True {
+//  ^ ast.StmtIf
+//     ^ ast.ExprIdentifier
+        return 3
+//      ^ ast.StmtReturn
+//             ^ ast.ExprInt
+    }
+    return 4
+//  ^ ast.StmtReturn
+}
+
 `
 
 	sourceFile := prepareSourceFileParsing(t, contents)

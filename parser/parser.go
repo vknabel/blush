@@ -447,7 +447,7 @@ func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationCh
 		p.expect(token.RPAREN)
 
 		fexprTok, _ := p.expect(token.LBRACE)
-		block := p.parseStmtBlock()
+		block := p.parseStmtBlock(IN_FUNC)
 		p.expect(token.RBRACE)
 
 		impl.SetImplBlock(block)
@@ -577,7 +577,10 @@ func (p *Parser) parseDeclParameterList() []ast.DeclParameter {
 	}
 }
 
-func (p *Parser) parseStatementReturn() ast.StmtReturn {
+func (p *Parser) parseStatementReturn(pos StatementPosition) ast.StmtReturn {
+	if pos != IN_FUNC {
+		p.errStatementMisplaced(pos)
+	}
 	retTok, _ := p.expect(token.RETURN)
 	for _, dec := range p.curToken.Leading {
 		if dec.Type != token.DECO_INLINE {
@@ -588,24 +591,24 @@ func (p *Parser) parseStatementReturn() ast.StmtReturn {
 	return ast.MakeStmtReturn(retTok, expr)
 }
 
-func (p *Parser) parseStatementIf() ast.StmtIf {
+func (p *Parser) parseStatementIf(pos StatementPosition) ast.StmtIf {
 	ifTok, _ := p.expect(token.IF)
 	cond := p.parseExpr()
 	p.expect(token.LBRACE)
-	ifBlock := p.parseStmtBlock()
+	ifBlock := p.parseStmtBlock(pos)
 	p.expect(token.RBRACE)
 
 	ifStmt := ast.MakeStmtIf(ifTok, cond, ifBlock)
 
 	for p.curIs(token.ELSE) {
 		if p.peekIs(token.IF) {
-			elseIf := p.parseStatementElseIf()
+			elseIf := p.parseStatementElseIf(pos)
 			ifStmt.AddElseIf(elseIf)
 			continue
 		}
 		p.expect(token.ELSE)
 		p.expect(token.LBRACE)
-		elseBlock := p.parseStmtBlock()
+		elseBlock := p.parseStmtBlock(pos)
 		p.expect(token.RBRACE)
 		ifStmt.SetElse(elseBlock)
 		break
@@ -613,12 +616,12 @@ func (p *Parser) parseStatementIf() ast.StmtIf {
 	return ifStmt
 }
 
-func (p *Parser) parseStatementElseIf() ast.StmtElseIf {
+func (p *Parser) parseStatementElseIf(pos StatementPosition) ast.StmtElseIf {
 	elseTok, _ := p.expect(token.ELSE)
 	p.expect(token.IF)
 	cond := p.parseExpr()
 	p.expect(token.LBRACE)
-	block := p.parseStmtBlock()
+	block := p.parseStmtBlock(pos)
 	p.expect(token.RBRACE)
 
 	return ast.MakeStmtIfElse(elseTok, cond, block)
@@ -641,9 +644,16 @@ func (p *Parser) parseExpr() ast.Expr {
 	return expr
 }
 
-func (p *Parser) parseStmtBlock() ast.Block {
+func (p *Parser) parseStmtBlock(pos StatementPosition) ast.Block {
 	block := make([]ast.Statement, 0)
-	// TODO: parse statements and local decls
+
+	for !p.curIs(token.RBRACE, token.RBRACKET, token.RPAREN) {
+		stmt, decls := p.parseAnnotatedStatementDeclaration(IN_FUNC)
+		if len(decls) > 0 {
+			p.errStatementMisplaced(IN_FUNC)
+		}
+		block = append(block, stmt)
+	}
 	return block
 }
 
@@ -660,7 +670,7 @@ func (p *Parser) parseExprFunction() *ast.ExprFunc {
 	} else {
 		p.expect(token.ARROW)
 	}
-	fun.SetImplBlock(p.parseStmtBlock())
+	fun.SetImplBlock(p.parseStmtBlock(IN_FUNC))
 	p.expect(token.RBRACE)
 	return fun
 }

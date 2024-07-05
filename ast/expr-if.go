@@ -57,7 +57,7 @@ func (s ExprIf) TokenLiteral() token.Token {
 func (e ExprIf) Expression() string {
 	var out bytes.Buffer
 
-	out.WriteString("if ")
+	out.WriteString("(if ")
 	out.WriteString(e.Condition.Expression())
 	out.WriteString(" { ")
 	out.WriteString(e.ThenExpr.Expression())
@@ -71,7 +71,7 @@ func (e ExprIf) Expression() string {
 
 	out.WriteString(" } else { ")
 	out.WriteString(e.ElseExpr.Expression())
-	out.WriteString(" }")
+	out.WriteString(" })")
 
 	return out.String()
 }

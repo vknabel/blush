@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	tempJumpAddress = math.MinInt
+	// A temporary address that acts placeholder.
+	// Should be replaced by the actual address once known.
+	placeholderJumpAddress = math.MinInt
 )
 
 func (c *Compiler) changeOperand(pos int, operand int) {
@@ -43,6 +45,53 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(op.Pop)
 		return nil
 
+	case ast.StmtIf:
+		var (
+			jumpNext int
+			jumpEnds []int = make([]int, 0, 1+len(node.ElseIf))
+			endPos   int
+		)
+		err := c.Compile(node.Condition)
+		if err != nil {
+			return err
+		}
+		jumpNext = c.emit(op.JumpFalse, placeholderJumpAddress)
+
+		err = c.compileBlock(node.IfBlock)
+		if err != nil {
+			return err
+		}
+
+		jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
+
+		for _, elseIf := range node.ElseIf {
+			c.changeOperand(jumpNext, len(c.instructions))
+
+			err = c.Compile(elseIf.Condition)
+			if err != nil {
+				return err
+			}
+			jumpNext = c.emit(op.JumpFalse, placeholderJumpAddress)
+
+			err = c.compileBlock(elseIf.Block)
+			if err != nil {
+				return err
+			}
+			jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
+		}
+		c.changeOperand(jumpNext, len(c.instructions))
+
+		err = c.compileBlock(node.ElseBlock)
+		if err != nil {
+			return err
+		}
+
+		endPos = len(c.instructions)
+		for _, pos := range jumpEnds {
+			c.changeOperand(pos, endPos)
+		}
+		return nil
+
 	case ast.ExprIf:
 		var (
 			jumpNext int
@@ -53,14 +102,14 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
-		jumpNext = c.emit(op.JumpFalse, tempJumpAddress)
+		jumpNext = c.emit(op.JumpFalse, placeholderJumpAddress)
 
 		err = c.Compile(node.ThenExpr)
 		if err != nil {
 			return err
 		}
 
-		jumpEnds = append(jumpEnds, c.emit(op.Jump, tempJumpAddress))
+		jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 
 		for _, elseIf := range node.ElseIf {
 			c.changeOperand(jumpNext, len(c.instructions))
@@ -69,13 +118,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 			if err != nil {
 				return err
 			}
-			jumpNext = c.emit(op.JumpFalse, tempJumpAddress)
+			jumpNext = c.emit(op.JumpFalse, placeholderJumpAddress)
 
 			err = c.Compile(elseIf.Then)
 			if err != nil {
 				return err
 			}
-			jumpEnds = append(jumpEnds, c.emit(op.Jump, tempJumpAddress))
+			jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 		}
 		c.changeOperand(jumpNext, len(c.instructions))
 
@@ -139,4 +188,14 @@ func (c *Compiler) Compile(node ast.Node) error {
 	default:
 		return fmt.Errorf("unknown ast node %T", node)
 	}
+}
+
+func (c *Compiler) compileBlock(block ast.Block) error {
+	for _, stmt := range block {
+		err := c.Compile(stmt)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

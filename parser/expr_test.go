@@ -20,9 +20,9 @@ func TestExprIdentifier(t *testing.T) {
 		{"!True", "(!True)"},
 		{"-3", "(-3)"},
 		{"(-3)", "(-3)"},
-		{"if x { y } else { z }", "if x { y } else { z }"},
-		{"if x { y } else if e { e1 } else { z }", "if x { y } else if e { e1 } else { z }"},
-		{"if x { y } else if e { e1 } else if f { f1 } else { z }", "if x { y } else if e { e1 } else if f { f1 } else { z }"},
+		{"(if x { y } else { z })", "(if x { y } else { z })"},
+		{"(if x { y } else if e { e1 } else { z })", "(if x { y } else if e { e1 } else { z })"},
+		{"(if x { y } else if e { e1 } else if f { f1 } else { z })", "(if x { y } else if e { e1 } else if f { f1 } else { z })"},
 		{"json.Null", "json.Null"},
 	}
 

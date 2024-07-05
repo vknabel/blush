@@ -1,8 +1,6 @@
 package ast
 
 import (
-	"fmt"
-
 	"github.com/vknabel/lithia/token"
 )
 
@@ -43,10 +41,8 @@ func (sf SourceFile) EnumerateChildNodes(action func(child Node)) {
 	}
 	for _, sym := range sf.Symbols.Parent.Symbols {
 		if sym.Decl == nil {
-			fmt.Printf("SKIPPING UNDEFINED SYMBOL %+v", sym)
 			continue
 		}
-		fmt.Printf("SYMBOL: %+v\nDECL: %T\n\n", sym, sym.Decl)
 		action(sym.Decl)
 		sym.Decl.EnumerateChildNodes(action)
 	}

@@ -19,7 +19,6 @@ const (
 	IN_EXTERN
 	IN_FUNC
 	IN_FOR
-	IN_IF
 	IN_SWITCH
 )
 
@@ -43,6 +42,10 @@ func (p *Parser) parseStatementInContext(pos StatementPosition, annos ast.Annota
 		return p.parseImportDecl(pos, annos), nil
 	case token.AT:
 		return p.parseAnnotatedStatementDeclaration(pos)
+	case token.IF:
+		return p.parseStatementIf(pos), nil
+	case token.RETURN:
+		return p.parseStatementReturn(pos), nil
 	default:
 		if _, ok := p.prefixParsers[p.curToken.Type]; ok {
 			if annos != nil {

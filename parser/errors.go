@@ -90,8 +90,6 @@ func (p *Parser) errStatementMisplaced(pos StatementPosition) {
 		details = "not allowed inside function"
 	case IN_FOR:
 		details = "not allowed in for loop"
-	case IN_IF:
-		details = "not allowed in if statement"
 	case IN_SWITCH:
 		details = "not allowed in switch statement"
 	}

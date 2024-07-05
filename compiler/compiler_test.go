@@ -40,6 +40,44 @@ func TestIntegerArithmetic(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestIfStmtsArithmetic(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             "if 1 { 2 } else { 3 }",
+			expectedConstants: []interface{}{1, 2, 3},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.JumpFalse, 13),
+				code.Make(code.Const, 1),
+				code.Make(code.Pop),
+				code.Make(code.Jump, 17),
+				code.Make(code.Const, 2),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "if 0 { 1 } else if 2 { 3 } else { 4 }",
+			expectedConstants: []interface{}{0, 1, 2, 3, 4},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.JumpFalse, 13),
+				code.Make(code.Const, 1),
+				code.Make(code.Pop),
+				code.Make(code.Jump, 30),
+				code.Make(code.Const, 2),
+				code.Make(code.JumpFalse, 26),
+				code.Make(code.Const, 3),
+				code.Make(code.Pop),
+				code.Make(code.Jump, 30),
+				code.Make(code.Const, 4),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func TestIfExpressionsArithmetic(t *testing.T) {
 	tests := []compilerTestCase{
 		{
