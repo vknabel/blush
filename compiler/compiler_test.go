@@ -56,6 +56,16 @@ func TestIfStmtsArithmetic(t *testing.T) {
 			},
 		},
 		{
+			input:             "if 1 { 2 }",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.JumpFalse, 10),
+				code.Make(code.Const, 1),
+				code.Make(code.Pop),
+			},
+		},
+		{
 			input:             "if 0 { 1 } else if 2 { 3 } else { 4 }",
 			expectedConstants: []interface{}{0, 1, 2, 3, 4},
 			expectedInstructions: []code.Instructions{
@@ -70,6 +80,21 @@ func TestIfStmtsArithmetic(t *testing.T) {
 				code.Make(code.Pop),
 				code.Make(code.Jump, 30),
 				code.Make(code.Const, 4),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "if 0 { 1 } else if 2 { 3 }",
+			expectedConstants: []interface{}{0, 1, 2, 3},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.JumpFalse, 13),
+				code.Make(code.Const, 1),
+				code.Make(code.Pop),
+				code.Make(code.Jump, 23),
+				code.Make(code.Const, 2),
+				code.Make(code.JumpFalse, 23),
+				code.Make(code.Const, 3),
 				code.Make(code.Pop),
 			},
 		},

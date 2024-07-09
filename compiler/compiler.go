@@ -79,11 +79,20 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 			jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 		}
-		c.changeOperand(jumpNext, len(c.instructions))
 
-		err = c.compileBlock(node.ElseBlock)
-		if err != nil {
-			return err
+		if node.ElseBlock != nil {
+			c.changeOperand(jumpNext, len(c.instructions))
+
+			err = c.compileBlock(node.ElseBlock)
+			if err != nil {
+				return err
+			}
+		} else {
+			lastIndex := len(jumpEnds) - 1
+			lastPos := jumpEnds[lastIndex]
+			c.instructions = c.instructions[:lastPos]
+
+			jumpEnds[lastIndex] = jumpNext
 		}
 
 		endPos = len(c.instructions)
