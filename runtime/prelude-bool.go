@@ -6,7 +6,11 @@ type Bool bool
 
 // Inspect implements RuntimeValue.
 func (b Bool) Inspect() string {
-	panic("unimplemented")
+	if b {
+		return "true"
+	} else {
+		return "false"
+	}
 }
 
 // Lookup implements RuntimeValue.

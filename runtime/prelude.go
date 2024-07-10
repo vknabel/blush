@@ -18,13 +18,12 @@ const (
 	typeIdInt
 	typeIdModule
 	typeIdString
+	typeIdVoid
 )
 
 var _ ExternPlugin = &Prelude{}
 
-type Prelude struct {
-	symbols map[string]*ast.Symbol
-}
+type Prelude struct{}
 
 // Bind implements runtime.ExternPlugin.
 func (*Prelude) Bind(module *ast.SymbolTable, decl *ast.Symbol) RuntimeValue {
@@ -37,7 +36,8 @@ func (*Prelude) Bind(module *ast.SymbolTable, decl *ast.Symbol) RuntimeValue {
 		"Func",
 		"Int",
 		"Module",
-		"String":
+		"String",
+		"Void":
 		return SimpleType{Decl: decl}
 	case "Any":
 		return MakeAnyType(decl)
@@ -52,3 +52,4 @@ func (p *Prelude) Dict(val map[RuntimeValue]RuntimeValue) Dict { return Dict(val
 func (p *Prelude) Float(val float64) Float                     { return Float(val) }
 func (p *Prelude) Int(val int64) Int                           { return Int(val) }
 func (p *Prelude) String(val string) String                    { return String(val) }
+func (p *Prelude) Void() Void                                  { return Void{} }
