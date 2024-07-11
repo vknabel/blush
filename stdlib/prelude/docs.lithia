@@ -1,0 +1,5 @@
+module prelude
+
+annotation Doc {
+  @String description
+}

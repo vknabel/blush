@@ -1,0 +1,94 @@
+module prelude
+
+annotation Countable {
+  @Returns(Int)
+  length(@Has(Countable) value)
+}
+
+annotation Iterable {
+  iterate(@Has(Iterable) value, @Func yield)
+}
+
+@Countable(v -> v.length)
+@Iterable(_arrayIterate)
+extern Array {
+  @Int length
+}
+
+@Countable(v -> v.length)
+@Iterable(_dictIterate)
+extern Dict {
+  @Int length
+  @Array keys
+}
+
+@Countable(_rangeCount)
+@Iterable(_rangeIterate)
+data Range {
+  @Int start
+  @Int end
+}
+
+@Countable(v -> v.length)
+@Iterable(_stringIterate)
+extern String {
+  @Int
+  length
+}
+
+func _arrayIterate(v, yield) {
+  let i = 0
+  let l = v.length
+  for {
+    if !yield(v[i]) {
+      return
+    }
+    i = i+1
+    if i == l {
+      return
+    }
+  }
+}
+
+func _dictIterate(v, yield) {
+  for k <- v.keys {
+    if !yield(v[k]) {
+      return
+    }
+  }
+}
+
+func _stringIterate(v, yield) {
+  let i = 0
+  let l = v.length
+  for {
+    if !yield(v[i]) {
+      return
+    }
+    i = i+1
+    if i == l {
+      return
+    }
+  }
+}
+
+func _rangeCount(v) {
+  if v.start >= v.end {
+    return 0
+  }
+  return v.end - v.start
+}
+
+func _rangeIterate(v) {
+  let i = v.start
+  let l = v.end
+  for {
+    if !yield(i) {
+      return
+    }
+    i = i+1
+    if i == l {
+      return
+    }
+  }
+}
