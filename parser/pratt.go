@@ -32,6 +32,8 @@ const (
 )
 
 var precedences = map[token.TokenType]Precedence{
+	token.OR:       LOGICAL_OR,
+	token.AND:      LOGICAL_AND,
 	token.EQ:       COMPARISON,
 	token.NEQ:      COMPARISON,
 	token.LTE:      COMPARISON,
@@ -41,6 +43,7 @@ var precedences = map[token.TokenType]Precedence{
 	token.PLUS:     SUM,
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
+	token.PERCENT:  PRODUCT,
 	token.ASTERISK: PRODUCT,
 	token.LPAREN:   CALL,
 	token.DOT:      MEMBER,
@@ -117,6 +120,16 @@ func (p *Parser) parsePrattExpr(precedence Precedence) ast.Expr {
 func (p *Parser) parsePrattExprIdentifier() ast.Expr {
 	tok, _ := p.expect(token.IDENT)
 	return ast.MakeExprIdentifier(ast.MakeIdentifier(tok))
+}
+
+func (p *Parser) parsePrattExprTrue() ast.Expr {
+	tok, _ := p.expect(token.TRUE)
+	return ast.MakeExprBool(true, tok)
+}
+
+func (p *Parser) parsePrattExprFalse() ast.Expr {
+	tok, _ := p.expect(token.FALSE)
+	return ast.MakeExprBool(false, tok)
 }
 
 func (p *Parser) parsePrattExprInt() ast.Expr {

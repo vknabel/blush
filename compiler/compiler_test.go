@@ -19,7 +19,40 @@ type compilerTestCase struct {
 	expectedInstructions []code.Instructions
 }
 
-func TestIntegerArithmetic(t *testing.T) {
+func TestUnaryOperators(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             "!true",
+			expectedConstants: nil,
+			expectedInstructions: []code.Instructions{
+				code.Make(code.ConstTrue),
+				code.Make(code.Invert),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "-3",
+			expectedConstants: []any{3},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Negate),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "+42",
+			expectedConstants: []any{42},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
+func TestBinaryOperators(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input:             "1 + 2",
@@ -35,12 +68,188 @@ func TestIntegerArithmetic(t *testing.T) {
 				code.Make(code.Pop),
 			},
 		},
+		{
+			input:             "1 - 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// -
+				code.Make(code.Sub),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 * 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// *
+				code.Make(code.Mul),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 / 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// /
+				code.Make(code.Div),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 == 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// ==
+				code.Make(code.Equal),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 != 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// !=
+				code.Make(code.NotEqual),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 > 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// >
+				code.Make(code.GreaterThan),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 < 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// <
+				code.Make(code.LessThan),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 >= 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// >=
+				code.Make(code.GreaterThanOrEqual),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 <= 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// <=
+				code.Make(code.LessThanOrEqual),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "1 % 2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []code.Instructions{
+				// 1
+				code.Make(code.Const, 0),
+				// 2
+				code.Make(code.Const, 1),
+				// %
+				code.Make(code.Mod),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "true && false",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []code.Instructions{
+				// left
+				code.Make(code.ConstTrue),
+				// when false do not exectue right
+				code.Make(code.JumpFalse, 8),
+				// right
+				code.Make(code.ConstFalse),
+				// result is right
+				code.Make(code.Jump, 9),
+				// put false back up
+				code.Make(code.ConstFalse),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "true || false",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []code.Instructions{
+				// left
+				code.Make(code.ConstTrue),
+				// when true do not exectue right
+				code.Make(code.JumpTrue, 8),
+				// right
+				code.Make(code.ConstFalse),
+				// result is right
+				code.Make(code.Jump, 9),
+				// put true back up
+				code.Make(code.ConstTrue),
+				// drop expr
+				code.Make(code.Pop),
+			},
+		},
 	}
 
 	runCompilerTests(t, tests)
 }
 
-func TestIfStmtsArithmetic(t *testing.T) {
+func TesEQtIfStmtsArithmetic(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input:             "if 1 { 2 } else { 3 }",
@@ -178,6 +387,11 @@ func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
 	if len(p.Errors()) > 0 {
 		for _, err := range p.Errors() {
 			src := err.Token.Source
+
+			if src == nil {
+				t.Errorf("<no source>: %q\n  %s", err.Token.Literal, err.Details)
+				continue
+			}
 			contentsBeforeOffset := contents[:src.Offset]
 			loc := strings.Count(contentsBeforeOffset, "\n")
 			lastLineIndex := strings.LastIndex(contentsBeforeOffset, "\n")
@@ -235,6 +449,11 @@ func testConstants(
 
 	for i, cons := range expected {
 		switch want := cons.(type) {
+		case bool:
+			got, ok := actual[i].(runtime.Bool)
+			if !ok || want != bool(got) {
+				return fmt.Errorf("wrong constant at %d.\nwant=%t\ngot=%q", i, want, got.Inspect())
+			}
 		case int:
 			got, ok := actual[i].(runtime.Int)
 			if !ok || want != int(got) {

@@ -28,11 +28,13 @@ func New(lex lexer.Lexer) *Parser {
 
 	p.prefixParsers = make(map[token.TokenType]prefixParser)
 	p.registerPrefix(token.IDENT, p.parsePrattExprIdentifier)
-	p.registerPrefix(token.MINUS, p.parsePrattExprPrefix)
+	p.registerPrefix(token.TRUE, p.parsePrattExprTrue)
+	p.registerPrefix(token.FALSE, p.parsePrattExprFalse)
 	p.registerPrefix(token.INT, p.parsePrattExprInt)
 	p.registerPrefix(token.FLOAT, p.parsePrattExprFloat)
 	p.registerPrefix(token.BANG, p.parsePrattExprPrefix)
 	p.registerPrefix(token.MINUS, p.parsePrattExprPrefix)
+	p.registerPrefix(token.PLUS, p.parsePrattExprPrefix)
 	p.registerPrefix(token.LPAREN, p.parsePrattExprGroup)
 	p.registerPrefix(token.IF, p.parsePrattExprIfElse) // only exactly one expr per if / else if / else, else mandatory, later we eventually want to allow assignments and local vars
 	p.registerPrefix(token.LBRACE, p.parsePrattExprFunc)
@@ -42,6 +44,8 @@ func New(lex lexer.Lexer) *Parser {
 	p.registerPrefix(token.STRING, p.parsePrattExprString)
 
 	p.infixParsers = make(map[token.TokenType]infixParser)
+	p.registerInfix(token.OR, p.parsePrattExprInfix)
+	p.registerInfix(token.AND, p.parsePrattExprInfix)
 	p.registerInfix(token.EQ, p.parsePrattExprInfix)
 	p.registerInfix(token.NEQ, p.parsePrattExprInfix)
 	p.registerInfix(token.LTE, p.parsePrattExprInfix)
@@ -52,6 +56,7 @@ func New(lex lexer.Lexer) *Parser {
 	p.registerInfix(token.MINUS, p.parsePrattExprInfix)
 	p.registerInfix(token.SLASH, p.parsePrattExprInfix)
 	p.registerInfix(token.ASTERISK, p.parsePrattExprInfix)
+	p.registerInfix(token.PERCENT, p.parsePrattExprInfix)
 	p.registerInfix(token.LPAREN, p.parsePrattExprCall)
 	p.registerInfix(token.DOT, p.parsePrattExprMember)
 	p.registerInfix(token.LBRACKET, p.parsePrattExprIndex)

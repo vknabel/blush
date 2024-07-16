@@ -29,6 +29,7 @@ const (
 	MINUS    TokenType = "-"
 	ASTERISK TokenType = "*"
 	SLASH    TokenType = "/"
+	PERCENT  TokenType = "%"
 
 	LT  TokenType = "<"
 	GT  TokenType = ">"
@@ -68,6 +69,8 @@ const (
 	ELSE       TokenType = "ELSE"
 	FOR        TokenType = "FOR"
 	BLANK      TokenType = "BLANK"
+	TRUE       TokenType = "TRUE"
+	FALSE      TokenType = "FALSE"
 )
 
 var keywords = map[string]TokenType{
@@ -84,6 +87,8 @@ var keywords = map[string]TokenType{
 	"if":         IF,
 	"else":       ELSE,
 	"for":        FOR,
+	"true":       TRUE,
+	"false":      FALSE,
 	"_":          BLANK,
 }
 

@@ -22,8 +22,16 @@ func TestBasicOperations(t *testing.T) {
 	tests := []vmTestCase{
 		{input: "1", expected: 1},
 		{input: "1+2", expected: 3},
-		{input: "(if 1 { 2 } else { 3 })", expected: 2},
-		{input: "(if 1 { 2*3 } else { 3 })", expected: 6},
+		{input: "true", expected: true},
+		{input: "false", expected: false},
+		{input: "!true", expected: false},
+		{input: "!false", expected: true},
+		{input: "(if true { 2 } else { 3 })", expected: 2},
+		{input: "(if 1 == 1 { 2*3 } else { 3 })", expected: 6},
+		{input: "(if 1 == 0 { 2*3 } else { 3 })", expected: 3},
+		{input: "(if 1 != 0 { 2*3 } else { 3 })", expected: 6},
+		{input: "(if true { 2*3 } else { 3 })", expected: 6},
+		{input: "(if true || false { 2*3 } else { 3 })", expected: 6},
 	}
 
 	runVmTests(t, tests)

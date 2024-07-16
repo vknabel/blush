@@ -18,10 +18,8 @@ extern Array {
   @Type(Int) length
 }
 
-@Type(Bool)
-extern True
-@Type(Bool)
-extern False
+let true = 0 == 0
+let false = 0 != 0
 
 // Represents boolean values like `True` and `False`.
 // Typically used for conditionals and flags.

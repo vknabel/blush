@@ -13,7 +13,8 @@ func TestLookupIdent(t *testing.T) {
 	}{
 		{"foo", token.IDENT},
 		{"bar", token.IDENT},
-		{"true", token.IDENT},
+		{"true", token.TRUE},
+		{"false", token.FALSE},
 		{"module", token.MODULE},
 		{"import", token.IMPORT},
 		{"data", token.DATA},

@@ -27,6 +27,16 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case op.ConstTrue:
+			err := vm.push(runtime.Bool(true))
+			if err != nil {
+				return err
+			}
+		case op.ConstFalse:
+			err := vm.push(runtime.Bool(false))
+			if err != nil {
+				return err
+			}
 
 		case op.Jump:
 			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
@@ -48,9 +58,55 @@ func (vm *VM) Run() error {
 				ip = pos - 1
 			}
 
-		case op.Add, op.Sub, op.Mul, op.Div:
-			vm.numericBinaryOperation(code)
-
+		case op.Invert:
+			v, ok := vm.pop().(runtime.Bool)
+			if !ok {
+				return fmt.Errorf("prefix operator ! is only defined on Bool (%T %q)", v, v.Inspect())
+			}
+			if err := vm.push(!v); err != nil {
+				return err
+			}
+		case op.Negate:
+			v := vm.pop()
+			switch v := v.(type) {
+			case runtime.Int:
+				if err := vm.push(-v); err != nil {
+					return err
+				}
+			case runtime.Float:
+				if err := vm.push(-v); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("prefix operator - is only defined on Int or Float (%T %q)", v, v.Inspect())
+			}
+		case op.Add, op.Sub, op.Mul, op.Div,
+			op.GreaterThan, op.GreaterThanOrEqual,
+			op.LessThan, op.LessThanOrEqual:
+			err := vm.numericBinaryOperation(code)
+			if err != nil {
+				return err
+			}
+		case op.Mod:
+			rhs, ok := vm.pop().(runtime.Int)
+			if !ok {
+				return fmt.Errorf("operator %% is only defined on Int (%T %q)", rhs, rhs.Inspect())
+			}
+			lhs, ok := vm.pop().(runtime.Int)
+			if !ok {
+				return fmt.Errorf("operator %% is only defined on Int (%T %q)", lhs, lhs.Inspect())
+			}
+			vm.push(lhs % rhs)
+		case op.Equal:
+			equal := vm.isEqual()
+			if err := vm.push(equal); err != nil {
+				return err
+			}
+		case op.NotEqual:
+			equal := vm.isEqual()
+			if err := vm.push(!equal); err != nil {
+				return err
+			}
 		default:
 			def, err := op.Lookup(byte(code))
 			if err != nil {
@@ -114,6 +170,16 @@ func (vm *VM) numericBinaryOperationInt(operator op.Opcode, lhs, rhs runtime.Int
 		vm.push(lhs * rhs)
 	case op.Div:
 		vm.push(lhs / rhs)
+	case op.Mod:
+		vm.push(lhs % rhs)
+	case op.LessThan:
+		vm.push(runtime.Bool(lhs < rhs))
+	case op.LessThanOrEqual:
+		vm.push(runtime.Bool(lhs <= rhs))
+	case op.GreaterThan:
+		vm.push(runtime.Bool(lhs > rhs))
+	case op.GreaterThanOrEqual:
+		vm.push(runtime.Bool(lhs >= rhs))
 	}
 }
 func (vm *VM) numericBinaryOperationFloat(operator op.Opcode, lhs, rhs runtime.Float) {
@@ -126,5 +192,57 @@ func (vm *VM) numericBinaryOperationFloat(operator op.Opcode, lhs, rhs runtime.F
 		vm.push(lhs * rhs)
 	case op.Div:
 		vm.push(lhs / rhs)
+	case op.LessThan:
+		vm.push(runtime.Bool(lhs < rhs))
+	case op.LessThanOrEqual:
+		vm.push(runtime.Bool(lhs <= rhs))
+	case op.GreaterThan:
+		vm.push(runtime.Bool(lhs > rhs))
+	case op.GreaterThanOrEqual:
+		vm.push(runtime.Bool(lhs >= rhs))
 	}
+}
+func (vm *VM) isEqual() runtime.Bool {
+	rhs := vm.pop()
+	lhs := vm.pop()
+
+	if lhs.TypeConstantId() != rhs.TypeConstantId() {
+		return false
+	}
+	switch lhs := lhs.(type) {
+	case runtime.Int:
+		rhs, ok := rhs.(runtime.Int)
+		if !ok {
+			return false
+		}
+		return lhs == rhs
+	case runtime.Float:
+		rhs, ok := rhs.(runtime.Float)
+		if !ok {
+			return false
+		}
+		return lhs == rhs
+	case runtime.Bool:
+		rhs, ok := rhs.(runtime.Bool)
+		if !ok {
+			return false
+		}
+		return lhs == rhs
+	case runtime.Char:
+		rhs, ok := rhs.(runtime.Char)
+		if !ok {
+			return false
+		}
+		return lhs == rhs
+	case runtime.String:
+		rhs, ok := rhs.(runtime.String)
+		if !ok {
+			return false
+		}
+		return lhs == rhs
+	case runtime.Void:
+		_, ok := rhs.(runtime.Void)
+		return runtime.Bool(ok)
+	}
+	panic(fmt.Sprintf("unknown type for equality check %T of %q", lhs, lhs.Inspect()))
 }

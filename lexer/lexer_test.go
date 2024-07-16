@@ -270,6 +270,17 @@ func TestAllTokens(t *testing.T) {
 			},
 		},
 		{
+			name:  "percent",
+			input: `%`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.PERCENT, "%"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			name:  "comma",
 			input: `,`,
 			expected: []struct {
