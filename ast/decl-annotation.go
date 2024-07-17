@@ -7,7 +7,7 @@ import (
 	"github.com/vknabel/lithia/token"
 )
 
-var _ Decl = &DeclData{}
+var _ Decl = &DeclAnnotation{}
 var _ Overviewable = &DeclData{}
 
 type DeclAnnotation struct {
@@ -45,8 +45,11 @@ func (e DeclAnnotation) DeclOverview() string {
 	return fmt.Sprintf("annotation %s {\n%s\n}", e.Name, strings.Join(fieldLines, "\n"))
 }
 
-func (e DeclAnnotation) IsExportedDecl() bool {
-	return true
+func (e DeclAnnotation) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func MakeDeclAnnotation(tok token.Token, name Identifier) *DeclAnnotation {

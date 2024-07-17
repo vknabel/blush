@@ -31,8 +31,8 @@ func (e DeclImportMember) DeclOverview() string {
 	return fmt.Sprintf("import %s { %s }", e.ModuleName, e.Name)
 }
 
-func (e DeclImportMember) IsExportedDecl() bool {
-	return false
+func (e DeclImportMember) ExportScope() ExportScope {
+	return ExportScopeLocal
 }
 
 func MakeDeclImportMember(tok token.Token, moduleName ModuleName, name Identifier) DeclImportMember {

@@ -45,8 +45,11 @@ func (e DeclExternType) DeclOverview() string {
 	return fmt.Sprintf("extern %s {\n%s\n}", e.Name, strings.Join(fieldLines, "\n"))
 }
 
-func (e DeclExternType) IsExportedDecl() bool {
-	return true
+func (e DeclExternType) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func MakeDeclExternType(tok token.Token, name Identifier) *DeclExternType {

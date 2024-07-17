@@ -23,8 +23,11 @@ func (e DeclEnumCase) DeclName() Identifier {
 	return e.Case.Name()
 }
 
-func (e DeclEnumCase) IsExportedDecl() bool {
-	return true
+func (e DeclEnumCase) ExportScope() ExportScope {
+	if e.Case.Name().Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func MakeDeclEnumCase(tok token.Token, name StaticReference) *DeclEnumCase {

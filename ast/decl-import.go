@@ -39,8 +39,8 @@ func (e DeclImport) DeclOverview() string {
 	}
 }
 
-func (e DeclImport) IsExportedDecl() bool {
-	return false
+func (e DeclImport) ExportScope() ExportScope {
+	return ExportScopeLocal
 }
 
 func (e *DeclImport) AddMember(member DeclImportMember) {

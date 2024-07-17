@@ -229,6 +229,7 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		if err != nil {
 			return err
 		}
+		c.emit(op.AssertType, int(c.plugins.Prelude().Bool(true).TypeConstantId()))
 		jumpEnd := c.emit(op.Jump, placeholderJumpAddress)
 		pos := c.emit(op.ConstFalse)
 		c.changeOperand(jumpQuick, pos)
@@ -241,6 +242,7 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		if err != nil {
 			return err
 		}
+		c.emit(op.AssertType, int(c.plugins.Prelude().Bool(true).TypeConstantId()))
 		jumpEnd := c.emit(op.Jump, placeholderJumpAddress)
 		pos := c.emit(op.ConstTrue)
 		c.changeOperand(jumpQuick, pos)

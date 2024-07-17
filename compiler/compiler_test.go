@@ -215,11 +215,12 @@ func TestBinaryOperators(t *testing.T) {
 				// left
 				code.Make(code.ConstTrue),
 				// when false do not exectue right
-				code.Make(code.JumpFalse, 8),
+				code.Make(code.JumpFalse, 11),
 				// right
 				code.Make(code.ConstFalse),
+				code.Make(code.AssertType, int(runtime.Bool(true).TypeConstantId())),
 				// result is right
-				code.Make(code.Jump, 9),
+				code.Make(code.Jump, 12),
 				// put false back up
 				code.Make(code.ConstFalse),
 				// drop expr
@@ -233,11 +234,12 @@ func TestBinaryOperators(t *testing.T) {
 				// left
 				code.Make(code.ConstTrue),
 				// when true do not exectue right
-				code.Make(code.JumpTrue, 8),
+				code.Make(code.JumpTrue, 11),
 				// right
 				code.Make(code.ConstFalse),
+				code.Make(code.AssertType, int(runtime.Bool(true).TypeConstantId())),
 				// result is right
-				code.Make(code.Jump, 9),
+				code.Make(code.Jump, 12),
 				// put true back up
 				code.Make(code.ConstTrue),
 				// drop expr

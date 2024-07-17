@@ -116,6 +116,7 @@ func example() {
 	h := syncheck.NewHarness(func(lineOffset int, line string, assert syncheck.Assertion) bool {
 		var relevantChildren []ast.Node
 		sourceFile.EnumerateChildNodes(func(child ast.Node) {
+			fmt.Printf("Searching: %d:%q, candidate: %T, %q\n", lineOffset, line, child, child)
 			tok := child.TokenLiteral()
 
 			if tok.Source.Offset <= assert.SourceOffset-1 && assert.SourceOffset <= tok.Source.Offset+len(tok.Literal)+1 {
