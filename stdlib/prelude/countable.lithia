@@ -9,13 +9,13 @@ annotation Iterable {
   iterate(@Has(Iterable) value, @Func yield)
 }
 
-@Countable(v -> v.length)
+@Countable({ v -> v.length })
 @Iterable(_arrayIterate)
 extern Array {
   @Int length
 }
 
-@Countable(v -> v.length)
+@Countable({ v -> v.length })
 @Iterable(_dictIterate)
 extern Dict {
   @Int length
@@ -29,7 +29,7 @@ data Range {
   @Int end
 }
 
-@Countable(v -> v.length)
+@Countable({ v -> v.length })
 @Iterable(_stringIterate)
 extern String {
   @Int
@@ -41,7 +41,7 @@ func _arrayIterate(v, yield) {
   let l = v.length
   for {
     if !yield(v[i]) {
-      return
+      break
     }
     i = i+1
     if i == l {
@@ -53,7 +53,7 @@ func _arrayIterate(v, yield) {
 func _dictIterate(v, yield) {
   for k <- v.keys {
     if !yield(v[k]) {
-      return
+      break
     }
   }
 }
@@ -63,7 +63,7 @@ func _stringIterate(v, yield) {
   let l = v.length
   for {
     if !yield(v[i]) {
-      return
+      break
     }
     i = i+1
     if i == l {
@@ -84,7 +84,7 @@ func _rangeIterate(v) {
   let l = v.end
   for {
     if !yield(i) {
-      return
+      break
     }
     i = i+1
     if i == l {
@@ -92,3 +92,4 @@ func _rangeIterate(v) {
     }
   }
 }
+
