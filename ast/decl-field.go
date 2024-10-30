@@ -47,8 +47,11 @@ func (e DeclField) DeclOverview() string {
 	return fmt.Sprintf("%s %s", e.Name, strings.Join(paramNames, ", "))
 }
 
-func (e DeclField) IsExportedDecl() bool {
-	return true
+func (e DeclField) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func MakeDeclField(name Identifier, params []DeclParameter, annotations AnnotationChain) *DeclField {

@@ -20,13 +20,16 @@ func MakeSourceFile(parent *SymbolTable, path string, token token.Token) *Source
 		Statements: make([]Statement, 0),
 	}
 	sf.Symbols = MakeSymbolTable(parent, sf)
-	sf.Symbols.delegatesExports = true
+	sf.Symbols.exportScopeLevel = ExportScopeInternal
 	return sf
 }
 
 func (sf *SourceFile) Add(globalStmt Statement) {
+	if globalStmt == nil {
+		panic("compiler-bug: nil statement")
+	}
 	if decl, ok := globalStmt.(Decl); ok {
-		if sym := sf.Symbols.resolve(decl.DeclName().Value); sym == nil {
+		if sym := sf.Symbols.resolve(decl.DeclName().Value); sym == nil || sym.Decl == nil {
 			sf.Symbols.Insert(decl)
 		}
 		return
@@ -36,6 +39,9 @@ func (sf *SourceFile) Add(globalStmt Statement) {
 
 func (sf SourceFile) EnumerateChildNodes(action func(child Node)) {
 	for _, sym := range sf.Symbols.Symbols {
+		if sym.Decl == nil {
+			continue
+		}
 		action(sym.Decl)
 		sym.Decl.EnumerateChildNodes(action)
 	}
@@ -48,6 +54,9 @@ func (sf SourceFile) EnumerateChildNodes(action func(child Node)) {
 	}
 
 	for _, node := range sf.Statements {
+		if node == nil {
+			panic("compiler bug: missing stmt")
+		}
 		action(node)
 		node.EnumerateChildNodes(action)
 	}

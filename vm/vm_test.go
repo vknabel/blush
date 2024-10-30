@@ -16,6 +16,7 @@ import (
 type vmTestCase struct {
 	input    string
 	expected any
+	err      string
 }
 
 func TestBasicOperations(t *testing.T) {
@@ -26,6 +27,8 @@ func TestBasicOperations(t *testing.T) {
 		{input: "false", expected: false},
 		{input: "!true", expected: false},
 		{input: "!false", expected: true},
+		{input: "true && true", expected: true},
+		{input: "true && 3", err: `unexpected type (runtime.Int "3")`},
 		{input: "(if true { 2 } else { 3 })", expected: 2},
 		{input: "(if 1 == 1 { 2*3 } else { 3 })", expected: 6},
 		{input: "(if 1 == 0 { 2*3 } else { 3 })", expected: 3},
@@ -51,13 +54,20 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 
 			vm := vm.New(comp.Bytecode())
 			err = vm.Run()
-			if err != nil {
+			if err != nil && tt.err == "" {
 				t.Fatalf("vm error: %s", err)
 			}
 
-			stackElem := vm.LastPoppedStackElem()
+			if tt.err != "" {
+				if err == nil || err.Error() != tt.err {
+					t.Errorf("expected error %q, got %q", tt.err, err)
+				}
+			}
+			if tt.expected != nil {
+				stackElem := vm.LastPoppedStackElem()
 
-			testExpectedValue(t, tt.expected, stackElem)
+				testExpectedValue(t, tt.expected, stackElem)
+			}
 		})
 	}
 

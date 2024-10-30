@@ -46,7 +46,7 @@ type SymbolTable struct {
 
 	symbolCounter    int
 	functionCounter  int
-	delegatesExports bool
+	exportScopeLevel ExportScope
 }
 
 func MakeSymbolTable(parent *SymbolTable, declaringNode Node) *SymbolTable {
@@ -79,8 +79,16 @@ func (st *SymbolTable) Name() string {
 }
 
 func (st *SymbolTable) Insert(decl Decl) *Symbol {
-	if st.delegatesExports && decl.IsExportedDecl() {
-		return st.Parent.Insert(decl)
+	scope := decl.ExportScope()
+	if st.exportScopeLevel >= scope && st.Parent != nil {
+		sym := st.Parent.Insert(decl)
+		usageSymbol, ok := st.Symbols[decl.DeclName().Value]
+		if !ok {
+			return sym
+		}
+		sym.Errs = append(sym.Errs, usageSymbol.Errs...)
+		sym.Usages = append(sym.Usages, usageSymbol.Usages...)
+		return sym
 	}
 	name := decl.DeclName().Value
 	if sym, ok := st.Symbols[name]; ok {
@@ -103,7 +111,7 @@ func (st *SymbolTable) Insert(decl Decl) *Symbol {
 }
 
 func (st *SymbolTable) addSymbol(symbol Symbol) *Symbol {
-	if st.delegatesExports == true && (symbol.Decl == nil || symbol.Decl.IsExportedDecl()) {
+	if symbol.Decl != nil && st.exportScopeLevel >= symbol.Decl.ExportScope() {
 		return st.Parent.addSymbol(symbol)
 	}
 	ref := &symbol

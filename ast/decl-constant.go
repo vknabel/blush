@@ -37,8 +37,11 @@ func (e DeclVariable) DeclOverview() string {
 	return fmt.Sprintf("let %s", e.Name)
 }
 
-func (e DeclVariable) IsExportedDecl() bool {
-	return true
+func (e DeclVariable) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func MakeDeclVariable(tok token.Token, name Identifier, value Expr) *DeclVariable {

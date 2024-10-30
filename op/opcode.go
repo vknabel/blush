@@ -7,6 +7,9 @@ const (
 	ConstFalse
 	Pop
 
+	// does not consume, just assert top value's type
+	AssertType
+
 	Jump
 	JumpTrue
 	JumpFalse
@@ -37,6 +40,8 @@ var definitions = map[Opcode]*Definition{
 	ConstTrue:  {"consttrue", []int{}},
 	ConstFalse: {"constfalse", []int{}},
 	Pop:        {"pop", []int{}},
+
+	AssertType: {"asserttype", []int{2}},
 
 	Jump:      {"jump", []int{2}},
 	JumpTrue:  {"jumptrue", []int{2}},

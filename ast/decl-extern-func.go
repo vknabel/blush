@@ -34,8 +34,11 @@ func (e DeclExternFunc) DeclName() Identifier {
 	return e.Name
 }
 
-func (e DeclExternFunc) IsExportedDecl() bool {
-	return true
+func (e DeclExternFunc) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func (e DeclExternFunc) DeclOverview() string {

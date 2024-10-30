@@ -25,8 +25,8 @@ func (e DeclParameter) DeclName() Identifier {
 	return e.Name
 }
 
-func (e DeclParameter) IsExportedDecl() bool {
-	return true
+func (e DeclParameter) ExportScope() ExportScope {
+	return ExportScopeLocal
 }
 
 func MakeDeclParameter(name Identifier, annotations AnnotationChain) *DeclParameter {

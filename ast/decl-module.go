@@ -36,8 +36,8 @@ func (e DeclModule) DeclOverview() string {
 	return fmt.Sprintf("module %s", e.Name)
 }
 
-func (e DeclModule) IsExportedDecl() bool {
-	return false
+func (e DeclModule) ExportScope() ExportScope {
+	return ExportScopeLocal
 }
 
 func MakeDeclModule(tok token.Token, internalName Identifier) *DeclModule {

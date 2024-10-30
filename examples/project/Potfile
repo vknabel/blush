@@ -1,0 +1,25 @@
+
+import pot = potfile
+import potfile.tasks
+
+@pot.Dependencies()
+data Dependencies {
+	@pot.Prelude()
+	data Prelude {
+		@tasks.Use("test")
+		test
+	}
+}
+
+@tasks.Name("generate")
+@tasks.Help("")
+data GenerateTask {
+	@Bool
+	@tasks.Flag("dry")
+	@tasks.Help("")
+	isDryRun
+
+	@String
+	@tasks.Arg()
+	positional
+}

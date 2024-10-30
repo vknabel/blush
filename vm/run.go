@@ -58,6 +58,14 @@ func (vm *VM) Run() error {
 				ip = pos - 1
 			}
 
+		case op.AssertType:
+			typeId := runtime.TypeId(op.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+			v := vm.stack[vm.sp-1]
+			if v.TypeConstantId() != typeId {
+				return fmt.Errorf("unexpected type (%T %q)", v, v.Inspect())
+			}
+
 		case op.Invert:
 			v, ok := vm.pop().(runtime.Bool)
 			if !ok {
@@ -96,7 +104,10 @@ func (vm *VM) Run() error {
 			if !ok {
 				return fmt.Errorf("operator %% is only defined on Int (%T %q)", lhs, lhs.Inspect())
 			}
-			vm.push(lhs % rhs)
+			err := vm.push(lhs % rhs)
+			if err != nil {
+				return err
+			}
 		case op.Equal:
 			equal := vm.isEqual()
 			if err := vm.push(equal); err != nil {
@@ -139,67 +150,70 @@ func (vm *VM) numericBinaryOperation(operator op.Opcode) error {
 	case runtime.Int:
 		switch lhs := vm.pop().(type) {
 		case runtime.Int:
-			vm.numericBinaryOperationInt(operator, lhs, rhs)
+			return vm.numericBinaryOperationInt(operator, lhs, rhs)
 		case runtime.Float:
-			vm.numericBinaryOperationFloat(operator, lhs, runtime.Float(rhs))
+			return vm.numericBinaryOperationFloat(operator, lhs, runtime.Float(rhs))
 		default:
 			return fmt.Errorf("unsupported %T", lhs)
 		}
 	case runtime.Float:
 		switch lhs := vm.pop().(type) {
 		case runtime.Int:
-			vm.numericBinaryOperationFloat(operator, runtime.Float(lhs), rhs)
+			return vm.numericBinaryOperationFloat(operator, runtime.Float(lhs), rhs)
 		case runtime.Float:
-			vm.numericBinaryOperationFloat(operator, lhs, rhs)
+			return vm.numericBinaryOperationFloat(operator, lhs, rhs)
 		default:
 			return fmt.Errorf("unsupported %T", lhs)
 		}
 	default:
 		return fmt.Errorf("unsupported %T", rhs)
 	}
-	return nil
 }
 
-func (vm *VM) numericBinaryOperationInt(operator op.Opcode, lhs, rhs runtime.Int) {
+func (vm *VM) numericBinaryOperationInt(operator op.Opcode, lhs, rhs runtime.Int) error {
 	switch operator {
 	case op.Add:
-		vm.push(lhs + rhs)
+		return vm.push(lhs + rhs)
 	case op.Sub:
-		vm.push(lhs - rhs)
+		return vm.push(lhs - rhs)
 	case op.Mul:
-		vm.push(lhs * rhs)
+		return vm.push(lhs * rhs)
 	case op.Div:
-		vm.push(lhs / rhs)
+		return vm.push(lhs / rhs)
 	case op.Mod:
-		vm.push(lhs % rhs)
+		return vm.push(lhs % rhs)
 	case op.LessThan:
-		vm.push(runtime.Bool(lhs < rhs))
+		return vm.push(runtime.Bool(lhs < rhs))
 	case op.LessThanOrEqual:
-		vm.push(runtime.Bool(lhs <= rhs))
+		return vm.push(runtime.Bool(lhs <= rhs))
 	case op.GreaterThan:
-		vm.push(runtime.Bool(lhs > rhs))
+		return vm.push(runtime.Bool(lhs > rhs))
 	case op.GreaterThanOrEqual:
-		vm.push(runtime.Bool(lhs >= rhs))
+		return vm.push(runtime.Bool(lhs >= rhs))
+	default:
+		return fmt.Errorf("unknown binary operator %x", operator)
 	}
 }
-func (vm *VM) numericBinaryOperationFloat(operator op.Opcode, lhs, rhs runtime.Float) {
+func (vm *VM) numericBinaryOperationFloat(operator op.Opcode, lhs, rhs runtime.Float) error {
 	switch operator {
 	case op.Add:
-		vm.push(lhs + rhs)
+		return vm.push(lhs + rhs)
 	case op.Sub:
-		vm.push(lhs - rhs)
+		return vm.push(lhs - rhs)
 	case op.Mul:
-		vm.push(lhs * rhs)
+		return vm.push(lhs * rhs)
 	case op.Div:
-		vm.push(lhs / rhs)
+		return vm.push(lhs / rhs)
 	case op.LessThan:
-		vm.push(runtime.Bool(lhs < rhs))
+		return vm.push(runtime.Bool(lhs < rhs))
 	case op.LessThanOrEqual:
-		vm.push(runtime.Bool(lhs <= rhs))
+		return vm.push(runtime.Bool(lhs <= rhs))
 	case op.GreaterThan:
-		vm.push(runtime.Bool(lhs > rhs))
+		return vm.push(runtime.Bool(lhs > rhs))
 	case op.GreaterThanOrEqual:
-		vm.push(runtime.Bool(lhs >= rhs))
+		return vm.push(runtime.Bool(lhs >= rhs))
+	default:
+		return fmt.Errorf("unknown binary operator %x", operator)
 	}
 }
 func (vm *VM) isEqual() runtime.Bool {

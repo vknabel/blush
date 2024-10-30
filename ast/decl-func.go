@@ -45,8 +45,11 @@ func (e DeclFunc) DeclOverview() string {
 	return fmt.Sprintf("func %s { %s => }", e.Name, strings.Join(paramNames, ", "))
 }
 
-func (e DeclFunc) IsExportedDecl() bool {
-	return true
+func (e DeclFunc) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func MakeDeclFunc(tok token.Token, name Identifier, impl *ExprFunc) *DeclFunc {

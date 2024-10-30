@@ -51,8 +51,11 @@ func (e DeclData) DeclOverview() string {
 	return fmt.Sprintf("data %s {\n%s\n}", e.Name, strings.Join(fieldLines, "\n"))
 }
 
-func (e DeclData) IsExportedDecl() bool {
-	return true
+func (e DeclData) ExportScope() ExportScope {
+	if e.Name.Value[0] == '_' {
+		return ExportScopePublic
+	}
+	return ExportScopeInternal
 }
 
 func (e *DeclData) AddField(field DeclField) {
