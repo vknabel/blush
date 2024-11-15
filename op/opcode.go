@@ -7,6 +7,9 @@ const (
 	ConstFalse
 	Pop
 
+	Array
+	Dict
+
 	// does not consume, just assert top value's type
 	AssertType
 
@@ -40,6 +43,9 @@ var definitions = map[Opcode]*Definition{
 	ConstTrue:  {"consttrue", []int{}},
 	ConstFalse: {"constfalse", []int{}},
 	Pop:        {"pop", []int{}},
+
+	Array: {"array", []int{}},
+	Dict:  {"dict", []int{}},
 
 	AssertType: {"asserttype", []int{2}},
 

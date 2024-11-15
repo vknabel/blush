@@ -339,6 +339,12 @@ func (p *Parser) parseDataDecl(pos StatementPosition, annos ast.AnnotationChain)
 	return data
 }
 
+// parseDataDeclField parses a single data declaration field.
+//
+//	simple
+//	method()
+//	@Annotation() field
+//	@Annotation() method()
 func (p *Parser) parseDataDeclField() *ast.DeclField {
 	annotations := p.parseAnnotationChain()
 	identTok, _ := p.expect(token.IDENT)
@@ -354,6 +360,12 @@ func (p *Parser) parseDataDeclField() *ast.DeclField {
 	return ast.MakeDeclField(name, params, annotations)
 }
 
+// parseAnnotationDecl parses the declaration of an annotation type.
+//
+//	annotation <identifier>
+//	annotation <identifier> {
+//	  // properties
+//	}
 func (p *Parser) parseAnnotationDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclAnnotation {
 	declToken, _ := p.expect(token.ANNOTATION)
 	identToken, _ := p.expect(token.IDENT)
@@ -373,6 +385,9 @@ func (p *Parser) parseAnnotationDecl(pos StatementPosition, annos ast.Annotation
 	return declAnno
 }
 
+// parseModuleDecl parses a declared module
+//
+//	module <identifier>
 func (p *Parser) parseModuleDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclModule {
 	if pos != IN_INITIAL {
 		p.errStatementMisplaced(pos)

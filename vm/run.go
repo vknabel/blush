@@ -118,6 +118,38 @@ func (vm *VM) Run() error {
 			if err := vm.push(!equal); err != nil {
 				return err
 			}
+
+		case op.Array:
+			length, ok := vm.pop().(runtime.Int)
+			if !ok {
+				return fmt.Errorf("lenght of an array must be an Int (%T %q)", length, length.Inspect())
+			}
+			array := make(runtime.Array, length)
+
+			for i := 1; i <= int(length); i++ {
+				array[int(length)-i] = vm.pop()
+			}
+
+			if err := vm.push(array); err != nil {
+				return err
+			}
+		case op.Dict:
+			length, ok := vm.pop().(runtime.Int)
+			if !ok {
+				return fmt.Errorf("lenght of an array must be an Int (%T %q)", length, length.Inspect())
+			}
+			dict := make(runtime.Dict)
+
+			for i := 0; i < int(length); i++ {
+				value := vm.pop()
+				key := vm.pop()
+				dict[key] = value
+			}
+
+			if err := vm.push(dict); err != nil {
+				return err
+			}
+
 		default:
 			def, err := op.Lookup(byte(code))
 			if err != nil {

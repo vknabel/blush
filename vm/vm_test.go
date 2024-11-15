@@ -35,6 +35,12 @@ func TestBasicOperations(t *testing.T) {
 		{input: "(if 1 != 0 { 2*3 } else { 3 })", expected: 6},
 		{input: "(if true { 2*3 } else { 3 })", expected: 6},
 		{input: "(if true || false { 2*3 } else { 3 })", expected: 6},
+		{input: "if true || false { 2*3 } else { 3 }", expected: 6},
+		{input: `"abc"`, expected: "abc"},
+		{input: "[]", expected: []any{}},
+		{input: "[1, 2, 3]", expected: []any{1, 2, 3}},
+		{input: "[:]", expected: map[any]any{}},
+		{input: `["hello": "world", 1: 2]`, expected: map[any]any{"hello": "world", 1: 2}},
 	}
 
 	runVmTests(t, tests)
@@ -98,25 +104,26 @@ func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
 
 func testExpectedValue(t *testing.T, expected interface{}, actual runtime.RuntimeValue) {
 	t.Helper()
+	err := testValue(expected, actual)
+	if err != nil {
+		t.Error(err)
+	}
+}
 
+func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 	switch expected := expected.(type) {
 	case int:
-		err := testInt(int64(expected), actual)
-		if err != nil {
-			t.Errorf("testInt failed: %s", err)
-		}
+		return testInt(int64(expected), actual)
 	case bool:
-		err := testBool(bool(expected), actual)
-		if err != nil {
-			t.Errorf("testBool failed: %s", err)
-		}
+		return testBool(bool(expected), actual)
 	case string:
-		err := testString(expected, actual)
-		if err != nil {
-			t.Errorf("testStringObject failed: %s", err)
-		}
+		return testString(expected, actual)
+	case []any:
+		return testArray([]any(expected), actual)
+	case map[any]any:
+		return testDict(map[any]any(expected), actual)
 	default:
-		t.Errorf("unhandled type %T", expected)
+		return fmt.Errorf("unhandled type %T", expected)
 	}
 }
 
@@ -159,4 +166,58 @@ func testString(expected string, actual runtime.RuntimeValue) error {
 	}
 
 	return nil
+}
+
+func testArray(expected []any, actual runtime.RuntimeValue) error {
+	result, ok := actual.(runtime.Array)
+	if !ok {
+		return fmt.Errorf("object is not Array. got=%T (%+v)", actual, actual)
+	}
+
+	if len(expected) != len(result) {
+		return fmt.Errorf("length does not match. got=%d, want=%d", len(result), len(expected))
+	}
+	for i, el := range result {
+		err := testValue(expected[i], el)
+		if err != nil {
+			return fmt.Errorf("at index %d: %w", i, err)
+		}
+	}
+	return nil
+}
+
+func testDict(expected map[any]any, actual runtime.RuntimeValue) error {
+	result, ok := actual.(runtime.Dict)
+	if !ok {
+		return fmt.Errorf("object is not Dict. got=%T (%+v)", actual, actual)
+	}
+
+	if len(expected) != len(result) {
+		return fmt.Errorf("length does not match. got=%d, want=%d", len(result), len(expected))
+	}
+
+	for key, el := range result {
+		nkey, err := native(key)
+		if err != nil {
+			return fmt.Errorf("at index %q: %w", key, err)
+		}
+		err = testValue(expected[nkey], el)
+		if err != nil {
+			return fmt.Errorf("at index %q: %w", key, err)
+		}
+	}
+	return nil
+}
+
+func native(val runtime.RuntimeValue) (any, error) {
+	switch val := val.(type) {
+	case runtime.Bool:
+		return bool(val), nil
+	case runtime.Int:
+		return int(val), nil
+	case runtime.String:
+		return string(val), nil
+	default:
+		return nil, fmt.Errorf("cannot convert %T into native Go type, got=%q", val, val.Inspect())
+	}
 }

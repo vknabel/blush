@@ -333,6 +333,7 @@ func (p *Parser) parseExprListOrDict() ast.Expr {
 	if rest == nil {
 		return nil
 	}
+	p.expect(token.RBRACKET)
 	entries = append(entries, rest...)
 	return ast.MakeExprDict(entries, tok)
 }

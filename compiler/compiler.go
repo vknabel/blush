@@ -76,6 +76,36 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(op.Const, idx)
 		return nil
 
+	case *ast.ExprArray:
+		for _, el := range node.Elements {
+			err := c.Compile(el)
+			if err != nil {
+				return err
+			}
+		}
+		val := c.plugins.Prelude().Int(int64(len(node.Elements)))
+		idx := c.addConstant(val)
+		c.emit(op.Const, idx)
+		c.emit(op.Array)
+		return nil
+
+	case *ast.ExprDict:
+		for _, entry := range node.Entries {
+			err := c.Compile(entry.Key)
+			if err != nil {
+				return err
+			}
+			err = c.Compile(entry.Value)
+			if err != nil {
+				return err
+			}
+		}
+		val := c.plugins.Prelude().Int(int64(len(node.Entries)))
+		idx := c.addConstant(val)
+		c.emit(op.Const, idx)
+		c.emit(op.Dict)
+		return nil
+
 	default:
 		return fmt.Errorf("unknown ast node %T", node)
 	}
