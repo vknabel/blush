@@ -1,12 +1,16 @@
 package gitreg_test
 
 import (
+	"cmp"
 	"context"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/vknabel/lithia/registry"
 	"github.com/vknabel/lithia/registry/gitreg"
+	"github.com/vknabel/lithia/version"
 )
 
 func TestIntegrationGitRegistryResolveLatestLithiaInMemory(t *testing.T) {
@@ -29,7 +33,14 @@ func TestIntegrationGitRegistryResolveLatestLithiaInMemory(t *testing.T) {
 	if len(pkgs) < 1 {
 		t.Errorf("expected at least one package")
 	}
-	pkg := pkgs[0] // TODO: sort!
+	slices.SortFunc(pkgs, func(lhs registry.Package, rhs registry.Package) int {
+		res := cmp.Compare(lhs.Source(), rhs.Source())
+		if res != 0 {
+			return res
+		}
+		return version.Compare(lhs.Version(), rhs.Version())
+	})
+	pkg := pkgs[0]
 
 	if pkg.Source() != "https://github.com/vknabel/lithia" {
 		t.Errorf("expected package name to be github.com/vknabel/lithia, got %s", pkg.Source())

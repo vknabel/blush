@@ -33,3 +33,13 @@ func Less(v1, v2 Version) bool {
 	}
 	return v1.String() < v2.String()
 }
+
+func Compare(v1, v2 Version) int {
+	if Less(v1, v2) {
+		return 1
+	}
+	if Less(v2, v1) {
+		return -1
+	}
+	return 0
+}
