@@ -1,15 +1,17 @@
 package ast
 
+import "github.com/vknabel/lithia/registry"
+
 type ModuleName StaticReference
 
 type ContextModule struct {
-	Name    ModuleName
+	Name    registry.LogicalURI
 	Symbols *SymbolTable
 
 	Files []*SourceFile
 }
 
-func MakeContextModule(name ModuleName) *ContextModule {
+func MakeContextModule(name registry.LogicalURI) *ContextModule {
 	m := &ContextModule{
 		Name:  name,
 		Files: []*SourceFile{},

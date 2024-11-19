@@ -9,8 +9,9 @@ import (
 )
 
 type Parser struct {
-	lex    lexer.Lexer
-	errors []ParseError
+	srcFile *ast.SourceFile
+	lex     *lexer.Lexer
+	errors  []ParseError
 
 	curToken  token.Token
 	peekToken token.Token
@@ -21,10 +22,12 @@ type Parser struct {
 	infixParsers  map[token.TokenType]infixParser
 }
 
-func New(lex lexer.Lexer) *Parser {
+func NewSourceParser(lex *lexer.Lexer, parent *ast.SymbolTable, path string) *Parser {
 	p := &Parser{lex: lex}
 	p.nextToken()
 	p.nextToken()
+
+	p.srcFile = ast.MakeSourceFile(parent, path, p.curToken)
 
 	p.prefixParsers = make(map[token.TokenType]prefixParser)
 	p.registerPrefix(token.IDENT, p.parsePrattExprIdentifier)
@@ -114,25 +117,24 @@ func symerrs(st *ast.SymbolTable) []ParseError {
 	return errs
 }
 
-func (p *Parser) ParseSourceFile(filePath, moduleName string, parent *ast.SymbolTable, input string) *ast.SourceFile {
-	srcFile := ast.MakeSourceFile(parent, filePath, p.curToken)
-	p.curSymbolTable = srcFile.Symbols
+func (p *Parser) ParseSourceFile() *ast.SourceFile {
+	p.curSymbolTable = p.srcFile.Symbols
 
 	inPosition := IN_INITIAL
 	for p.curToken.Type != token.EOF {
 		stmt, childDecls := p.parseStatementInContext(inPosition, nil)
 		inPosition = IN_GLOBAL
 		if stmt != nil {
-			srcFile.Add(stmt)
+			p.srcFile.Add(stmt)
 			for _, d := range childDecls {
-				srcFile.Add(d)
+				p.srcFile.Add(d)
 			}
 		} else {
 			p.nextToken()
 		}
 	}
 
-	return srcFile
+	return p.srcFile
 }
 
 func (p *Parser) nextToken() token.Token {

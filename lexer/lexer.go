@@ -1,27 +1,30 @@
 package lexer
 
 import (
+	"github.com/vknabel/lithia/registry"
 	"github.com/vknabel/lithia/token"
 )
 
 type Lexer struct {
-	module   string
-	fileName string
-	input    string // TODO: change to io.Reader or *bufio.Reader
-	startPos int    // start position of this token
-	peekPos  int    // current reading position in input (after current char)
-	currPos  int    // current position in input (points to current char)
-	ch       byte   // current char under examination
+	src      registry.Source
+	input    string
+	startPos int  // start position of this token
+	peekPos  int  // current reading position in input (after current char)
+	currPos  int  // current position in input (points to current char)
+	ch       byte // current char under examination
 }
 
-func New(module, fileName, input string) Lexer {
-	l := Lexer{
-		module:   module,
-		fileName: fileName,
-		input:    input,
+func New(src registry.Source) (*Lexer, error) {
+	raw, err := src.Read()
+	if err != nil {
+		return nil, err
+	}
+	l := &Lexer{
+		src:   src,
+		input: string(raw),
 	}
 	l.advance()
-	return l
+	return l, nil
 }
 
 func (l *Lexer) NextToken() token.Token {
@@ -29,7 +32,7 @@ func (l *Lexer) NextToken() token.Token {
 
 	tok.Leading = l.parseLeadingDecorations()
 	l.startPos = l.currPos
-	tok.Source = token.MakeSource(l.module, l.fileName, l.currPos)
+	tok.Source = token.MakeSource(string(l.src.URI()), l.currPos)
 
 	switch l.ch {
 	case '!': // BANG, NEQ
@@ -205,6 +208,6 @@ func (l *Lexer) newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{
 		Type:    tokenType,
 		Literal: string(ch),
-		Source:  token.MakeSource(l.module, l.fileName, l.currPos),
+		Source:  token.MakeSource(string(l.src.URI()), l.currPos),
 	}
 }

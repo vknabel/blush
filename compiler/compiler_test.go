@@ -10,6 +10,7 @@ import (
 	"github.com/vknabel/lithia/lexer"
 	code "github.com/vknabel/lithia/op"
 	"github.com/vknabel/lithia/parser"
+	"github.com/vknabel/lithia/registry/staticmodule"
 	"github.com/vknabel/lithia/runtime"
 )
 
@@ -417,9 +418,12 @@ func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 }
 
 func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
-	l := lexer.New("testing", "test.lithia", input)
-	p := parser.New(l)
-	srcFile := p.ParseSourceFile("test.lithia", "testing", nil, input)
+	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.lithia", input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := parser.NewSourceParser(l, nil, "test.lithia")
+	srcFile := p.ParseSourceFile()
 	checkParserErrors(t, p, input)
 	return srcFile
 }
@@ -439,7 +443,7 @@ func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
 			col := src.Offset - lastLineIndex
 			relevantLine, _, _ := strings.Cut(contents[lastLineIndex+1:], "\n")
 
-			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Token.Source.FileName, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
+			t.Errorf("%s:%d:%d: %s\n\n  %s\n  %s^\n  %s", err.Token.Source.File, loc, col, err.Summary, relevantLine, strings.Repeat(" ", col-1), err.Details)
 		}
 		t.FailNow()
 	}

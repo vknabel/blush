@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/vknabel/lithia/lexer"
+	"github.com/vknabel/lithia/registry/staticmodule"
 	"github.com/vknabel/lithia/token"
 )
 
@@ -31,7 +32,10 @@ test "any in enums matches all types", { fail =>
 	unless isCorrect, fail "should not be the case"
 }
 `
-	l := lexer.New("lexer", "TestLexer", input)
+	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.lithia", input))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expect := []struct {
 		expectedType    token.TokenType
@@ -770,7 +774,10 @@ func TestAllTokens(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		l := lexer.New("lexer", "TestAllTokens", tt.input)
+		l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.lithia", tt.input))
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		for i, expect := range tt.expected {
 			tok := l.NextToken()
@@ -914,7 +921,10 @@ func TestDecorativeLexer(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			l := lexer.New("TestDecorativeLexer", t.Name(), tt.input)
+			l, err := lexer.New(staticmodule.NewSourceString("testing:///decorative/test.lithia", tt.input))
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			for i, want := range tt.want {
 				t.Run(fmt.Sprintf("[%d] %s", i, want.tokenType), func(t *testing.T) {
