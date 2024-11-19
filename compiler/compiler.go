@@ -15,18 +15,6 @@ const (
 	placeholderJumpAddress = math.MinInt
 )
 
-func (c *Compiler) changeOperand(pos int, operand int) {
-	opcode := op.Opcode(c.instructions[pos])
-	patched := op.Make(opcode, operand)
-	c.replaceInstruction(pos, patched)
-}
-
-func (c *Compiler) replaceInstruction(pos int, patched []byte) {
-	for i := 0; i < len(patched); i++ {
-		c.instructions[pos+i] = patched[i]
-	}
-}
-
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
 	case *ast.SourceFile:
@@ -108,6 +96,18 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 	default:
 		return fmt.Errorf("unknown ast node %T", node)
+	}
+}
+
+func (c *Compiler) changeOperand(pos int, operand int) {
+	opcode := op.Opcode(c.instructions[pos])
+	patched := op.Make(opcode, operand)
+	c.replaceInstruction(pos, patched)
+}
+
+func (c *Compiler) replaceInstruction(pos int, patched []byte) {
+	for i := 0; i < len(patched); i++ {
+		c.instructions[pos+i] = patched[i]
 	}
 }
 

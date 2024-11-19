@@ -27,6 +27,6 @@ func (p *remoteGitPackage) Version() version.Version {
 }
 
 // Resolve implements registry.Package
-func (p *remoteGitPackage) Resolve(ctx context.Context) (registry.LocalPackage, error) {
+func (p *remoteGitPackage) Resolve(ctx context.Context) (registry.ResolvedPackage, error) {
 	return p.provider.clone(ctx, p)
 }

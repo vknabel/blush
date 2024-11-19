@@ -41,6 +41,7 @@ func TestBasicOperations(t *testing.T) {
 		{input: "[1, 2, 3]", expected: []any{1, 2, 3}},
 		{input: "[:]", expected: map[any]any{}},
 		{input: `["hello": "world", 1: 2]`, expected: map[any]any{"hello": "world", 1: 2}},
+		{input: `["1": 3, 1: 2]`, expected: map[any]any{"1": 3, 1: 2}},
 	}
 
 	runVmTests(t, tests)

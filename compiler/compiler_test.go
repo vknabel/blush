@@ -349,6 +349,45 @@ func TestIfExpressionsArithmetic(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestArrayExpressions(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             "[]",
+			expectedConstants: []any{0},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Array),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "[42, 1337]",
+			expectedConstants: []any{42, 1337, 2},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Const, 1),
+				code.Make(code.Const, 2),
+				code.Make(code.Array),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "[42 + 1337]",
+			expectedConstants: []any{42, 1337, 1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Const, 1),
+				code.Make(code.Add),
+				code.Make(code.Const, 2),
+				code.Make(code.Array),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 

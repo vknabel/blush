@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/go-git/go-billy/v5 v5.6.0
 	github.com/go-git/go-git/v5 v5.12.0
+	github.com/google/go-cmp v0.6.0
 )
 
 require (

@@ -3,6 +3,7 @@ package registry
 
 import (
 	"context"
+	"strings"
 
 	"github.com/vknabel/lithia/version"
 )
@@ -32,7 +33,7 @@ import (
 // Each dependency can be renamed within the package.
 type Provider interface {
 	// Discover returns all packages in all versions that are available locally.
-	Discover(ctx context.Context) ([]LocalPackage, error)
+	Discover(ctx context.Context) ([]ResolvedPackage, error)
 	// DiscoverPackageVersions returns packages with the given name constrained by the given predicates from remote.
 	DiscoverPackageVersions(ctx context.Context, name string, preds ...version.Predicate) ([]Package, error)
 }
@@ -40,11 +41,31 @@ type Provider interface {
 type Package interface {
 	Source() string
 	Version() version.Version
-	Resolve(ctx context.Context) (LocalPackage, error)
+	Resolve(ctx context.Context) (ResolvedPackage, error)
 }
 
-type LocalPackage interface {
+type ResolvedPackage interface {
 	Package
-	// LocalPath returns the path to the package.
-	LocalPath() string
+	// ResolveModules discovers all nested modules.
+	ResolveModules() ([]ResolvedModule, error)
+}
+
+type ResolvedModule interface {
+	URI() LogicalURI
+	Sources() ([]Source, error)
+}
+
+type Source interface {
+	URI() LogicalURI
+	Read() ([]byte, error)
+}
+
+type LogicalURI string
+
+func (u LogicalURI) Join(segment string) LogicalURI {
+	joined := u
+	if !strings.HasSuffix(string(u), "/") {
+		joined += "/"
+	}
+	return joined + LogicalURI(segment)
 }

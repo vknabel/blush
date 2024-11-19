@@ -54,13 +54,13 @@ func New(regrootfs billy.Filesystem, opts ...Option) *GitRegistry {
 }
 
 // Discover implements Registry
-func (r *GitRegistry) Discover(ctx context.Context) ([]registry.LocalPackage, error) {
+func (r *GitRegistry) Discover(ctx context.Context) ([]registry.ResolvedPackage, error) {
 	repoEntries, err := r.rootfs.ReadDir(".")
 	if err != nil && !errors.Is(err, world.ErrNotExist) {
 		return nil, err
 	}
 	var errs []error
-	var packages []registry.LocalPackage
+	var packages []registry.ResolvedPackage
 	for _, repoEntry := range repoEntries {
 		if !repoEntry.IsDir() {
 			continue
@@ -140,8 +140,8 @@ func (r *GitRegistry) remotePackageVersions(ctx context.Context, repoUrl string,
 	return pkgs, nil
 }
 
-func (r *GitRegistry) localPackageVersionClones(ctx context.Context, unversionedPackageFS billy.Filesystem, preds []version.Predicate) ([]registry.LocalPackage, error) {
-	var providables []registry.LocalPackage
+func (r *GitRegistry) localPackageVersionClones(ctx context.Context, unversionedPackageFS billy.Filesystem, preds []version.Predicate) ([]registry.ResolvedPackage, error) {
+	var providables []registry.ResolvedPackage
 	var errs []error
 	versionEntries, err := unversionedPackageFS.ReadDir(".")
 	if err != nil && !errors.Is(err, world.ErrNotExist) {
@@ -166,7 +166,7 @@ func (r *GitRegistry) localPackageVersionClones(ctx context.Context, unversioned
 	return providables, nil
 }
 
-func (r *GitRegistry) localPackageVersionAliasesInWorktree(ctx context.Context, worktree billy.Filesystem) ([]registry.LocalPackage, error) {
+func (r *GitRegistry) localPackageVersionAliasesInWorktree(ctx context.Context, worktree billy.Filesystem) ([]registry.ResolvedPackage, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -193,14 +193,14 @@ func (r *GitRegistry) localPackageVersionAliasesInWorktree(ctx context.Context, 
 		return nil, err
 	}
 
-	packages := make([]registry.LocalPackage, len(refs))
+	packages := make([]registry.ResolvedPackage, len(refs))
 	packageName := remote.Config().URLs[0]
 	for i, ref := range refs {
 		if !ref.Name().IsTag() {
 			continue
 		}
 		packages[i] = &localGitPackage{
-			localPath: worktree.Root(),
+			fs: worktree,
 			remoteGitPackage: &remoteGitPackage{
 				provider:     r,
 				source:       packageName,
@@ -241,7 +241,7 @@ func (r *GitRegistry) relevantReferences(repo *git.Repository) ([]*plumbing.Refe
 	return versions, nil
 }
 
-func (r *GitRegistry) clone(ctx context.Context, pkg *remoteGitPackage) (registry.LocalPackage, error) {
+func (r *GitRegistry) clone(ctx context.Context, pkg *remoteGitPackage) (registry.ResolvedPackage, error) {
 	repoPath := path.Join(mangle(pkg.source), mangle(pkg.version.String()))
 	err := r.rootfs.MkdirAll(repoPath, 0755)
 	if err != nil {
@@ -270,7 +270,7 @@ func (r *GitRegistry) clone(ctx context.Context, pkg *remoteGitPackage) (registr
 	}
 	return &localGitPackage{
 		remoteGitPackage: pkg,
-		localPath:        worktreefs.Root(),
+		fs:               worktreefs,
 	}, nil
 }
 

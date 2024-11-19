@@ -79,7 +79,7 @@ func _rangeCount(v) {
   return v.end - v.start
 }
 
-func _rangeIterate(v) {
+func _rangeIterate(v, yield) {
   let i = v.start
   let l = v.end
   for {

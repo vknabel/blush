@@ -8,6 +8,7 @@ import (
 // These are not guaranteed to be constant over versions and are not safe to serialize.
 // They only offer fast creation for literals without excessive lookups.
 // May change in the future.
+// TODO: Either use an alternative or find out how to prefill these.
 const (
 	typeIdArray TypeId = iota
 	typeIdBool

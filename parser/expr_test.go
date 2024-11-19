@@ -24,6 +24,9 @@ func TestExprIdentifier(t *testing.T) {
 		{"(if x { y } else if e { e1 } else { z })", "(if x { y } else if e { e1 } else { z })"},
 		{"(if x { y } else if e { e1 } else if f { f1 } else { z })", "(if x { y } else if e { e1 } else if f { f1 } else { z })"},
 		{"json.Null", "json.Null"},
+		{"[42 + 1337]", "[(42+1337)]"},
+		{"[42 + 1337: 12 - 34]", "[(42+1337): (12-34)]"},
+		{"[42 + 1337: 12 - 34, 2: 3]", "[(42+1337): (12-34), 2: 3]"},
 	}
 
 	for i, tt := range tests {

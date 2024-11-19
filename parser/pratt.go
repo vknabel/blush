@@ -304,6 +304,11 @@ func (p *Parser) parseExprListOrDict() ast.Expr {
 
 	initialExpr := p.parsePrattExpr(LOWEST)
 
+	if p.curIs(token.RBRACKET) {
+		p.nextToken()
+		return ast.MakeExprArray([]ast.Expr{initialExpr}, tok)
+	}
+
 	if p.curIs(token.COMMA) {
 		rest := p.parsePrattExprArrayElements()
 		if rest == nil {

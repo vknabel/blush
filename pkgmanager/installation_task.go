@@ -12,7 +12,7 @@ type InstallationTask struct {
 	pot        potfile.Potfile
 	pkgmanager *PackageManager
 
-	completed []registry.LocalPackage
+	completed []registry.ResolvedPackage
 	queue     []potfile.Dependency
 }
 
@@ -21,7 +21,7 @@ func (t *InstallationTask) Run(ctx context.Context) error {
 	if t.queue == nil {
 		t.queue = t.pot.Dependencies
 	}
-	availables := make(map[string][]registry.LocalPackage, 0)
+	availables := make(map[string][]registry.ResolvedPackage, 0)
 
 	for _, reg := range t.pkgmanager.registries {
 		available, err := reg.Discover(ctx)
