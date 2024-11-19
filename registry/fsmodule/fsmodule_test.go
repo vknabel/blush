@@ -39,8 +39,7 @@ func TestDiscoderFSModules(t *testing.T) {
 				"/github.com/vknabel/lithia-example/cmd/main.lithia":  "module cmd",
 				"/github.com/vknabel/lithia-example/app/root.lithia":  "module app",
 
-				// TODO: currently we only nest one level deep
-				// "/github.com/vknabel/lithia-example/app/views/body.lithia": "module views",
+				"/github.com/vknabel/lithia-example/app/views/body.lithia": "module views",
 			},
 			want: []testWant{
 				{
@@ -49,12 +48,12 @@ func TestDiscoderFSModules(t *testing.T) {
 						"memory:///github.com/vknabel/lithia-example/app/root.lithia": "module app",
 					},
 				},
-				// {
-				// 	uri: "memory:///github.com/vknabel/lithia-example/app/views",
-				// 	sources: map[registry.LogicalURI]string{
-				// 		"memory:///github.com/vknabel/lithia-example/app/views/body.lithia": "module views",
-				// 	},
-				// },
+				{
+					uri: "memory:///github.com/vknabel/lithia-example/app/views",
+					sources: map[registry.LogicalURI]string{
+						"memory:///github.com/vknabel/lithia-example/app/views/body.lithia": "module views",
+					},
+				},
 				{
 					uri: "memory:///github.com/vknabel/lithia-example/cmd",
 					sources: map[registry.LogicalURI]string{
@@ -112,7 +111,7 @@ func TestDiscoderFSModules(t *testing.T) {
 				want := tt.want[i]
 				t.Run(fmt.Sprintf("mod %d.", i), func(t *testing.T) {
 					if mod.URI() != want.uri {
-						t.Errorf("wrong uri %q", mod.URI())
+						t.Errorf("got uri %q, want %q", mod.URI(), want.uri)
 					}
 					srcs, err := mod.Sources()
 					if err != nil {

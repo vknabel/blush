@@ -3,8 +3,11 @@ package fsmodule
 import (
 	"cmp"
 	"fmt"
+	"io/fs"
 	"path/filepath"
+	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	billyutil "github.com/go-git/go-billy/v5/util"
@@ -40,7 +43,8 @@ func DiscoverModules(base registry.LogicalURI, fs billy.Filesystem) ([]*FSModule
 	rootSrcs := make(map[registry.LogicalURI]*FSModule)
 
 	// TODO: replace glob with cusom logic
-	matches, err := billyutil.Glob(fs, "**/*.lithia")
+	// matches, err := billyutil.Glob(fs, "**/*.lithia")
+	matches, err := recursiveGlob(fs, 5)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover modules of %q, %w", base, err)
 	}
@@ -77,4 +81,38 @@ func DiscoverModules(base registry.LogicalURI, fs billy.Filesystem) ([]*FSModule
 		return cmp.Compare(lhs.URI(), rhs.URI())
 	})
 	return mods, nil
+}
+
+func recursiveGlob(fsys billy.Filesystem, maxDepth int) ([]string, error) {
+	var (
+		sources []string
+		folder  = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_-]+$")
+		ext     = ".lithia"
+	)
+
+	err := billyutil.Walk(fsys, ".", func(path string, info fs.FileInfo, err error) error {
+		if path == "" || path == "." {
+			return nil
+		}
+		if info.IsDir() {
+			if maxDepth > 0 && len(strings.Split(path, string(filepath.Separator))) > maxDepth {
+				return filepath.SkipDir
+			}
+			ok := folder.MatchString(filepath.Base(path))
+			if !ok {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if filepath.Ext(path) == ext {
+			sources = append(sources, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return sources, nil
 }
