@@ -16,6 +16,8 @@ type Token struct {
 const (
 	ILLEGAL TokenType = "ILLEGAL"
 	EOF     TokenType = "EOF"
+	// A virtual token, that does not actually exist and represents directories.
+	MODULE_DIRECTORY TokenType = "MODULE_DIRECTORY"
 
 	// Identifiers + literals
 	IDENT  TokenType = "IDENT"

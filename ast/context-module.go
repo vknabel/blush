@@ -1,6 +1,9 @@
 package ast
 
-import "github.com/vknabel/lithia/registry"
+import (
+	"github.com/vknabel/lithia/registry"
+	"github.com/vknabel/lithia/token"
+)
 
 type ModuleName StaticReference
 
@@ -22,4 +25,22 @@ func MakeContextModule(name registry.LogicalURI) *ContextModule {
 
 func (m *ContextModule) AddSourceFile(sourceFile *SourceFile) {
 	m.Files = append(m.Files, sourceFile)
+}
+
+func (m *ContextModule) TokenLiteral() token.Token {
+	return token.Token{
+		Type:    token.MODULE_DIRECTORY,
+		Literal: string(m.Name),
+		Source: &token.Source{
+			File:   string(m.Name),
+			Offset: 0,
+		},
+		Leading: []token.DecorativeToken{},
+	}
+}
+
+func (m *ContextModule) EnumerateChildNodes(action func(child Node)) {
+	for _, src := range m.Files {
+		action(src)
+	}
 }

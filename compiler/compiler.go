@@ -17,6 +17,14 @@ const (
 
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
+	case *ast.ContextModule:
+		for _, src := range node.Files {
+			err := c.Compile(src)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	case *ast.SourceFile:
 		for _, stmt := range node.Statements {
 			err := c.Compile(stmt)
