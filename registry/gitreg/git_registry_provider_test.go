@@ -26,7 +26,7 @@ func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 	defer cancel()
 
 	reg := gitreg.New(memfs.New())
-	pkgs, err := reg.DiscoverPackageVersions(ctx, "https://github.com/vknabel/blush")
+	pkgs, err := reg.DiscoverPackageVersions(ctx, "https://github.com/vknabel/lithia")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,8 +42,8 @@ func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 	})
 	pkg := pkgs[0]
 
-	if pkg.Source() != "https://github.com/vknabel/blush" {
-		t.Errorf("expected package name to be github.com/vknabel/blush, got %s", pkg.Source())
+	if pkg.Source() != "https://github.com/vknabel/lithia" {
+		t.Errorf("expected package name to be github.com/vknabel/lithia, got %s", pkg.Source())
 	}
 	if pkg.Version().String() != "0.0.19" {
 		t.Errorf("expected package version to be v0.0.19, got %s", pkg.Version())
@@ -53,8 +53,8 @@ func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if localPkg.Source() != "https://github.com/vknabel/blush" {
-		t.Errorf("expected package local path to be /github.com/vknabel/blush, got %s", localPkg.Source())
+	if localPkg.Source() != "https://github.com/vknabel/lithia" {
+		t.Errorf("expected package local path to be /github.com/vknabel/lithia, got %s", localPkg.Source())
 	}
 	if localPkg.Version().String() != "0.0.19" {
 		t.Errorf("expected package version to be v0.0.19, got %s", localPkg.Version())
@@ -75,7 +75,7 @@ func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 // 		t.Errorf("expected no packages, got %d", len(packages))
 // 	}
 
-// 	versions, err := reg.DiscoverPackageVersions(ctx, "https://github.com/vknabel/blush")
+// 	versions, err := reg.DiscoverPackageVersions(ctx, "https://github.com/vknabel/lithia")
 // 	if err != nil {
 // 		t.Fatal(err)
 // 	}
@@ -95,13 +95,13 @@ func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 // 		Comparison: version.ComparisonUpToNextMajor,
 // 		Version:    version.SemverVersion{Major: 0, Minor: 0, Patch: 1},
 // 	}
-// 	pkg, err := reg.ResolveLatest(ctx, "https://github.com/vknabel/blush", predicate)
+// 	pkg, err := reg.ResolveLatest(ctx, "https://github.com/vknabel/lithia", predicate)
 // 	if err != nil {
 // 		t.Fatal(err)
 // 	}
 
-// 	if pkg.Name != "https://github.com/vknabel/blush" {
-// 		t.Errorf("expected package name to be github.com/vknabel/blush, got %s", pkg.Name)
+// 	if pkg.Name != "https://github.com/vknabel/lithia" {
+// 		t.Errorf("expected package name to be github.com/vknabel/lithia, got %s", pkg.Name)
 // 	}
 
 // 	packages, err = reg.Discover(ctx)
@@ -112,8 +112,8 @@ func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 // 		t.Errorf("expected at least one package, got %d, %v", len(packages), packages)
 // 	}
 // 	for i, pkg := range packages {
-// 		if pkg.Name != "https://github.com/vknabel/blush" {
-// 			t.Errorf("expected package %d name to be https://github.com/vknabel/blush, got %s", i, packages[i].Name)
+// 		if pkg.Name != "https://github.com/vknabel/lithia" {
+// 			t.Errorf("expected package %d name to be https://github.com/vknabel/lithia, got %s", i, packages[i].Name)
 // 		}
 // 	}
 // }
