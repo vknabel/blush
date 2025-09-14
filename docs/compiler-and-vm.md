@@ -14,7 +14,7 @@
 | constfalse    | 0     | Push boolean `false`                           |          |
 | pop           | 0     | Discard top of stack                           |          |
 | array         | 0     | Build array from preceding values             | length on stack |
-| dict          | 0     | Build dictionary from preceding key/value pairs| length on stack |
+| dict          | 0     | Build dictionary from preceding key/value pairs | length on stack |
 | asserttype    | 2     | Assert top value has given type ID             |          |
 | jump          | 2     | Unconditional jump to address                  |          |
 | jumptrue      | 2     | Jump if top value is truthy                    |          |
