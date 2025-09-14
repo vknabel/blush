@@ -1,14 +1,14 @@
 
-import pot = potfile
-import potfile.tasks
+import cave
+import cave.tasks
 
-@pot.Dependencies()
+@cave.Dependencies()
 data Dependencies {
-	@pot.Prelude()
-	data Prelude {
-		@tasks.Use("test")
-		test
-	}
+        @cave.Prelude()
+        data Prelude {
+                @tasks.Use("test")
+                test
+        }
 }
 
 @tasks.Name("generate")

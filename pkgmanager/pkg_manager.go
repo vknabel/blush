@@ -1,10 +1,10 @@
 package pkgmanager
 
 import (
-	"github.com/go-git/go-billy/v5"
-	"github.com/vknabel/blush/potfile"
-	"github.com/vknabel/blush/registry"
-	"github.com/vknabel/blush/registry/gitreg"
+        "github.com/go-git/go-billy/v5"
+        "github.com/vknabel/blush/cavefile"
+        "github.com/vknabel/blush/registry"
+        "github.com/vknabel/blush/registry/gitreg"
 )
 
 type PackageManager struct {
@@ -23,9 +23,9 @@ func New(fs billy.Filesystem) (*PackageManager, error) {
 	}, nil
 }
 
-func (pm *PackageManager) Install(pot potfile.Potfile) *InstallationTask {
-	return &InstallationTask{
-		pkgmanager: pm,
-		pot:        pot,
-	}
+func (pm *PackageManager) Install(cf cavefile.Cavefile) *InstallationTask {
+        return &InstallationTask{
+                pkgmanager: pm,
+                cave:       cf,
+        }
 }
