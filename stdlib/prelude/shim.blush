@@ -37,7 +37,6 @@ extern Dict {
   @Type(Int) length
 }
 
-// 
 // A callable function.
 extern Func {
   // The amount of function parameters to be passed.
