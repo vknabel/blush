@@ -3,6 +3,7 @@ package ast
 import (
 	"errors"
 	"fmt"
+	"sync"
 )
 
 var (
@@ -19,10 +20,11 @@ const (
 )
 
 type Symbol struct {
-	Name  string
-	Scope SymbolScope
-	Index int
-	Decl  Decl
+	Name   string
+	Scope  SymbolScope
+	Index  int
+	Decl   Decl
+	Parent *Symbol
 
 	Usages     []SymbolUsage
 	ChildTable *SymbolTable
@@ -56,6 +58,7 @@ type SymbolTable struct {
 	symbolCounter    int
 	functionCounter  int
 	exportScopeLevel ExportScope
+	mu               sync.RWMutex
 }
 
 func MakeSymbolTable(parent *SymbolTable, declaringNode Node) *SymbolTable {
@@ -67,6 +70,9 @@ func MakeSymbolTable(parent *SymbolTable, declaringNode Node) *SymbolTable {
 }
 
 func (st *SymbolTable) Name() string {
+	st.mu.RLock()
+	defer st.mu.RUnlock()
+
 	var prefix string
 	if st.Parent != nil {
 		prefix = st.Parent.Name() + "->"
@@ -88,6 +94,9 @@ func (st *SymbolTable) Name() string {
 }
 
 func (st *SymbolTable) Insert(decl Decl) *Symbol {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	scope := decl.ExportScope()
 	if st.exportScopeLevel >= scope && st.Parent != nil {
 		sym := st.Parent.Insert(decl)
@@ -121,6 +130,8 @@ func (st *SymbolTable) Insert(decl Decl) *Symbol {
 
 func (st *SymbolTable) addSymbol(symbol Symbol) *Symbol {
 	if symbol.Decl != nil && st.exportScopeLevel >= symbol.Decl.ExportScope() {
+		st.Parent.mu.Lock()
+		defer st.Parent.mu.Unlock()
 		return st.Parent.addSymbol(symbol)
 	}
 	ref := &symbol
@@ -132,9 +143,18 @@ func (st *SymbolTable) resolve(name string) (*Symbol, bool) {
 	if st == nil {
 		return nil, false
 	}
+
 	if sym, ok := st.Symbols[name]; ok {
 		return sym, true
 	}
+
+	if st.Parent == nil {
+		return nil, false
+	}
+
+	st.Parent.mu.Lock()
+	defer st.Parent.mu.Unlock()
+
 	if sym, ok := st.Parent.resolve(name); ok {
 		return st.defineFree(sym), true
 	}
@@ -142,23 +162,28 @@ func (st *SymbolTable) resolve(name string) (*Symbol, bool) {
 }
 
 func (st *SymbolTable) defineFree(sym *Symbol) *Symbol {
+	idx := len(st.FreeSymbols)
 	st.FreeSymbols = append(st.FreeSymbols, sym)
 	free := &Symbol{
 		Name:       sym.Name,
 		Scope:      FreeScope,
-		Index:      len(st.FreeSymbols) - 1,
+		Index:      idx,
 		Decl:       sym.Decl,
-		Usages:     sym.Usages,
+		Usages:     nil,
 		ChildTable: sym.ChildTable,
 		Errs:       sym.Errs,
 		ConstantId: sym.ConstantId,
 		TypeSymbol: sym.TypeSymbol,
+		Parent:     sym,
 	}
 	st.Symbols[sym.Name] = free
 	return free
 }
 
 func (st *SymbolTable) Lookup(name string, fromNode Node, requirements ...SymbolRequirement) *Symbol {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	usage := SymbolUsage{
 		Node:             fromNode,
 		typeRequirements: requirements,
@@ -177,6 +202,9 @@ func (st *SymbolTable) Lookup(name string, fromNode Node, requirements ...Symbol
 }
 
 func (st *SymbolTable) LookupIdentifier(name Identifier, requirements ...SymbolRequirement) *Symbol {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	usage := SymbolUsage{
 		Node:             name,
 		typeRequirements: requirements,
@@ -198,6 +226,9 @@ func (st *SymbolTable) LookupRef(ref StaticReference, requirements ...SymbolRequ
 	if len(ref) == 1 {
 		return st.LookupIdentifier(ref[0], requirements...)
 	}
+
+	st.mu.Lock()
+	defer st.mu.Unlock()
 
 	name := ref[0]
 	usage := SymbolUsage{
@@ -224,6 +255,9 @@ func (st *SymbolTable) LookupRef(ref StaticReference, requirements ...SymbolRequ
 }
 
 func (st *SymbolTable) NextAnonymousFunctionName() string {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	st.functionCounter++
 	return fmt.Sprintf("func#%d", st.functionCounter)
 }
