@@ -3,7 +3,7 @@ package ast
 import (
 	"strconv"
 
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/token"
 )
 
 var _ Expr = ExprString{}

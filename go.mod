@@ -1,4 +1,4 @@
-module github.com/vknabel/lithia
+module github.com/vknabel/blush
 
 go 1.23
 

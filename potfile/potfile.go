@@ -1,6 +1,6 @@
 package potfile
 
-import "github.com/vknabel/lithia/version"
+import "github.com/vknabel/blush/version"
 
 type Potfile struct {
 	Dependencies []Dependency

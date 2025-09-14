@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/vknabel/lithia/ast"
+	"github.com/vknabel/blush/ast"
 )
 
 func TestExprIdentifier(t *testing.T) {

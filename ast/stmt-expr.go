@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/token"
 )
 
 var _ Statement = &StmtExpr{}

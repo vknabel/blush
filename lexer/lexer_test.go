@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/vknabel/lithia/lexer"
-	"github.com/vknabel/lithia/registry/staticmodule"
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/lexer"
+	"github.com/vknabel/blush/registry/staticmodule"
+	"github.com/vknabel/blush/token"
 )
 
 func TestLexer(t *testing.T) {

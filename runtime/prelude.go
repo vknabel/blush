@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"github.com/vknabel/lithia/ast"
+	"github.com/vknabel/blush/ast"
 )
 
 // Declares some TypeId constants for the prelude data types.

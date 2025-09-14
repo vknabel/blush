@@ -1,6 +1,6 @@
 package runtime
 
-import "github.com/vknabel/lithia/ast"
+import "github.com/vknabel/blush/ast"
 
 var _ RuntimeValue = &AnyType{}
 

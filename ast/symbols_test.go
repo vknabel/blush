@@ -3,8 +3,8 @@ package ast_test
 // import (
 // 	"testing"
 
-// 	"github.com/vknabel/lithia/ast"
-// 	"github.com/vknabel/lithia/token"
+// 	"github.com/vknabel/blush/ast"
+// 	"github.com/vknabel/blush/token"
 // )
 
 // func TestNonDelegatedSymbolTable(t *testing.T) {

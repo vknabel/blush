@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vknabel/lithia/potfile"
-	"github.com/vknabel/lithia/registry"
+	"github.com/vknabel/blush/potfile"
+	"github.com/vknabel/blush/registry"
 )
 
 type InstallationTask struct {

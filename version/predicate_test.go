@@ -3,7 +3,7 @@ package version_test
 import (
 	"testing"
 
-	"github.com/vknabel/lithia/version"
+	"github.com/vknabel/blush/version"
 )
 
 func TestComparisonString(t *testing.T) {

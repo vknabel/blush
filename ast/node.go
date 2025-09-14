@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/vknabel/lithia/token"
+import "github.com/vknabel/blush/token"
 
 type Node interface {
 	TokenLiteral() token.Token

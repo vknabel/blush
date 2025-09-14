@@ -3,7 +3,7 @@ package runtime
 import (
 	"fmt"
 
-	"github.com/vknabel/lithia/ast"
+	"github.com/vknabel/blush/ast"
 )
 
 var _ RuntimeValue = &EnumType{}

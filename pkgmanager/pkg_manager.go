@@ -2,9 +2,9 @@ package pkgmanager
 
 import (
 	"github.com/go-git/go-billy/v5"
-	"github.com/vknabel/lithia/potfile"
-	"github.com/vknabel/lithia/registry"
-	"github.com/vknabel/lithia/registry/gitreg"
+	"github.com/vknabel/blush/potfile"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/registry/gitreg"
 )
 
 type PackageManager struct {

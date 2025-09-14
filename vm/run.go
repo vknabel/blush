@@ -3,8 +3,8 @@ package vm
 import (
 	"fmt"
 
-	"github.com/vknabel/lithia/op"
-	"github.com/vknabel/lithia/runtime"
+	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/runtime"
 )
 
 func (vm *VM) Run() error {

@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"github.com/vknabel/lithia/ast"
-	"github.com/vknabel/lithia/lexer"
-	"github.com/vknabel/lithia/registry"
+	"github.com/vknabel/blush/ast"
+	"github.com/vknabel/blush/lexer"
+	"github.com/vknabel/blush/registry"
 )
 
 type ModuleParser struct {
