@@ -48,6 +48,7 @@ When compiling, named arguments are reordered into positional form to reuse exis
 Introduce a `@Default` annotation that accepts an expression providing a field's default value.  Standard library types and functions may adopt named construction and use `@Default` where appropriate.
 ```blush
 annotation Default {
+  // The default value expression for the field. Should be of the field's type.
   value
 }
 ```
