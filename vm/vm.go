@@ -14,6 +14,7 @@ type VM struct {
 	constants    []runtime.RuntimeValue
 	stack        []runtime.RuntimeValue
 	sp           int
+	globals      []runtime.RuntimeValue
 	instructions op.Instructions
 }
 
@@ -21,6 +22,7 @@ func New(bytecode *compiler.Bytecode) *VM {
 	return &VM{
 		stack:        make([]runtime.RuntimeValue, stackSize),
 		sp:           0,
+		globals:      make([]runtime.RuntimeValue, globalSize),
 		constants:    bytecode.Constants,
 		instructions: bytecode.Instructions,
 	}

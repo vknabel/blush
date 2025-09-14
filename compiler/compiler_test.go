@@ -252,6 +252,35 @@ func TestBinaryOperators(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestGlobalVariables(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             "let answer = 1\nanswer",
+			expectedConstants: []interface{}{1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.SetGlobal, 0),
+				code.Make(code.GetGlobal, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			input:             "let a = 1\nlet b = a\nb",
+			expectedConstants: []interface{}{1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.SetGlobal, 0),
+				code.Make(code.GetGlobal, 0),
+				code.Make(code.SetGlobal, 1),
+				code.Make(code.GetGlobal, 1),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func TesEQtIfStmtsArithmetic(t *testing.T) {
 	tests := []compilerTestCase{
 		{

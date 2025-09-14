@@ -3,6 +3,7 @@ package compiler
 import (
 	"fmt"
 	"math"
+	"sort"
 
 	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
@@ -26,9 +27,20 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		return nil
 	case *ast.SourceFile:
+		decls := make([]*ast.Symbol, 0, len(node.Symbols.Symbols))
+		for _, sym := range node.Symbols.Symbols {
+			if sym.Decl != nil {
+				decls = append(decls, sym)
+			}
+		}
+		sort.Slice(decls, func(i, j int) bool { return decls[i].Index < decls[j].Index })
+		for _, sym := range decls {
+			if err := c.Compile(sym.Decl); err != nil {
+				return err
+			}
+		}
 		for _, stmt := range node.Statements {
-			err := c.Compile(stmt)
-			if err != nil {
+			if err := c.Compile(stmt); err != nil {
 				return err
 			}
 		}
@@ -39,6 +51,18 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		c.emit(op.Pop)
+		return nil
+	case *ast.DeclVariable:
+		index, ok := c.globals[node.Name.Value]
+		if !ok {
+			index = len(c.globals)
+			c.globals[node.Name.Value] = index
+		}
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+		c.emit(op.SetGlobal, index)
 		return nil
 	case ast.StmtIf:
 		return c.compileStmtIf(node)
@@ -100,6 +124,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 		idx := c.addConstant(val)
 		c.emit(op.Const, idx)
 		c.emit(op.Dict)
+		return nil
+	case *ast.ExprIdentifier:
+		index, ok := c.globals[node.Name.Value]
+		if !ok {
+			return fmt.Errorf("unknown identifier %s", node.Name.Value)
+		}
+		c.emit(op.GetGlobal, index)
 		return nil
 
 	default:

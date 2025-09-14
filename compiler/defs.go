@@ -9,6 +9,7 @@ type Compiler struct {
 	instructions op.Instructions
 	constants    []runtime.RuntimeValue
 	plugins      *runtime.ExternPluginRegistry
+	globals      map[string]int
 }
 
 func New() *Compiler {
@@ -16,6 +17,7 @@ func New() *Compiler {
 		instructions: op.Instructions{},
 		constants:    []runtime.RuntimeValue{},
 		plugins:      &runtime.ExternPluginRegistry{},
+		globals:      map[string]int{},
 	}
 }
 

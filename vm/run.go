@@ -38,6 +38,17 @@ func (vm *VM) Run() error {
 				return err
 			}
 
+		case op.GetGlobal:
+			idx := op.ReadUint16(vm.instructions[ip+1:])
+			ip += 2
+			if err := vm.push(vm.globals[idx]); err != nil {
+				return err
+			}
+		case op.SetGlobal:
+			idx := op.ReadUint16(vm.instructions[ip+1:])
+			ip += 2
+			vm.globals[idx] = vm.pop()
+
 		case op.Jump:
 			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
 			ip = pos - 1

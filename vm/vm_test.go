@@ -47,6 +47,16 @@ func TestBasicOperations(t *testing.T) {
 
 	runVmTests(t, tests)
 }
+
+func TestGlobalVariables(t *testing.T) {
+	tests := []vmTestCase{
+		{input: "let a = 1\na", expected: 1},
+		{input: "let a = 1\nlet b = 2\na + b", expected: 3},
+		{input: "let a = 1\nlet b = a\nb", expected: 1},
+	}
+
+	runVmTests(t, tests)
+}
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 

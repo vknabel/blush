@@ -7,6 +7,9 @@ const (
 	ConstFalse
 	Pop
 
+	GetGlobal
+	SetGlobal
+
 	Array
 	Dict
 
@@ -43,6 +46,9 @@ var definitions = map[Opcode]*Definition{
 	ConstTrue:  {"consttrue", []int{}},
 	ConstFalse: {"constfalse", []int{}},
 	Pop:        {"pop", []int{}},
+
+	GetGlobal: {"getglobal", []int{2}},
+	SetGlobal: {"setglobal", []int{2}},
 
 	Array: {"array", []int{}},
 	Dict:  {"dict", []int{}},

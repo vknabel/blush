@@ -13,6 +13,8 @@ func TestMake(t *testing.T) {
 		want     []byte
 	}{
 		{Const, []int{65534}, []byte{byte(Const), 255, 254}},
+		{GetGlobal, []int{65534}, []byte{byte(GetGlobal), 255, 254}},
+		{SetGlobal, []int{65534}, []byte{byte(SetGlobal), 255, 254}},
 	}
 	for _, tt := range tests {
 		instruction := Make(tt.op, tt.operands...)
