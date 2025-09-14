@@ -13,5 +13,5 @@ To create a new proposal:
 
 | Proposal | Title | Status | Author |
 | --- | --- | --- | --- |
-| *(none yet)* |  |  |  |
+| [BE-001](BE-001-named-data-construction.md) | Named Data Construction | Draft | [@openai](https://github.com/openai) |
 
