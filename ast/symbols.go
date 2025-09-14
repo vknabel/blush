@@ -130,9 +130,12 @@ func (st *SymbolTable) Insert(decl Decl) *Symbol {
 
 func (st *SymbolTable) addSymbol(symbol Symbol) *Symbol {
 	if symbol.Decl != nil && st.exportScopeLevel >= symbol.Decl.ExportScope() {
-		st.Parent.mu.Lock()
-		defer st.Parent.mu.Unlock()
-		return st.Parent.addSymbol(symbol)
+		if st.Parent != nil {
+			st.Parent.mu.Lock()
+			defer st.Parent.mu.Unlock()
+			return st.Parent.addSymbol(symbol)
+		}
+		// If Parent is nil, fall through to add to current table
 	}
 	ref := &symbol
 	st.Symbols[symbol.Name] = ref
