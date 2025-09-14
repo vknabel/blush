@@ -13,11 +13,11 @@ import (
 //
 // The expected folder structure in increasing priority is:
 //
-//	 $LITHIA_STDLIB/
+//	 $BLUSH_STDLIB/
 //	 └── git/<package>/<version>/
 //		 ├── Potfile
 //	 	 └── <submodule>/
-//	 $LITHIA_PACKAGES/
+//	 $BLUSH_PACKAGES/
 //	 └── git/<package>/<version>/
 //		 ├── Potfile
 //	 	 └── <submodule>/

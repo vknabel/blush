@@ -34,36 +34,36 @@ func TestDiscoderFSModules(t *testing.T) {
 			cwd:  "/github.com/vknabel/blush-example",
 			base: "memory:///github.com/vknabel/blush-example",
 			files: map[string]string{
-				"/github.com/vknabel/blush-example/Potfile":          "module potfile",
-				"/github.com/vknabel/blush-example/tools/fmt.lithia": "module tools",
-				"/github.com/vknabel/blush-example/cmd/main.lithia":  "module cmd",
-				"/github.com/vknabel/blush-example/app/root.lithia":  "module app",
+				"/github.com/vknabel/blush-example/Potfile":         "module potfile",
+				"/github.com/vknabel/blush-example/tools/fmt.blush": "module tools",
+				"/github.com/vknabel/blush-example/cmd/main.blush":  "module cmd",
+				"/github.com/vknabel/blush-example/app/root.blush":  "module app",
 
-				"/github.com/vknabel/blush-example/app/views/body.lithia": "module views",
+				"/github.com/vknabel/blush-example/app/views/body.blush": "module views",
 			},
 			want: []testWant{
 				{
 					uri: "memory:///github.com/vknabel/blush-example/app",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/blush-example/app/root.lithia": "module app",
+						"memory:///github.com/vknabel/blush-example/app/root.blush": "module app",
 					},
 				},
 				{
 					uri: "memory:///github.com/vknabel/blush-example/app/views",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/blush-example/app/views/body.lithia": "module views",
+						"memory:///github.com/vknabel/blush-example/app/views/body.blush": "module views",
 					},
 				},
 				{
 					uri: "memory:///github.com/vknabel/blush-example/cmd",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/blush-example/cmd/main.lithia": "module cmd",
+						"memory:///github.com/vknabel/blush-example/cmd/main.blush": "module cmd",
 					},
 				},
 				{
 					uri: "memory:///github.com/vknabel/blush-example/tools",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/blush-example/tools/fmt.lithia": "module tools",
+						"memory:///github.com/vknabel/blush-example/tools/fmt.blush": "module tools",
 					},
 				},
 			},

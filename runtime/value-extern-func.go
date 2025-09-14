@@ -29,11 +29,6 @@ func (ef ExternFunc) Arity() int {
 	return ef.arity
 }
 
-// Call implements CallableRuntimeValue.
-func (ef ExternFunc) Call(args []RuntimeValue) RuntimeValue {
-	return ef.Impl(args)
-}
-
 // Inspect implements CallableRuntimeValue.
 func (ef ExternFunc) Inspect() string {
 	return fmt.Sprintf("extern %s(#%d)", ef.symbol.Decl.DeclName(), ef.arity)

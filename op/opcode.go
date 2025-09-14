@@ -39,7 +39,7 @@ const (
 )
 
 var definitions = map[Opcode]*Definition{
-	Const:      {"const", []int{2}},
+	Const:      {"const", []int{2}}, // const id
 	ConstTrue:  {"consttrue", []int{}},
 	ConstFalse: {"constfalse", []int{}},
 	Pop:        {"pop", []int{}},
@@ -47,11 +47,11 @@ var definitions = map[Opcode]*Definition{
 	Array: {"array", []int{}},
 	Dict:  {"dict", []int{}},
 
-	AssertType: {"asserttype", []int{2}},
+	AssertType: {"asserttype", []int{2}}, // type id
 
-	Jump:      {"jump", []int{2}},
-	JumpTrue:  {"jumptrue", []int{2}},
-	JumpFalse: {"jumpfalse", []int{2}},
+	Jump:      {"jump", []int{2}},      // address
+	JumpTrue:  {"jumptrue", []int{2}},  // address
+	JumpFalse: {"jumpfalse", []int{2}}, // address
 
 	Negate: {"negate", []int{}},
 	Invert: {"invert", []int{}},

@@ -418,11 +418,11 @@ func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 }
 
 func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
-	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.lithia", input))
+	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.blush", input))
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := parser.NewSourceParser(l, nil, "test.lithia")
+	p := parser.NewSourceParser(l, nil, "test.blush")
 	srcFile := p.ParseSourceFile()
 	checkParserErrors(t, p, input)
 	return srcFile

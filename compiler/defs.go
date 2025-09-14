@@ -5,17 +5,31 @@ import (
 	"github.com/vknabel/blush/runtime"
 )
 
+type CompilationScope struct {
+	instructions op.Instructions
+	constants    []runtime.RuntimeValue
+}
+
 type Compiler struct {
 	instructions op.Instructions
 	constants    []runtime.RuntimeValue
 	plugins      *runtime.ExternPluginRegistry
+
+	scopes   []CompilationScope
+	scodeIdx int
 }
 
 func New() *Compiler {
+	mainScope := CompilationScope{
+		instructions: op.Instructions{},
+		constants:    []runtime.RuntimeValue{},
+	}
 	return &Compiler{
 		instructions: op.Instructions{},
 		constants:    []runtime.RuntimeValue{},
 		plugins:      &runtime.ExternPluginRegistry{},
+		scopes:       []CompilationScope{mainScope},
+		scodeIdx:     0,
 	}
 }
 

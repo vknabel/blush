@@ -29,7 +29,7 @@ func (sf *SourceFile) Add(globalStmt Statement) {
 		panic("compiler-bug: nil statement")
 	}
 	if decl, ok := globalStmt.(Decl); ok {
-		if sym := sf.Symbols.resolve(decl.DeclName().Value); sym == nil || sym.Decl == nil {
+		if sym, ok := sf.Symbols.resolve(decl.DeclName().Value); !ok || sym.Decl == nil {
 			sf.Symbols.Insert(decl)
 		}
 		return
