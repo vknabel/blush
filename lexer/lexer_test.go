@@ -11,7 +11,7 @@ import (
 
 func TestLexer(t *testing.T) {
 	input := `
-#!/usr/bin/env lithia
+#!/usr/bin/env blush
 module example
 
 import tests {
@@ -32,7 +32,7 @@ test "any in enums matches all types", { fail =>
 	unless isCorrect, fail "should not be the case"
 }
 `
-	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.lithia", input))
+	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.blush", input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ test "any in enums matches all types", { fail =>
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
-		// {token.COMMENT, "!/usr/bin/env lithia"},
+		// {token.COMMENT, "!/usr/bin/env blush"},
 		{token.MODULE, "module"},
 		{token.IDENT, "example"},
 		{token.IMPORT, "import"},
@@ -774,7 +774,7 @@ func TestAllTokens(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.lithia", tt.input))
+		l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.blush", tt.input))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -849,10 +849,10 @@ func TestDecorativeLexer(t *testing.T) {
 		},
 		{
 			"empty shebang",
-			"#!/usr/bin/env lithia",
+			"#!/usr/bin/env blush",
 			[]tok{
 				{token.EOF, "", []deco{
-					{token.DECO_COMMENT, "!/usr/bin/env lithia"},
+					{token.DECO_COMMENT, "!/usr/bin/env blush"},
 				}},
 			},
 		},
@@ -921,7 +921,7 @@ func TestDecorativeLexer(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			l, err := lexer.New(staticmodule.NewSourceString("testing:///decorative/test.lithia", tt.input))
+			l, err := lexer.New(staticmodule.NewSourceString("testing:///decorative/test.blush", tt.input))
 			if err != nil {
 				t.Fatal(err)
 			}

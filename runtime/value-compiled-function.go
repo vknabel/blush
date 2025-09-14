@@ -3,8 +3,8 @@ package runtime
 import (
 	"fmt"
 
-	"github.com/vknabel/lithia/ast"
-	"github.com/vknabel/lithia/op"
+	"github.com/vknabel/blush/ast"
+	"github.com/vknabel/blush/op"
 )
 
 var _ CallableRuntimeValue = CompiledFunction{}

@@ -148,11 +148,11 @@ func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
 	parentTable := ast.MakeSymbolTable(nil, ast.Identifier{
 		Value: "test",
 	})
-	l, err := lexer.New(staticmodule.NewSourceString("testing:///test.lithia", input))
+	l, err := lexer.New(staticmodule.NewSourceString("testing:///test.blush", input))
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := parser.NewSourceParser(l, parentTable, "test.lithia")
+	p := parser.NewSourceParser(l, parentTable, "test.blush")
 
 	srcFile := p.ParseSourceFile()
 	checkParserErrors(t, p, input)
