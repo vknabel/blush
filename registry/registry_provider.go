@@ -15,21 +15,21 @@ import (
 //
 //	 $BLUSH_STDLIB/
 //	 └── git/<package>/<version>/
-//		 ├── Potfile
+//		 ├── Cavefile
 //	 	 └── <submodule>/
 //	 $BLUSH_PACKAGES/
 //	 └── git/<package>/<version>/
-//		 ├── Potfile
+//		 ├── Cavefile
 //	 	 └── <submodule>/
 //	 <package>
-//	 ├── Potfile
+//	 ├── Cavefile
 //	 ├── <vendored-package>/
-//	 │	 ├── Potfile
+//	 │	 ├── Cavefile
 //	 │	 └── <submodule>/
 //	 └── <submodule>/
 //
-// Each Potfile describes the package and its dependencies.
-// The Potfile also declares the package name which are used for the imports.
+// Each Cavefile describes the package and its dependencies.
+// The Cavefile also declares the package name which are used for the imports.
 // Each dependency can be renamed within the package.
 type Provider interface {
 	// Discover returns all packages in all versions that are available locally.

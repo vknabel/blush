@@ -27,7 +27,7 @@ import (
 //	 <root>/
 //	 └── <package>/
 //		 └── <version>/
-//			 ├── Potfile
+//			 ├── Cavefile
 //	 		 └── <submodule>/
 //
 // TODO: Add some in-memory caching to avoid discovering remote versions on every run.
