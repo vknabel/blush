@@ -7,8 +7,8 @@
 
 ## OpCodes
 
-| Mnemonic      | Width | Description                                    | Comments |
-| ------------- | ----- | ---------------------------------------------- | -------- |
+| Mnemonic      | Widths | Description                                    | Comments |
+| ------------- | ------ | ---------------------------------------------- | -------- |
 | const         | 2     | Push constant from constant pool               |          |
 | consttrue     | 0     | Push boolean `true`                            |          |
 | constfalse    | 0     | Push boolean `false`                           |          |
