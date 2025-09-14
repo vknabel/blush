@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/vknabel/lithia/registry"
-	"github.com/vknabel/lithia/registry/fsmodule"
-	"github.com/vknabel/lithia/version"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/registry/fsmodule"
+	"github.com/vknabel/blush/version"
 )
 
 type localGitPackage struct {

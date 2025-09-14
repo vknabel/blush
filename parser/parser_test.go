@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vknabel/lithia/ast"
-	"github.com/vknabel/lithia/lexer"
-	"github.com/vknabel/lithia/parser"
-	"github.com/vknabel/lithia/registry/staticmodule"
-	"github.com/vknabel/lithia/syncheck"
+	"github.com/vknabel/blush/ast"
+	"github.com/vknabel/blush/lexer"
+	"github.com/vknabel/blush/parser"
+	"github.com/vknabel/blush/registry/staticmodule"
+	"github.com/vknabel/blush/syncheck"
 )
 
 func TestParseSourceFile(t *testing.T) {

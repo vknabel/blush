@@ -3,9 +3,9 @@ package parser
 import (
 	"fmt"
 
-	"github.com/vknabel/lithia/ast"
-	"github.com/vknabel/lithia/lexer"
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/ast"
+	"github.com/vknabel/blush/lexer"
+	"github.com/vknabel/blush/token"
 )
 
 type Parser struct {

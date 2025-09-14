@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"github.com/vknabel/lithia/ast"
+	"github.com/vknabel/blush/ast"
 )
 
 var _ RuntimeValue = SimpleType{}

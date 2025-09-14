@@ -1,8 +1,8 @@
 package ast
 
 import (
-	"github.com/vknabel/lithia/registry"
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/token"
 )
 
 type ModuleName StaticReference

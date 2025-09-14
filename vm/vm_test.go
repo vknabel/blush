@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vknabel/lithia/ast"
-	"github.com/vknabel/lithia/compiler"
-	"github.com/vknabel/lithia/lexer"
-	"github.com/vknabel/lithia/parser"
-	"github.com/vknabel/lithia/registry/staticmodule"
-	"github.com/vknabel/lithia/runtime"
-	"github.com/vknabel/lithia/vm"
+	"github.com/vknabel/blush/ast"
+	"github.com/vknabel/blush/compiler"
+	"github.com/vknabel/blush/lexer"
+	"github.com/vknabel/blush/parser"
+	"github.com/vknabel/blush/registry/staticmodule"
+	"github.com/vknabel/blush/runtime"
+	"github.com/vknabel/blush/vm"
 )
 
 type vmTestCase struct {

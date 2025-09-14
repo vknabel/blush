@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
-	"github.com/vknabel/lithia/registry"
-	"github.com/vknabel/lithia/registry/gitreg"
-	"github.com/vknabel/lithia/version"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/registry/gitreg"
+	"github.com/vknabel/blush/version"
 )
 
 func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {

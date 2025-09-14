@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/vknabel/lithia/ast"
-	"github.com/vknabel/lithia/op"
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/ast"
+	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/token"
 )
 
 const (

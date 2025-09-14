@@ -5,7 +5,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/vknabel/lithia/version"
+	"github.com/vknabel/blush/version"
 )
 
 // Provider is the registry for all packages in all versions.

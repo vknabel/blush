@@ -1,6 +1,6 @@
 package staticmodule
 
-import "github.com/vknabel/lithia/registry"
+import "github.com/vknabel/blush/registry"
 
 type (
 	StaticModule struct {

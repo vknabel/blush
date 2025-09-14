@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/vknabel/lithia/version"
+	"github.com/vknabel/blush/version"
 )
 
 func TestConditionParsing(t *testing.T) {

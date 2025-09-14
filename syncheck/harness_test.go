@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vknabel/lithia/syncheck"
+	"github.com/vknabel/blush/syncheck"
 )
 
 func TestHarness(t *testing.T) {

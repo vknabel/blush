@@ -3,7 +3,7 @@ package ast
 import (
 	"fmt"
 
-	"github.com/vknabel/lithia/token"
+	"github.com/vknabel/blush/token"
 )
 
 var _ Decl = DeclVariable{}
