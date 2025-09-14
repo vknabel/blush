@@ -1,6 +1,6 @@
 
 (*
-This file declares the new Lithia syntax starting from v0.1.0 and will be updated.
+This file declares the new Blush syntax starting from v0.1.0 and will be updated.
 It is used as formal reference in EBNF format, but the actual parser is not generated from it.
 
 The names of the productions follow a naming schema to be used within parsing implementations.

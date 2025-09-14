@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
-	"github.com/vknabel/lithia/registry"
-	"github.com/vknabel/lithia/registry/gitreg"
-	"github.com/vknabel/lithia/version"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/registry/gitreg"
+	"github.com/vknabel/blush/version"
 )
 
-func TestIntegrationGitRegistryResolveLatestLithiaInMemory(t *testing.T) {
+func TestIntegrationGitRegistryResolveLatestBlushInMemory(t *testing.T) {
 	resp, err := http.Get("https://github.com")
 	if err != nil {
 		t.Skipf("unable to connect to GitHub. Are you connected to the internet? %s", err)
@@ -61,7 +61,7 @@ func TestIntegrationGitRegistryResolveLatestLithiaInMemory(t *testing.T) {
 	}
 }
 
-// func TestIntegrationGitRegistryResolveSecondLatestLithia(t *testing.T) {
+// func TestIntegrationGitRegistryResolveSecondLatestBlush(t *testing.T) {
 // 	ctx, cancel := context.WithCancel(context.Background())
 // 	defer cancel()
 

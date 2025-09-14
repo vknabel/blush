@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/google/go-cmp/cmp"
-	"github.com/vknabel/lithia/registry"
-	"github.com/vknabel/lithia/registry/fsmodule"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/registry/fsmodule"
 )
 
 type (
@@ -31,39 +31,39 @@ func TestDiscoderFSModules(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "basic test",
-			cwd:  "/github.com/vknabel/lithia-example",
-			base: "memory:///github.com/vknabel/lithia-example",
+			cwd:  "/github.com/vknabel/blush-example",
+			base: "memory:///github.com/vknabel/blush-example",
 			files: map[string]string{
-				"/github.com/vknabel/lithia-example/Potfile":          "module potfile",
-				"/github.com/vknabel/lithia-example/tools/fmt.lithia": "module tools",
-				"/github.com/vknabel/lithia-example/cmd/main.lithia":  "module cmd",
-				"/github.com/vknabel/lithia-example/app/root.lithia":  "module app",
+				"/github.com/vknabel/blush-example/Potfile":          "module potfile",
+				"/github.com/vknabel/blush-example/tools/fmt.lithia": "module tools",
+				"/github.com/vknabel/blush-example/cmd/main.lithia":  "module cmd",
+				"/github.com/vknabel/blush-example/app/root.lithia":  "module app",
 
-				"/github.com/vknabel/lithia-example/app/views/body.lithia": "module views",
+				"/github.com/vknabel/blush-example/app/views/body.lithia": "module views",
 			},
 			want: []testWant{
 				{
-					uri: "memory:///github.com/vknabel/lithia-example/app",
+					uri: "memory:///github.com/vknabel/blush-example/app",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/lithia-example/app/root.lithia": "module app",
+						"memory:///github.com/vknabel/blush-example/app/root.lithia": "module app",
 					},
 				},
 				{
-					uri: "memory:///github.com/vknabel/lithia-example/app/views",
+					uri: "memory:///github.com/vknabel/blush-example/app/views",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/lithia-example/app/views/body.lithia": "module views",
+						"memory:///github.com/vknabel/blush-example/app/views/body.lithia": "module views",
 					},
 				},
 				{
-					uri: "memory:///github.com/vknabel/lithia-example/cmd",
+					uri: "memory:///github.com/vknabel/blush-example/cmd",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/lithia-example/cmd/main.lithia": "module cmd",
+						"memory:///github.com/vknabel/blush-example/cmd/main.lithia": "module cmd",
 					},
 				},
 				{
-					uri: "memory:///github.com/vknabel/lithia-example/tools",
+					uri: "memory:///github.com/vknabel/blush-example/tools",
 					sources: map[registry.LogicalURI]string{
-						"memory:///github.com/vknabel/lithia-example/tools/fmt.lithia": "module tools",
+						"memory:///github.com/vknabel/blush-example/tools/fmt.lithia": "module tools",
 					},
 				},
 			},

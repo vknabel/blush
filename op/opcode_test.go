@@ -3,7 +3,7 @@ package op_test
 import (
 	"testing"
 
-	. "github.com/vknabel/lithia/op"
+	. "github.com/vknabel/blush/op"
 )
 
 func TestMake(t *testing.T) {

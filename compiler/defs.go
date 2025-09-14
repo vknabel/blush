@@ -1,8 +1,8 @@
 package compiler
 
 import (
-	"github.com/vknabel/lithia/op"
-	"github.com/vknabel/lithia/runtime"
+	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/runtime"
 )
 
 type CompilationScope struct {

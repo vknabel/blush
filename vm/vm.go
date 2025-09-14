@@ -1,9 +1,9 @@
 package vm
 
 import (
-	"github.com/vknabel/lithia/compiler"
-	"github.com/vknabel/lithia/op"
-	"github.com/vknabel/lithia/runtime"
+	"github.com/vknabel/blush/compiler"
+	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/runtime"
 )
 
 const (

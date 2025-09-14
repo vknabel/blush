@@ -1,8 +1,8 @@
 # Typesystem
 
-Lithia is a dynamically, but strongly typed language. In the future it may add type inference, but for now all types can be assigned to any variable, field or function parameter.
+Blush is a dynamically, but strongly typed language. In the future it may add type inference, but for now all types can be assigned to any variable, field or function parameter.
 
-In the end, we try to keept the type system simple and easy to understand. Lithia supports the following classes of types:
+In the end, we try to keept the type system simple and easy to understand. Blush supports the following classes of types:
 
 - `data` types are the most common types. They are used to store data and can be easily created by calling the type name as a function.
 - `enum` types are used to express that their values can be one of a group of types. In other languages they are also called union types.
@@ -11,9 +11,9 @@ In the end, we try to keept the type system simple and easy to understand. Lithi
 
 ## Data types
 
-Data types are the most common types in Lithia and store data. In most other languages they are called classes or structs. They are defined by the `data` keyword followed by the type name and a list of fields.
+Data types are the most common types in Blush and store data. In most other languages they are called classes or structs. They are defined by the `data` keyword followed by the type name and a list of fields.
 
-```lithia
+```blush
 data Person {
     name
     age
@@ -22,7 +22,7 @@ data Person {
 
 To create a new instance of a data type, simply call the type name as a function with the field values as arguments.
 
-```lithia
+```blush
 let person = Person("John", 42)
 ```
 
@@ -31,7 +31,7 @@ let person = Person("John", 42)
 Fields are the building blocks of data types. They are defined by their name and optionally annotations.
 To increase the expressiveness, function fields can be defined by adding a function signature after the field name.
 
-```lithia
+```blush
 data Greetable {
     greeting(ofValue) // function field
 }
@@ -41,7 +41,7 @@ data Greetable {
 
 Fields can be annotated with metadata. These annotations will be processed at compile time and can be accessed at runtime.
 
-```lithia
+```blush
 data Person {
     @String
     @json.HasKey("name")
@@ -58,7 +58,7 @@ data Person {
 Enum types are used to express that their values can be one of a group of types. In other languages they are also called union types. They are defined by the `enum` keyword followed by the type name and a list of types.
 As convenience, you can even declare types within the enum declaration. These will still be available outside of the enum.
 
-```lithia
+```blush
 enum JuristicPerson {
     Person
     data Company {
@@ -97,7 +97,7 @@ nameOf you
 Annotation types are used to annotate declarations with metadata. They can only be constructed at compile time.
 They are defined by the `annotation` keyword followed by the type name and a list of fields.
 
-```lithia
+```blush
 module json
 
 annotation HasKey {
@@ -107,7 +107,7 @@ annotation HasKey {
 
 To annotate a declaration, start with the `@` symbol followed by the annotation type name and a list of field values.
 
-```lithia
+```blush
 import json
 
 data Person {
@@ -125,7 +125,7 @@ data Person {
 
 Annotations can be accessed at runtime by using the `reflect`-module.
 
-```lithia
+```blush
 import json
 import reflect
 
@@ -141,7 +141,7 @@ let nameAnnotation = reflect.typeOf(person).
 
 Extern types are built-in types that are implemented in the runtime like `Func`, `String` or `Int`. They are defined by the `extern` keyword followed by the type name. Optionally you can add a list of fields.
 
-```lithia
+```blush
 extern Int
 
 extern String {

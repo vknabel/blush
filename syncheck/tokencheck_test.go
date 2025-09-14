@@ -3,7 +3,7 @@ package syncheck_test
 import (
 	"testing"
 
-	"github.com/vknabel/lithia/syncheck"
+	"github.com/vknabel/blush/syncheck"
 )
 
 func TestParsingAssertions(t *testing.T) {
