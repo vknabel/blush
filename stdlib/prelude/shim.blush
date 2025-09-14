@@ -37,17 +37,29 @@ extern Dict {
   @Type(Int) length
 }
 
-// A floating point number.
-extern Float {}
-
+// 
 // A callable function.
 extern Func {
   // The amount of function parameters to be passed.
   @Type(Int) arity
 }
 
-// A whole integer number.
-extern Int {}
+// A numeric value, either floating point or integer.
+annotation Numeric {
+  @Returns(Number)
+  get()
+}
+
+enum Number {
+  // A floating point number.
+  @Numeric({ f => f })
+  extern Float {}
+
+  // A whole integer number.
+  @Numeric({ i => i })
+  extern Int {}
+}
+
 extern Module {}
 extern String {
   @Type(Int) length

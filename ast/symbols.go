@@ -9,16 +9,24 @@ var (
 	errSymbolAlreadyDefinedInSameScope = errors.New("symbol already defined")
 )
 
+type SymbolScope string
+
+const (
+	GlobalScope   SymbolScope = "Global"
+	LocalScope    SymbolScope = "Local"
+	FreeScope     SymbolScope = "Free"
+	FunctionScope SymbolScope = "Function"
+)
+
 type Symbol struct {
-	Name       string
+	Name  string
+	Scope SymbolScope
+	Index int
+	Decl  Decl
+
 	Usages     []SymbolUsage
 	ChildTable *SymbolTable
 	Errs       []error
-
-	// Filled on declaration
-
-	Decl  Decl
-	Index int
 
 	// Filled by later phases
 
@@ -40,9 +48,10 @@ type RequireStaticRef struct {
 }
 
 type SymbolTable struct {
-	Parent   *SymbolTable
-	OpenedBy Node
-	Symbols  map[string]*Symbol
+	Parent      *SymbolTable
+	OpenedBy    Node
+	Symbols     map[string]*Symbol
+	FreeSymbols []*Symbol
 
 	symbolCounter    int
 	functionCounter  int
@@ -119,17 +128,34 @@ func (st *SymbolTable) addSymbol(symbol Symbol) *Symbol {
 	return ref
 }
 
-func (st *SymbolTable) resolve(name string) *Symbol {
+func (st *SymbolTable) resolve(name string) (*Symbol, bool) {
 	if st == nil {
-		return nil
+		return nil, false
 	}
 	if sym, ok := st.Symbols[name]; ok {
-		return sym
+		return sym, true
 	}
-	if sym := st.Parent.resolve(name); sym != nil {
-		return sym
+	if sym, ok := st.Parent.resolve(name); ok {
+		return st.defineFree(sym), true
 	}
-	return nil
+	return nil, false
+}
+
+func (st *SymbolTable) defineFree(sym *Symbol) *Symbol {
+	st.FreeSymbols = append(st.FreeSymbols, sym)
+	free := &Symbol{
+		Name:       sym.Name,
+		Scope:      FreeScope,
+		Index:      len(st.FreeSymbols) - 1,
+		Decl:       sym.Decl,
+		Usages:     sym.Usages,
+		ChildTable: sym.ChildTable,
+		Errs:       sym.Errs,
+		ConstantId: sym.ConstantId,
+		TypeSymbol: sym.TypeSymbol,
+	}
+	st.Symbols[sym.Name] = free
+	return free
 }
 
 func (st *SymbolTable) Lookup(name string, fromNode Node, requirements ...SymbolRequirement) *Symbol {
@@ -137,7 +163,7 @@ func (st *SymbolTable) Lookup(name string, fromNode Node, requirements ...Symbol
 		Node:             fromNode,
 		typeRequirements: requirements,
 	}
-	if sym := st.resolve(name); sym != nil {
+	if sym, ok := st.resolve(name); ok {
 		sym.Usages = append(sym.Usages, usage)
 		return sym
 	}
@@ -155,7 +181,7 @@ func (st *SymbolTable) LookupIdentifier(name Identifier, requirements ...SymbolR
 		Node:             name,
 		typeRequirements: requirements,
 	}
-	if sym := st.resolve(name.Value); sym != nil {
+	if sym, ok := st.resolve(name.Value); ok {
 		sym.Usages = append(sym.Usages, usage)
 		return sym
 	}
@@ -178,7 +204,7 @@ func (st *SymbolTable) LookupRef(ref StaticReference, requirements ...SymbolRequ
 		Node:             name,
 		typeRequirements: append(requirements, RequireStaticRef{ref[1:], requirements}),
 	}
-	if sym := st.resolve(name.Value); sym != nil {
+	if sym, ok := st.resolve(name.Value); ok {
 		if sym.ChildTable != nil {
 			return sym.ChildTable.LookupRef(ref[1:])
 		}

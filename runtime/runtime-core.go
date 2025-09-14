@@ -13,6 +13,4 @@ type RuntimeValue interface {
 type CallableRuntimeValue interface {
 	RuntimeValue
 	Arity() int
-	// Call expectes `len(args)` to exactly equal `Arity()`
-	Call(args []RuntimeValue) RuntimeValue
 }
