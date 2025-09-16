@@ -6,6 +6,7 @@ import (
 
 	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/runtime"
 	"github.com/vknabel/blush/token"
 )
 
@@ -18,20 +19,24 @@ const (
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
 	case *ast.ContextModule:
+		prev := c.symbols
+		c.symbols = node.Symbols
 		for _, src := range node.Files {
-			err := c.Compile(src)
-			if err != nil {
+			if err := c.Compile(src); err != nil {
 				return err
 			}
 		}
+		c.symbols = prev
 		return nil
 	case *ast.SourceFile:
+		prev := c.symbols
+		c.symbols = node.Symbols
 		for _, stmt := range node.Statements {
-			err := c.Compile(stmt)
-			if err != nil {
+			if err := c.Compile(stmt); err != nil {
 				return err
 			}
 		}
+		c.symbols = prev
 		return nil
 	case *ast.StmtExpr:
 		err := c.Compile(node.Expr)
@@ -39,6 +44,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		c.emit(op.Pop)
+		return nil
+
+	case ast.StmtReturn:
+		if node.Expr != nil {
+			return c.Compile(node.Expr)
+		}
 		return nil
 	case ast.StmtIf:
 		return c.compileStmtIf(node)
@@ -71,6 +82,45 @@ func (c *Compiler) Compile(node ast.Node) error {
 		idx := c.addConstant(val)
 		c.emit(op.Const, idx)
 		return nil
+
+	case *ast.ExprFunc:
+		fnCompiler := New()
+		fnCompiler.plugins = c.plugins
+		fnCompiler.symbols = node.Symbols
+		if err := fnCompiler.compileBlock(node.Impl); err != nil {
+			return err
+		}
+		cf := &runtime.CompiledFunction{
+			Instructions:  fnCompiler.instructions,
+			Constants:     fnCompiler.constants,
+			NumParameters: len(node.Parameters),
+		}
+		idx := c.addConstant(cf)
+		c.emit(op.Const, idx)
+		return nil
+
+	case *ast.ExprInvocation:
+		if err := c.Compile(node.Function); err != nil {
+			return err
+		}
+		for _, arg := range node.Arguments {
+			if err := c.Compile(arg); err != nil {
+				return err
+			}
+		}
+		c.emit(op.Call, len(node.Arguments))
+		return nil
+
+	case *ast.ExprIdentifier:
+		if c.symbols == nil {
+			return fmt.Errorf("identifier %s not in scope", node.Name.Value)
+		}
+		sym := c.symbols.LookupIdentifier(node.Name)
+		if _, ok := sym.Decl.(*ast.DeclParameter); ok {
+			c.emit(op.GetLocal, sym.Index)
+			return nil
+		}
+		return fmt.Errorf("unknown identifier %s", node.Name.Value)
 
 	case *ast.ExprArray:
 		for _, el := range node.Elements {

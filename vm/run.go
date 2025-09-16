@@ -3,6 +3,7 @@ package vm
 import (
 	"fmt"
 
+	"github.com/vknabel/blush/compiler"
 	"github.com/vknabel/blush/op"
 	"github.com/vknabel/blush/runtime"
 )
@@ -56,6 +57,52 @@ func (vm *VM) Run() error {
 
 			if cond != runtime.Bool(false) {
 				ip = pos - 1
+			}
+
+		case op.Call:
+			argc := int(op.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+			args := make([]runtime.RuntimeValue, argc)
+			for i := argc - 1; i >= 0; i-- {
+				args[i] = vm.pop()
+			}
+			fn := vm.pop()
+			switch fn := fn.(type) {
+			case *runtime.CompiledFunction:
+				if argc != fn.NumParameters {
+					return fmt.Errorf("wrong number of arguments: expected %d, got %d", fn.NumParameters, argc)
+				}
+				bytecode := &compiler.Bytecode{
+					Instructions: fn.Instructions,
+					Constants:    fn.Constants,
+				}
+				fvm := New(bytecode)
+				for _, arg := range args {
+					if err := fvm.push(arg); err != nil {
+						return err
+					}
+				}
+				if err := fvm.Run(); err != nil {
+					return err
+				}
+				result := fvm.stack[fvm.sp-1]
+				if err := vm.push(result); err != nil {
+					return err
+				}
+			case runtime.CallableRuntimeValue:
+				result := fn.Call(args)
+				if err := vm.push(result); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("calling non-function (%T)", fn)
+			}
+
+		case op.GetLocal:
+			idx := int(op.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+			if err := vm.push(vm.stack[idx]); err != nil {
+				return err
 			}
 
 		case op.AssertType:

@@ -17,6 +17,9 @@ const (
 	JumpTrue
 	JumpFalse
 
+	Call
+	GetLocal
+
 	Negate
 	Invert
 
@@ -52,6 +55,9 @@ var definitions = map[Opcode]*Definition{
 	Jump:      {"jump", []int{2}},
 	JumpTrue:  {"jumptrue", []int{2}},
 	JumpFalse: {"jumpfalse", []int{2}},
+
+	Call:     {"call", []int{2}},
+	GetLocal: {"getlocal", []int{2}},
 
 	Negate: {"negate", []int{}},
 	Invert: {"invert", []int{}},

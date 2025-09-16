@@ -43,6 +43,10 @@ func TestBasicOperations(t *testing.T) {
 		{input: "[:]", expected: map[any]any{}},
 		{input: `["hello": "world", 1: 2]`, expected: map[any]any{"hello": "world", 1: 2}},
 		{input: `["1": 3, 1: 2]`, expected: map[any]any{"1": 3, 1: 2}},
+		{input: "{ -> return 5 }()", expected: 5},
+		{input: "{ x -> return x }(5)", expected: 5},
+		{input: "{ x, y -> return x + y }(1, 2)", expected: 3},
+		{input: "{ x -> return x }()", err: "wrong number of arguments: expected 1, got 0"},
 	}
 
 	runVmTests(t, tests)

@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
 	"github.com/vknabel/blush/runtime"
 )
@@ -9,6 +10,7 @@ type Compiler struct {
 	instructions op.Instructions
 	constants    []runtime.RuntimeValue
 	plugins      *runtime.ExternPluginRegistry
+	symbols      *ast.SymbolTable
 }
 
 func New() *Compiler {
