@@ -6,8 +6,8 @@
 
 ## Introduction
 
-Blush is an experimental programming language designed to be bridge the gap between scripting languages and full fledged programming languages while keeping its own identity.
-Blush is a dynamically, but strongly typed language. It aims to be simple yet have batteries included.
+Blush is an experimental programming language designed to bridge the gap between scripting languages and full-fledged programming languages while keeping its own identity.
+Blush is dynamically, but strongly typed. It aims to be simple yet have batteries included.
 Possible long term use cases are all terminal related stuff and text UI applications that might spread to other domains.
 
 In this proposal we define the base language features in detail. All other proposals will build on top of this one.
@@ -467,7 +467,7 @@ let filtered = for num <- items {
 
 ```ebnf
 stmt_for = "for", [ ( expression | identifier "<-" expression ) ], "{", block, "}" ;
-expr_for = "for", [ ( expression | identifier "<-" expression ) ], "->", expression, "{", expr_for_block, "}" ;
+expr_for = "for", [ ( expression | identifier "<-" expression ) ], "{", expr_for_block, "}" ;
 
 stmt_break = "break" ;
 stmt_continue = "continue" ;
