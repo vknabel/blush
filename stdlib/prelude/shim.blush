@@ -1,16 +1,19 @@
 module prelude
 
-// Annotates a declaration to be of a given type.
-// Instead of annotating declarations with `@Type(SomeType)`, the shorthand of `@SomeType` can be used.
-annotation Type {
-  // The type of the annotation.
-  @Type(AnyType) type
-}
-
 // Anything is a value of type `Any`.
 extern type Any {}
 // All types are of type `AnyType`.
 extern type AnyType {}
+
+// All annotations are of type `Annotation`.
+extern type Annotation {}
+// All annotation types are of type `AnnotationType`.
+extern type AnnotationType {}
+
+// All modules are of type `Module`.
+extern type Module {}
+// All module types are of type `ModuleType`.
+extern type ModuleType {}
 
 // A finite list of values.
 extern type Array {
@@ -61,11 +64,12 @@ enum Number {
   extern Int {}
 }
 
-extern type Module {}
 extern type String {
   @Type(Int) length
 }
 
+// Represents the absence of a value.
 @Type(Void)
 extern let void
+// The type of the `void` value.
 extern type Void {}
