@@ -98,6 +98,7 @@ The following precedence groups and operators are supported:
 | `CALL`       | `fun(x)`                         | Left          |
 | `MEMBER`     | `.`, `?.` (reserved)             | Left          |
 
+> **Note:** Operators marked as "(reserved)" are not currently implemented in Blush. They are reserved for possible future use and may be subject to change or removal in later versions. Their presence in this table does not guarantee future support, but indicates that their syntax is being considered for potential language features.
 ```blush
 let value = object.field + 2 // member access
 fun(x + 1, y * 2) // function call
