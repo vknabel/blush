@@ -45,7 +45,7 @@ Additionally there will be a few ideas that worked great in Lithia, but won't in
 ## Non-Goals
 
 Blush explicitly does not implement generics, interfaces or inheritance.
-Blush does not try be an embedded or systems language. Competeing without other scripting languages in terms of performance is not a goal.
+Blush does not try to be an embedded or systems language. Competing with other scripting languages in terms of performance is not a goal.
 It is not built to mirror existing languages, but tries to find its own way by combining a few concepts to form something larger.
 
 ## Proposed Solution
