@@ -14,12 +14,12 @@ In this proposal we define the base language features in detail. All other propo
 
 ## Motivation
 
-Blush is created to address the flaws identified by the [Lithia programming language](ttps://github.com/vknabel/lithia). In short these were:
+Blush is created to address the flaws identified by the [Lithia programming language](https://github.com/vknabel/lithia). In short these were:
 
 - the hardly readable function call syntax
 - the bad combination of dynamically, strong typed languages especially with lazy evaluation
 - lack of control flow structures
-- no obvious way to build modern way of file parsing due to missing type hints or annations
+- no obvious way to build modern way of file parsing due to missing type hints or annotations
 - performance issues due to the interpreter design, lazy evaluation and the lack of control flow structures
 - the `type` expression being limited to types only
 
@@ -46,7 +46,7 @@ Additionally there will be a few ideas that worked great in Lithia, but won't in
 
 Blush explicitly does not implement generics, interfaces or inheritance.
 Blush does not try be an embedded or systems language. Competeing without other scripting languages in terms of performance is not a goal.
-It is not built to mirror existing languages, but tries to find its own way by combining a few concept to form something larger.
+It is not built to mirror existing languages, but tries to find its own way by combining a few concepts to form something larger.
 
 ## Proposed Solution
 
@@ -110,7 +110,7 @@ The following literals are supported:
 ```blush
 42                 // Int
 3.14               // Float
-Ox8899aa           // Hex Int
+0x8899aa           // Hex Int
 0777               // Octal Int
 0b101010           // Binary Int
 1e10               // Scientific Float
@@ -226,7 +226,7 @@ annotation SomeAnnotation {
 
 ```ebnf
 decl = [annotation_chain], ( decl_let | decl_func | decl_enum | decl_data | decl_annotation | decl_extern_type | decl_extern_func | decl_module ) ;
-annotaion_chain = annotation, { annotation } ;
+annotation_chain = annotation, { annotation } ;
 annotation = "@", static_reference, [ "(", [ argument_list ], ")" ] ;
 
 decl_annotation = "annotation", type_identifier, [ "{", { decl_field }, "}" ] ;
@@ -382,8 +382,8 @@ let result = if condition {
 ```
 
 ```ebnf
-stmt_if = "if", "(", expression, ")", block, { "else", ( stmt_if | block ) } ;
-expr_if = "if", "(", expression, ")", expr_block, { "else", ( expr_if | expr_block ) } ;
+stmt_if = "if", expression, block, { "else", ( stmt_if | block ) } ;
+expr_if = "if", expression, expr_block, { "else", ( expr_if | expr_block ) } ;
 ```
 
 ### Switch expressions and statements
@@ -418,7 +418,7 @@ case _:
 ```
 
 ```ebnf
-stmt_switch = "switch", "(", expression, ")", "{", { switch_case }, "}" ;
+stmt_switch = "switch", expression, "{", { switch_case }, "}" ;
 switch_case = "case", ( expression | annotation | "_" ), ":", block ;
 ```
   
@@ -450,7 +450,7 @@ let result = for item <- items { // collection expression
     item * 2
 }
 // produces an array with filtering and breaking
-let filtered = for num -> items {
+let filtered = for num <- items {
   if num % 13 == 0 {
     break // finish the produced array
   } else if num % 2 == 0 && num % 3 == 0 {
@@ -528,7 +528,7 @@ This introduces lots of new concepts that will be used by the standard library.
 - annotations for common use cases like `Type`, `Numeric`, `Has`, `Returns` and `Deprecated`, `Countable`, `Iterable`
 - data types like `Range`
 
-This also requires the extistance of a `reflect` module to be able to access annotations at runtime, but this will be defined in a separate proposal.
+This also requires the existence of a `reflect` module to be able to access annotations at runtime, but this will be defined in a separate proposal.
 
 ### Special Extern Types
 
@@ -550,4 +550,4 @@ This also requires the extistance of a `reflect` module to be able to access ann
 
 ## Acknowledgements
 
-A lot of ideas were taken from existing programming languages like Lithia, Go, Swift, TypeScript, Ruby and Pyhton.
+A lot of ideas were taken from existing programming languages like Lithia, Go, Swift, TypeScript, Ruby and Python.
