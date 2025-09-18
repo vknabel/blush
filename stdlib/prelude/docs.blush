@@ -3,3 +3,7 @@ module prelude
 annotation Doc {
   @String description
 }
+
+annotation Deprecated {
+  @String reason
+}

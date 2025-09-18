@@ -8,37 +8,39 @@ annotation Type {
 }
 
 // Anything is a value of type `Any`.
-extern Any {}
+extern type Any {}
 // All types are of type `AnyType`.
-extern AnyType {}
+extern type AnyType {}
 
 // A finite list of values.
-extern Array {
+extern type Array {
   // The length of the array.
   @Type(Int) length
 }
 
+@Bool
 let true = 0 == 0
+@Bool
 let false = 0 != 0
 
 // Represents boolean values like `True` and `False`.
 // Typically used for conditionals and flags.
-extern Bool {
+extern type Bool {
   // Negates a boolean value.
   toggle()
 }
 
 // A single character from a string.
-extern Char {}
+extern type Char {}
 
 // An associative array of keys and their values.
-extern Dict {
+extern type Dict {
   // The length of the dictionary.
   @Type(Int) length
 }
 
 // A callable function.
-extern Func {
+extern type Func {
   // The amount of function parameters to be passed.
   @Type(Int) arity
 }
@@ -59,11 +61,11 @@ enum Number {
   extern Int {}
 }
 
-extern Module {}
-extern String {
+extern type Module {}
+extern type String {
   @Type(Int) length
 }
 
 @Type(Void)
-extern void
-extern Void {}
+extern let void
+extern type Void {}
