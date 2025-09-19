@@ -476,7 +476,6 @@ func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationCh
 		impl.Token = fexprTok
 
 		p.popSymbolTable()
-
 	} else {
 		impl = p.parseExprFunction()
 	}

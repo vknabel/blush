@@ -108,14 +108,14 @@ func (c *Compiler) Compile(node ast.Node) error {
 }
 
 func (c *Compiler) changeOperand(pos int, operand int) {
-	opcode := op.Opcode(c.instructions[pos])
+	opcode := op.Opcode(c.currentInstructions()[pos])
 	patched := op.Make(opcode, operand)
 	c.replaceInstruction(pos, patched)
 }
 
 func (c *Compiler) replaceInstruction(pos int, patched []byte) {
 	for i := 0; i < len(patched); i++ {
-		c.instructions[pos+i] = patched[i]
+		c.currentInstructions()[pos+i] = patched[i]
 	}
 }
 
@@ -132,7 +132,7 @@ func (c *Compiler) compileBlock(block ast.Block) error {
 func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 	var (
 		jumpNext int
-		jumpEnds []int = make([]int, 0, 1+len(node.ElseIf))
+		jumpEnds = make([]int, 0, 1+len(node.ElseIf))
 		endPos   int
 	)
 	err := c.Compile(node.Condition)
@@ -149,7 +149,7 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 	jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 
 	for _, elseIf := range node.ElseIf {
-		c.changeOperand(jumpNext, len(c.instructions))
+		c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 		err = c.Compile(elseIf.Condition)
 		if err != nil {
@@ -165,7 +165,7 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 	}
 
 	if node.ElseBlock != nil {
-		c.changeOperand(jumpNext, len(c.instructions))
+		c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 		err = c.compileBlock(node.ElseBlock)
 		if err != nil {
@@ -173,13 +173,15 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 		}
 	} else {
 		lastIndex := len(jumpEnds) - 1
-		lastPos := jumpEnds[lastIndex]
-		c.instructions = c.instructions[:lastPos]
+
+		if c.isLastInstruction(op.Pop) {
+			c.removeLastInstruction()
+		}
 
 		jumpEnds[lastIndex] = jumpNext
 	}
 
-	endPos = len(c.instructions)
+	endPos = len(c.currentInstructions())
 	for _, pos := range jumpEnds {
 		c.changeOperand(pos, endPos)
 	}
@@ -189,7 +191,7 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 func (c *Compiler) compileExprIf(node ast.ExprIf) error {
 	var (
 		jumpNext int
-		jumpEnds []int = make([]int, 0, 1+len(node.ElseIf))
+		jumpEnds = make([]int, 0, 1+len(node.ElseIf))
 		endPos   int
 	)
 	err := c.Compile(node.Condition)
@@ -206,7 +208,7 @@ func (c *Compiler) compileExprIf(node ast.ExprIf) error {
 	jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 
 	for _, elseIf := range node.ElseIf {
-		c.changeOperand(jumpNext, len(c.instructions))
+		c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 		err = c.Compile(elseIf.Condition)
 		if err != nil {
@@ -220,14 +222,14 @@ func (c *Compiler) compileExprIf(node ast.ExprIf) error {
 		}
 		jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 	}
-	c.changeOperand(jumpNext, len(c.instructions))
+	c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 	err = c.Compile(node.ElseExpr)
 	if err != nil {
 		return err
 	}
 
-	endPos = len(c.instructions)
+	endPos = len(c.currentInstructions())
 	for _, pos := range jumpEnds {
 		c.changeOperand(pos, endPos)
 	}
@@ -271,7 +273,7 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		jumpEnd := c.emit(op.Jump, placeholderJumpAddress)
 		pos := c.emit(op.ConstFalse)
 		c.changeOperand(jumpQuick, pos)
-		c.changeOperand(jumpEnd, len(c.instructions))
+		c.changeOperand(jumpEnd, len(c.currentInstructions()))
 		return nil
 
 	case token.OR:
@@ -284,7 +286,7 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		jumpEnd := c.emit(op.Jump, placeholderJumpAddress)
 		pos := c.emit(op.ConstTrue)
 		c.changeOperand(jumpQuick, pos)
-		c.changeOperand(jumpEnd, len(c.instructions))
+		c.changeOperand(jumpEnd, len(c.currentInstructions()))
 		return nil
 
 	case token.PLUS:
