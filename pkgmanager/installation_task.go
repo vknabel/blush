@@ -1,26 +1,26 @@
 package pkgmanager
 
 import (
-        "context"
-        "fmt"
+	"context"
+	"fmt"
 
-        "github.com/vknabel/blush/cavefile"
-        "github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/cavefile"
+	"github.com/vknabel/blush/registry"
 )
 
 type InstallationTask struct {
-        cave       cavefile.Cavefile
-        pkgmanager *PackageManager
+	cave       cavefile.Cavefile
+	pkgmanager *PackageManager
 
-        completed []registry.ResolvedPackage
-        queue     []cavefile.Dependency
+	completed []registry.ResolvedPackage
+	queue     []cavefile.Dependency
 }
 
 // TODO: Recursively install dependencies!
 func (t *InstallationTask) Run(ctx context.Context) error {
-        if t.queue == nil {
-                t.queue = t.cave.Dependencies
-        }
+	if t.queue == nil {
+		t.queue = t.cave.Dependencies
+	}
 	availables := make(map[string][]registry.ResolvedPackage, 0)
 
 	for _, reg := range t.pkgmanager.registries {

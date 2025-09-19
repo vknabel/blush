@@ -1,10 +1,10 @@
 package pkgmanager
 
 import (
-        "github.com/go-git/go-billy/v5"
-        "github.com/vknabel/blush/cavefile"
-        "github.com/vknabel/blush/registry"
-        "github.com/vknabel/blush/registry/gitreg"
+	"github.com/go-git/go-billy/v5"
+	"github.com/vknabel/blush/cavefile"
+	"github.com/vknabel/blush/registry"
+	"github.com/vknabel/blush/registry/gitreg"
 )
 
 type PackageManager struct {
@@ -24,8 +24,8 @@ func New(fs billy.Filesystem) (*PackageManager, error) {
 }
 
 func (pm *PackageManager) Install(cf cavefile.Cavefile) *InstallationTask {
-        return &InstallationTask{
-                pkgmanager: pm,
-                cave:       cf,
-        }
+	return &InstallationTask{
+		pkgmanager: pm,
+		cave:       cf,
+	}
 }
