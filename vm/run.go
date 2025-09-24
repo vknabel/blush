@@ -8,20 +8,23 @@ import (
 )
 
 func (vm *VM) Run() error {
-	var (
-		ip   int
-		code op.Opcode
-	)
+	for vm.currentFrame().ip < len(vm.currentFrame().Instructions()) {
+		vm.currentFrame().ip++
 
-	for ip = 0; ip < len(vm.instructions); ip++ {
-		code = op.Opcode(vm.instructions[ip])
+		var (
+			fr   = vm.currentFrame()
+			ip   = fr.ip
+			ins  = fr.Instructions()
+			code = op.Opcode(ins[ip-1])
+		)
+
 		switch code {
 		case op.Pop:
 			vm.pop()
 
 		case op.Const:
-			idx := op.ReadUint16(vm.instructions[ip+1:])
-			ip += 2
+			idx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
 
 			err := vm.push(vm.constants[idx])
 			if err != nil {
@@ -39,28 +42,28 @@ func (vm *VM) Run() error {
 			}
 
 		case op.Jump:
-			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
-			ip = pos - 1
+			pos := int(op.ReadUint16(ins[ip:]))
+			fr.ip = pos
 		case op.JumpFalse:
-			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			pos := int(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
 			cond := vm.pop()
 
 			if cond == runtime.Bool(false) {
-				ip = pos - 1
+				fr.ip = pos
 			}
 		case op.JumpTrue:
-			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			pos := int(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
 			cond := vm.pop()
 
 			if cond != runtime.Bool(false) {
-				ip = pos - 1
+				fr.ip = pos
 			}
 
 		case op.AssertType:
-			typeId := runtime.TypeId(op.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			typeId := runtime.TypeId(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
 			v := vm.stack[vm.sp-1]
 			if v.TypeConstantId() != typeId {
 				return fmt.Errorf("unexpected type (%T %q)", v, v.Inspect())

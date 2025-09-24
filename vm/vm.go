@@ -18,23 +18,45 @@ type Frame struct {
 	basep   int
 }
 
+func newFrame(closure *runtime.Closure, basep int) *Frame {
+	return &Frame{
+		closure: closure,
+		ip:      0,
+		basep:   basep,
+	}
+}
+
+func (f *Frame) Instructions() op.Instructions {
+	return f.closure.Fn.Instructions
+}
+
 type VM struct {
-	constants    []runtime.RuntimeValue
-	stack        []runtime.RuntimeValue
-	frames       []Frame
-	sp           int
-	instructions op.Instructions
+	constants []runtime.RuntimeValue
+	stack     []runtime.RuntimeValue
+	sp        int
+	frames    []*Frame
+	framesIdx int
 }
 
 func New(bytecode *compiler.Bytecode) *VM {
+	mainFn := runtime.MakeCompiledFunction(bytecode.Instructions, 0, nil)
+	mainClosure := runtime.MakeClosure(mainFn, nil)
+
+	frames := make([]*Frame, maxFrames)
+	frames[0] = newFrame(&mainClosure, 0)
+
 	return &VM{
-		stack:        make([]runtime.RuntimeValue, stackSize),
-		frames:       make([]Frame, maxFrames),
-		sp:           0,
-		constants:    bytecode.Constants,
-		instructions: bytecode.Instructions,
+		stack:     make([]runtime.RuntimeValue, stackSize),
+		sp:        0,
+		constants: bytecode.Constants,
+		frames:    frames,
+		framesIdx: 1,
 	}
 }
 func (vm *VM) LastPoppedStackElem() runtime.RuntimeValue {
 	return vm.stack[vm.sp]
+}
+
+func (vm *VM) currentFrame() *Frame {
+	return vm.frames[vm.framesIdx-1]
 }

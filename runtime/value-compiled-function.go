@@ -11,20 +11,17 @@ var _ CallableRuntimeValue = CompiledFunction{}
 
 type CompiledFunction struct {
 	Instructions op.Instructions
-	Locals       int
 	Params       int
 	Symbol       *ast.Symbol
 }
 
 func MakeCompiledFunction(
 	instructions op.Instructions,
-	locals int,
 	params int,
 	symbol *ast.Symbol,
-) CompiledFunction {
-	return CompiledFunction{
+) *CompiledFunction {
+	return &CompiledFunction{
 		Instructions: instructions,
-		Locals:       locals,
 		Params:       params,
 		Symbol:       symbol,
 	}
