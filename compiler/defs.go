@@ -90,7 +90,7 @@ func (c *Compiler) enterScope(syms *ast.SymbolTable) {
 
 func (c *Compiler) leaveScope() *CompilationScope {
 	scope := c.scopes[c.scopeIdx]
-	c.scopes = c.scopes[:len(c.scopes)]
+	c.scopes = c.scopes[:len(c.scopes)-1]
 	c.scopeIdx--
 	return scope
 }
