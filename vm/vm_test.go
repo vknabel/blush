@@ -47,6 +47,15 @@ func TestBasicOperations(t *testing.T) {
 
 	runVmTests(t, tests)
 }
+
+func TestBasicFunctions(t *testing.T) {
+	tests := []vmTestCase{
+		{input: "func example() { return 42 }\nexample()", expected: 42},
+	}
+
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 

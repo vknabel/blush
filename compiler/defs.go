@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
 	"github.com/vknabel/blush/runtime"
 )
@@ -11,8 +12,8 @@ type emittedInstruction struct {
 }
 
 type CompilationScope struct {
-	constants    []runtime.RuntimeValue
 	instructions op.Instructions
+	symbols      *ast.SymbolTable
 
 	lastInstruction     emittedInstruction
 	previousInstruction emittedInstruction
@@ -34,7 +35,7 @@ type Compiler struct {
 func New() *Compiler {
 	mainScope := &CompilationScope{
 		instructions: op.Instructions{},
-		constants:    []runtime.RuntimeValue{},
+		symbols:      ast.MakeSymbolTable(nil, nil),
 	}
 	return &Compiler{
 		constants: []runtime.RuntimeValue{},
@@ -79,17 +80,17 @@ func (c *Compiler) addConstant(v runtime.RuntimeValue) int {
 	return len(c.constants) - 1
 }
 
-func (c *Compiler) enterScope() {
+func (c *Compiler) enterScope(syms *ast.SymbolTable) {
 	c.scopes = append(c.scopes, &CompilationScope{
 		instructions: op.Instructions{},
+		symbols:      syms,
 	})
 	c.scopeIdx++
-	panic("unimplemented")
 }
 
 func (c *Compiler) leaveScope() *CompilationScope {
 	scope := c.scopes[c.scopeIdx]
-	c.scopes = c.scopes[:len(c.scopes)-1]
+	c.scopes = c.scopes[:len(c.scopes)]
 	c.scopeIdx--
 	return scope
 }

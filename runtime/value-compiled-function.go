@@ -47,5 +47,5 @@ func (c CompiledFunction) Lookup(name string) RuntimeValue {
 
 // TypeConstantId implements CallableRuntimeValue.
 func (c CompiledFunction) TypeConstantId() TypeId {
-	return TypeId(c.Symbol.TypeSymbol.ConstantId)
+	return TypeId(*c.Symbol.TypeSymbol.ConstantId)
 }

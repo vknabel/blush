@@ -33,6 +33,9 @@ const (
 	LessThan
 	LessThanOrEqual
 
+	Call
+	Return
+
 	// Serves as instruction to optionally pause on breakpoints.
 	// Will not be compiled for non debugging sessions.
 	Debug
@@ -67,6 +70,9 @@ var definitions = map[Opcode]*Definition{
 	GreaterThanOrEqual: {"gte", []int{}},
 	LessThan:           {"lt", []int{}},
 	LessThanOrEqual:    {"lte", []int{}},
+
+	Call:   {"call", []int{2}},   // arg count
+	Return: {"return", []int{2}}, // return value
 
 	Debug: {"debug", []int{}},
 }

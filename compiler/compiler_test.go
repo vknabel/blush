@@ -389,6 +389,47 @@ func TestArrayExpressions(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestDeclFunction(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: "func example() { return 42 }",
+			expectedConstants: []any{
+				42,
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.Const, 0),
+						code.Make(code.Return),
+					},
+				},
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+		{
+			input: "func example() { return 42 }\nexample()",
+			expectedConstants: []any{
+				42,
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.Const, 0),
+						code.Make(code.Return),
+					},
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 1),
+				code.Make(code.Call, 0),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 
@@ -504,10 +545,35 @@ func testConstants(
 			if !ok || want != int(got) {
 				return fmt.Errorf("wrong constant at %d.\nwant=%d\ngot=%q", i, want, got)
 			}
+		case compiledFunction:
+			got, ok := actual[i].(*runtime.CompiledFunction)
+			if !ok {
+				return fmt.Errorf("constant %d is not a function: %T", i, actual[i])
+			}
+
+			if got.Symbol.Name != want.name {
+				return fmt.Errorf("wrong function name at %d.\nwant=%q\ngot=%q", i, want.name, got.Symbol.Name)
+			}
+
+			if got.Arity() != want.params {
+				return fmt.Errorf("wrong function params at %d.\nwant=%d\ngot=%d", i, want.params, got.Arity())
+			}
+
+			err := testInstructions(t, want.ins, got.Instructions)
+			if err != nil {
+				return fmt.Errorf("wrong function instructions at %d: %s", i, err)
+			}
+
 		default:
 			got := actual[i]
 			return fmt.Errorf("unhandled wanted type %T of value at %d.\nwant=%q\ngot=%q", i, want, want, got)
 		}
 	}
 	return nil
+}
+
+type compiledFunction struct {
+	name   string
+	params int
+	ins    []code.Instructions
 }

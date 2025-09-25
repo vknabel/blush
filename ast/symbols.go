@@ -32,7 +32,7 @@ type Symbol struct {
 
 	// Filled by later phases
 
-	ConstantId uint16
+	ConstantId *int
 	TypeSymbol *Symbol
 }
 

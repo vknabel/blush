@@ -317,7 +317,7 @@ func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 //	  <optional:annotations> <func_decl>
 //	  <optional:annotations> <var_decl>
 //	}
-func (p *Parser) parseDataDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclData {
+func (p *Parser) parseDataDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclData {
 	declToken, _ := p.expect(token.DATA)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -368,7 +368,7 @@ func (p *Parser) parseDataDeclField() *ast.DeclField {
 //	annotation <identifier> {
 //	  // properties
 //	}
-func (p *Parser) parseAnnotationDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclAnnotation {
+func (p *Parser) parseAnnotationDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclAnnotation {
 	declToken, _ := p.expect(token.ANNOTATION)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -454,7 +454,7 @@ func (p *Parser) parseExternDecl(pos StatementPosition, annos ast.AnnotationChai
 	return extern
 }
 
-func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclFunc {
+func (p *Parser) parseFunctionDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclFunc {
 	funcTok, _ := p.expect(token.FUNCTION)
 	nameTok, _ := p.expect(token.IDENT)
 
@@ -523,7 +523,7 @@ func (p *Parser) parseImportDecl(pos StatementPosition, annos ast.AnnotationChai
 	return importDecl
 }
 
-func (p *Parser) parseVariableDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclVariable {
+func (p *Parser) parseVariableDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclVariable {
 	letTok, _ := p.expect(token.LET)
 	nameTok, _ := p.expect(token.IDENT)
 	name := ast.MakeIdentifier(nameTok)
@@ -598,7 +598,7 @@ func (p *Parser) parseDeclParameterList() []ast.DeclParameter {
 	}
 }
 
-func (p *Parser) parseStatementReturn(pos StatementPosition) ast.StmtReturn {
+func (p *Parser) parseStatementReturn(pos StatementPosition) *ast.StmtReturn {
 	if pos != IN_FUNC {
 		p.errStatementMisplaced(pos)
 	}
@@ -665,7 +665,7 @@ func (p *Parser) parseExpr() ast.Expr {
 	return expr
 }
 
-func (p *Parser) parseStmtBlock(pos StatementPosition) ast.Block {
+func (p *Parser) parseStmtBlock(_ StatementPosition) ast.Block {
 	block := make([]ast.Statement, 0)
 
 	for !p.curIs(token.RBRACE, token.RBRACKET, token.RPAREN) {

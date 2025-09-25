@@ -43,7 +43,7 @@ func New(bytecode *compiler.Bytecode) *VM {
 	mainClosure := runtime.MakeClosure(mainFn, nil)
 
 	frames := make([]*Frame, maxFrames)
-	frames[0] = newFrame(&mainClosure, 0)
+	frames[0] = newFrame(mainClosure, 0)
 
 	return &VM{
 		stack:     make([]runtime.RuntimeValue, stackSize),
@@ -59,4 +59,14 @@ func (vm *VM) LastPoppedStackElem() runtime.RuntimeValue {
 
 func (vm *VM) currentFrame() *Frame {
 	return vm.frames[vm.framesIdx-1]
+}
+
+func (vm *VM) pushFrame(f *Frame) {
+	vm.frames[vm.framesIdx] = f
+	vm.framesIdx++
+}
+
+func (vm *VM) popFrame() *Frame {
+	vm.framesIdx--
+	return vm.frames[vm.framesIdx]
 }

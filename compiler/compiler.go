@@ -6,6 +6,7 @@ import (
 
 	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/runtime"
 	"github.com/vknabel/blush/token"
 )
 
@@ -18,20 +19,43 @@ const (
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
 	case *ast.ContextModule:
+		c.enterScope(node.Symbols)
+
 		for _, src := range node.Files {
 			err := c.Compile(src)
 			if err != nil {
 				return err
 			}
 		}
+
+		c.leaveScope()
+
 		return nil
 	case *ast.SourceFile:
+		c.enterScope(node.Symbols)
+
+		for _, sym := range node.Symbols.Symbols {
+			err := c.compileSymbol(sym)
+			if err != nil {
+				return err
+			}
+		}
+
 		for _, stmt := range node.Statements {
 			err := c.Compile(stmt)
 			if err != nil {
 				return err
 			}
 		}
+
+		scope := c.leaveScope()
+
+		// at its core this is fine, but shouldn't this be at the module level?
+		c.scopes[c.scopeIdx].instructions = append(
+			c.scopes[c.scopeIdx].instructions,
+			scope.instructions...,
+		)
+
 		return nil
 	case *ast.StmtExpr:
 		err := c.Compile(node.Expr)
@@ -100,6 +124,51 @@ func (c *Compiler) Compile(node ast.Node) error {
 		idx := c.addConstant(val)
 		c.emit(op.Const, idx)
 		c.emit(op.Dict)
+		return nil
+	case *ast.ExprIdentifier:
+		symbol := c.scopes[c.scopeIdx].symbols.LookupIdentifier(node.Name)
+		if symbol == nil {
+			return fmt.Errorf("undefined identifier %q", node.Name)
+		}
+		switch symbol.Decl.(type) {
+		case *ast.DeclFunc, *ast.DeclData, *ast.DeclEnum, *ast.DeclExternFunc, *ast.DeclAnnotation:
+			if symbol.ConstantId == nil {
+				return fmt.Errorf("identifier %q has no constant id", node.Name)
+			}
+			c.emit(op.Const, *symbol.ConstantId)
+			return nil
+
+		default:
+			return fmt.Errorf("identifier %q has unknown declaration type %T", node.Name, symbol.Decl)
+		}
+
+	case *ast.ExprInvocation:
+		for i := len(node.Arguments) - 1; i >= 0; i-- {
+			err := c.Compile(node.Arguments[i])
+			if err != nil {
+				return err
+			}
+		}
+		err := c.Compile(node.Function)
+		if err != nil {
+			return err
+		}
+
+		c.emit(op.Call, len(node.Arguments))
+		return nil
+
+	case *ast.StmtReturn:
+		if node.Expr == nil {
+			// TODO
+			panic("unimplemented blank stmt return")
+		}
+
+		err := c.Compile(node.Expr)
+		if err != nil {
+			return err
+		}
+
+		c.emit(op.Return)
 		return nil
 
 	default:
@@ -368,5 +437,30 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		return nil
 	default:
 		return fmt.Errorf("unknown infix operator %q", node.Operator.Literal)
+	}
+}
+
+func (c *Compiler) compileSymbol(sym *ast.Symbol) error {
+	switch decl := sym.Decl.(type) {
+	case *ast.DeclFunc:
+		c.enterScope(decl.Impl.Symbols)
+
+		err := c.compileBlock(decl.Impl.Impl)
+		if err != nil {
+			return err
+		}
+
+		scope := c.leaveScope()
+		id := c.addConstant(runtime.MakeCompiledFunction(
+			scope.instructions,
+			len(decl.Impl.Parameters),
+			sym,
+		))
+
+		sym.ConstantId = &id
+
+		return nil
+	default:
+		return fmt.Errorf("unknown declaration %T", decl)
 	}
 }

@@ -45,5 +45,5 @@ func (ef ExternFunc) Lookup(name string) RuntimeValue {
 
 // TypeConstantId implements CallableRuntimeValue.
 func (ef ExternFunc) TypeConstantId() TypeId {
-	return TypeId(ef.symbol.TypeSymbol.ConstantId)
+	return TypeId(*ef.symbol.TypeSymbol.ConstantId)
 }

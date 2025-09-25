@@ -152,6 +152,32 @@ func (vm *VM) Run() error {
 			if err := vm.push(dict); err != nil {
 				return err
 			}
+		case op.Call:
+			argCount := int(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
+			callee := vm.pop()
+
+			switch callee := callee.(type) {
+			case *runtime.CompiledFunction:
+				if argCount != callee.Arity() {
+					return fmt.Errorf("wrong number of arguments: want=%d, got=%d", callee.Arity(), argCount)
+				}
+
+				closure := runtime.MakeClosure(callee, nil)
+				frame := newFrame(closure, vm.sp-argCount)
+				frame.ip = 0
+				vm.pushFrame(frame)
+				vm.sp = frame.basep
+			}
+
+		case op.Return:
+			ret := vm.pop()
+			frame := vm.popFrame()
+			vm.sp = frame.basep
+
+			if err := vm.push(ret); err != nil {
+				return err
+			}
 
 		default:
 			def, err := op.Lookup(byte(code))

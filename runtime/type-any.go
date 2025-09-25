@@ -24,5 +24,5 @@ func (*AnyType) Lookup(name string) RuntimeValue {
 
 // TypeConstantId implements RuntimeValue.
 func (at *AnyType) TypeConstantId() TypeId {
-	return TypeId(at.symbol.ConstantId)
+	return TypeId(*at.symbol.ConstantId)
 }
