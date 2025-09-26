@@ -159,8 +159,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 	case *ast.StmtReturn:
 		if node.Expr == nil {
-			// TODO
-			panic("unimplemented blank stmt return")
+			c.emit(op.ConstNull)
+			c.emit(op.Return)
+			return nil
 		}
 
 		err := c.Compile(node.Expr)

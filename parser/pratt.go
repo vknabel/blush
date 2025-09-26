@@ -132,6 +132,11 @@ func (p *Parser) parsePrattExprFalse() ast.Expr {
 	return ast.MakeExprBool(false, tok)
 }
 
+func (p *Parser) parsePrattExprNull() ast.Expr {
+	tok, _ := p.expect(token.NULL)
+	return ast.MakeExprNull(tok)
+}
+
 func (p *Parser) parsePrattExprInt() ast.Expr {
 	tok, _ := p.expect(token.INT)
 	int, err := strconv.ParseInt(tok.Literal, 0, 64)

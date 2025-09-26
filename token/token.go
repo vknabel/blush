@@ -43,18 +43,19 @@ const (
 	OR  TokenType = "||"
 
 	// Delimiters
-	ASSIGN   TokenType = "="
-	ARROW    TokenType = "=>"
-	COLON    TokenType = ":"
-	DOT      TokenType = "."
-	COMMA    TokenType = ","
-	LPAREN   TokenType = "("
-	RPAREN   TokenType = ")"
-	LBRACE   TokenType = "{"
-	RBRACE   TokenType = "}"
-	LBRACKET TokenType = "["
-	RBRACKET TokenType = "]"
-	AT       TokenType = "@"
+	ASSIGN      TokenType = "="
+	RIGHT_ARROW TokenType = "->"
+	LEFT_ARROW  TokenType = "<-"
+	COLON       TokenType = ":"
+	DOT         TokenType = "."
+	COMMA       TokenType = ","
+	LPAREN      TokenType = "("
+	RPAREN      TokenType = ")"
+	LBRACE      TokenType = "{"
+	RBRACE      TokenType = "}"
+	LBRACKET    TokenType = "["
+	RBRACKET    TokenType = "]"
+	AT          TokenType = "@"
 
 	// KEYWORDS
 	MODULE     TokenType = "MODULE"
@@ -66,6 +67,10 @@ const (
 	FUNCTION   TokenType = "FUNCTION"
 	LET        TokenType = "LET"
 	TYPE       TokenType = "TYPE"
+	SWITCH     TokenType = "SWITCH"
+	CASE       TokenType = "CASE"
+	BREAK      TokenType = "BREAK"
+	CONTINUE   TokenType = "CONTINUE"
 	RETURN     TokenType = "RETURN"
 	IF         TokenType = "IF"
 	ELSE       TokenType = "ELSE"
@@ -73,6 +78,7 @@ const (
 	BLANK      TokenType = "BLANK"
 	TRUE       TokenType = "TRUE"
 	FALSE      TokenType = "FALSE"
+	NULL       TokenType = "NULL"
 )
 
 var keywords = map[string]TokenType{
@@ -85,12 +91,17 @@ var keywords = map[string]TokenType{
 	"func":       FUNCTION,
 	"let":        LET,
 	"type":       TYPE,
+	"switch":     SWITCH,
+	"case":       CASE,
+	"break":      BREAK,
+	"continue":   CONTINUE,
 	"return":     RETURN,
 	"if":         IF,
 	"else":       ELSE,
 	"for":        FOR,
 	"true":       TRUE,
 	"false":      FALSE,
+	"null":       NULL,
 	"_":          BLANK,
 }
 

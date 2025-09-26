@@ -425,6 +425,38 @@ func TestDeclFunction(t *testing.T) {
 				code.Make(code.Pop),
 			},
 		},
+		{
+			input: "func example() { return }",
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.ConstNull),
+						code.Make(code.Return),
+					},
+				},
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+		{
+			input: "func example() { return }\nexample()",
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.ConstNull),
+						code.Make(code.Return),
+					},
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Call, 0),
+				code.Make(code.Pop),
+			},
+		},
 	}
 
 	runCompilerTests(t, tests)

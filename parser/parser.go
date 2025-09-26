@@ -608,6 +608,11 @@ func (p *Parser) parseStatementReturn(pos StatementPosition) *ast.StmtReturn {
 			return ast.MakeStmtReturn(retTok, nil)
 		}
 	}
+
+	if !p.peekIs(token.RBRACE, token.CASE) {
+		return ast.MakeStmtReturn(retTok, nil)
+	}
+
 	expr := p.parseExpr()
 	return ast.MakeStmtReturn(retTok, expr)
 }
@@ -687,9 +692,9 @@ func (p *Parser) parseExprFunction() *ast.ExprFunc {
 	fun.SetParams(params)
 
 	if len(params) == 0 {
-		p.skip(token.ARROW)
+		p.skip(token.RIGHT_ARROW)
 	} else {
-		p.expect(token.ARROW)
+		p.expect(token.RIGHT_ARROW)
 	}
 	fun.SetImplBlock(p.parseStmtBlock(IN_FUNC))
 	p.expect(token.RBRACE)

@@ -36,7 +36,7 @@ AND = "&&";
 OR = "||";
 
 ASSIGN = "=";
-ARROW = "=>" | "->";
+ARROW = "->";
 COLON = ":";
 DOT = ".";
 COMMA = ",";

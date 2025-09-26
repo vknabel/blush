@@ -315,8 +315,8 @@ func (vm *VM) isEqual() runtime.Bool {
 			return false
 		}
 		return lhs == rhs
-	case runtime.Void:
-		_, ok := rhs.(runtime.Void)
+	case runtime.Null:
+		_, ok := rhs.(runtime.Null)
 		return runtime.Bool(ok)
 	}
 	panic(fmt.Sprintf("unknown type for equality check %T of %q", lhs, lhs.Inspect()))
