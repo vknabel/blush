@@ -40,6 +40,11 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case op.ConstNull:
+			err := vm.push(runtime.Null{})
+			if err != nil {
+				return err
+			}
 
 		case op.Jump:
 			pos := int(op.ReadUint16(ins[ip:]))

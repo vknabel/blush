@@ -51,6 +51,7 @@ func TestBasicOperations(t *testing.T) {
 func TestBasicFunctions(t *testing.T) {
 	tests := []vmTestCase{
 		{input: "func example() { return 42 }\nexample()", expected: 42},
+		{input: "func example() { return }\nexample()", expected: nil},
 	}
 
 	runVmTests(t, tests)
@@ -127,6 +128,8 @@ func testExpectedValue(t *testing.T, expected interface{}, actual runtime.Runtim
 
 func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 	switch expected := expected.(type) {
+	case nil:
+		return testNull(actual)
 	case int:
 		return testInt(int64(expected), actual)
 	case bool:
@@ -140,6 +143,14 @@ func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 	default:
 		return fmt.Errorf("unhandled type %T", expected)
 	}
+}
+
+func testNull(actual runtime.RuntimeValue) error {
+	_, ok := actual.(runtime.Null)
+	if !ok {
+		return fmt.Errorf("object is not Null. got=%T (%+v)", actual, actual)
+	}
+	return nil
 }
 
 func testInt(expected int64, actual runtime.RuntimeValue) error {
