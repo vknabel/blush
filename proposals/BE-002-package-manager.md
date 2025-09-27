@@ -15,29 +15,19 @@ stores cached packages.
 
 ## Cavefile data model
 
-The package manager consumes a simplified representation of the manifest:
+The installer works with a high-level manifest called the Cavefile. When Blush
+parses this document it records each dependency's
 
-```go
-type Cavefile struct {
-        Dependencies []Dependency
-}
+- **import name** – the identifier used in `import` statements,
+- **source** – the upstream location (today this is normally a Git URL), and
+- **version requirement** – a semantic-version predicate that must be satisfied
+  by the resolved package.
 
-type Dependency struct {
-        ImportName string
-        Source     string
-        Predicate  version.Predicate
-}
-```
-
-`ImportName` records the identifier a project expects to use for an imported
-package, `Source` points to the upstream location (such as a Git URL), and
-`Predicate` captures the semantic-version constraint that must be satisfied by a
-resolved release.
-
-Blush manifests can contain additional declarations for automation or tooling.
-The package manager, however, only inspects the dependency list. For example,
-the sample project declares both dependency metadata and a task definition, but
-only the entries under `@cave.Dependencies` affect installation.
+Other declarations in the Cavefile continue to be available to author project
+automation, but only the dependencies list participates in package resolution.
+For example, the sample project below defines both dependency metadata and a
+task, yet the installer only inspects the entries created by
+`@cave.Dependencies`.
 
 ### Example Cavefile
 
@@ -70,43 +60,47 @@ data GenerateTask {
 
 ## Installation workflow
 
-Executing `InstallationTask.Run` performs dependency resolution in three phases:
+Creating an installation task (`PackageManager.Install`) snapshots the manifest
+and defers the actual work until the task runs. When executed, the installer
+performs three high-level steps:
 
-1. Initialise the work queue from the manifest if this is the first run.
-2. Ask every configured registry for locally cached packages and index the
-   results by their source string.
-3. For each dependency, prefer a matching local package. If none are available,
-   query each registry for remote versions that satisfy the predicate, resolve
-   (clone) the first match, and append it to the completed list.
+1. **Prepare the queue.** The dependencies from the Cavefile seed the task the
+   first time it runs so repeated invocations can reuse progress.
+2. **Discover local packages.** Every configured registry is asked to describe
+   packages that are already cached on disk. The results are grouped by source
+   so the installer can quickly match them to dependencies.
+3. **Resolve missing versions.** Dependencies that cannot be satisfied locally
+   trigger remote discovery. Registries return the versions that satisfy the
+   predicate, the installer picks the first candidate, clones it into the cache,
+   and records the resolved package.
 
-If no registry can serve a dependency, the task aborts with an error. Completed
-packages remain attached to the task instance so tooling can reuse the results in
-subsequent steps.
+If no registry can satisfy a dependency, the task reports an error and stops.
+Successful resolutions remain attached to the task instance, giving the rest of
+the toolchain a consistent view of what was installed.
 
 ## Registry abstraction
 
-Registries implement a common interface that supports two operations: enumerate
-locally resolved packages and discover remote versions that meet a set of
-predicates. The API also defines the `Package`, `ResolvedPackage`, and
-`ResolvedModule` contracts used throughout the installer. Blush expects packages
-to live under a `git/<package>/<version>/` hierarchy beneath either the standard
-library or user-controlled cache directories.
+Registries implement a shared interface with two capabilities: list packages
+that are already available locally and enumerate remote versions that satisfy a
+set of predicates. Implementations return lightweight package descriptors that
+can later be resolved into local clones, alongside helpers for discovering the
+modules contained within a package. Blush stores cached repositories under a
+`git/<source>/<version>/` tree relative to the registry's root directory.
 
 ### Git registry provider
 
-The built-in `GitRegistry` keeps its workspace inside the filesystem supplied to
-`PackageManager.New`. During local discovery it traverses each repository folder,
-opens stored clones, and exposes tag aliases that refer to cached versions. When
-remote discovery is requested, it lists tags from the upstream repository,
-filters them against the predicates, sorts versions in descending order, and
-returns descriptors that can be cloned on demand. Cloning writes into a
-`<source>/<version>/` subdirectory whose name is mangled to remain filesystem
-friendly before returning a `localGitPackage`.
+The built-in `GitRegistry` keeps its workspace inside the filesystem passed to
+`PackageManager.New`. Local discovery scans each cached repository and returns
+every version that has been cloned already. Remote discovery fetches tags from
+the upstream Git repository, filters them by the provided predicates, sorts the
+matches in descending version order, and offers them as resolvable packages.
+Resolving a package clones the tag into a mangled `<source>/<version>/`
+directory beneath the registry root.
 
-Resolved Git packages delegate module discovery to the filesystem-based helper in
-`registry/fsmodule`. This helper walks the repository for `.blush` sources,
-groups them by directory, and exposes each group as a module accessible via a
-logical URI derived from the package source and path.
+Once a repository is available locally, the registry uses the filesystem module
+discovery helper (`registry/fsmodule`) to list modules within the checkout. Each
+module reports the `.blush` sources in its directory along with a logical URI
+built from the package source and path.
 
 ## Limitations and open questions
 
