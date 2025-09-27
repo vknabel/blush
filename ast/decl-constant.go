@@ -14,6 +14,7 @@ type DeclVariable struct {
 	Value       Expr
 	Token       token.Token
 	Annotations AnnotationChain
+	IsGlobal    bool
 
 	Docs *Docs
 }
@@ -38,6 +39,9 @@ func (e DeclVariable) DeclOverview() string {
 }
 
 func (e DeclVariable) ExportScope() ExportScope {
+	if !e.IsGlobal {
+		return ExportScopeLocal
+	}
 	if e.Name.Value[0] == '_' {
 		return ExportScopePublic
 	}

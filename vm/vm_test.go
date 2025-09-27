@@ -15,6 +15,7 @@ import (
 )
 
 type vmTestCase struct {
+	label    string
 	input    string
 	expected any
 	err      string
@@ -47,11 +48,100 @@ func TestBasicOperations(t *testing.T) {
 
 	runVmTests(t, tests)
 }
+
+func TestBasicFunctions(t *testing.T) {
+	tests := []vmTestCase{
+		{input: "func example() { return 42 }\nexample()", expected: 42},
+		{input: "func example() { return }\nexample()", expected: nil},
+		{input: `
+		func example() {
+			let x = 1
+			return x + x
+		}
+		example()
+		`, expected: 2},
+		{
+			label: "function with parameter",
+			input: `
+		func twice(n) {
+			return n+n
+		}
+		twice(2)
+		`, expected: 4},
+	}
+
+	runVmTests(t, tests)
+}
+
+func BenchmarkFib10(t *testing.B) {
+	runBench(t, `
+	func fib(n) {
+		return if n < 3 {
+			1
+		} else {
+			fib(n-1) + fib(n-2)				
+		}
+	}
+
+	fib(10)
+	`)
+}
+
+func BenchmarkFib28(t *testing.B) {
+	runBench(t, `
+	func fib(n) {
+		return if n < 3 {
+			1
+		} else {
+			fib(n-1) + fib(n-2)				
+		}
+	}
+
+	fib(28)
+	`)
+}
+
+func BenchmarkFib30(t *testing.B) {
+	runBench(t, `
+	func fib(n) {
+		return if n < 3 {
+			1
+		} else {
+			fib(n-1) + fib(n-2)				
+		}
+	}
+
+	fib(30)
+	`)
+}
+
+func BenchmarkFib32(t *testing.B) {
+	runBench(t, `
+	func fib(n) {
+		return if n < 3 {
+			1
+		} else {
+			fib(n-1) + fib(n-2)				
+		}
+	}
+
+	fib(32)
+	`)
+}
+
+func TestBasicVariables(t *testing.T) {
+	tests := []vmTestCase{
+		{input: "let a = 42\na", expected: 42},
+	}
+
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 
 	for i, tt := range tests {
-		t.Run(fmt.Sprintf("%d.", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d. %s", i, tt.label), func(t *testing.T) {
 			program := prepareSourceFileParsing(t, tt.input)
 
 			comp := compiler.New()
@@ -80,7 +170,25 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 	}
 
 }
-func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
+
+func runBench(t *testing.B, input string) {
+	program := prepareSourceFileParsing(t, input)
+
+	comp := compiler.New()
+	err := comp.Compile(program)
+	if err != nil {
+		t.Fatalf("compiler error: %s", err)
+	}
+
+	vm := vm.New(comp.Bytecode())
+	err = vm.Run()
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func prepareSourceFileParsing(t testing.TB, input string) *ast.SourceFile {
 	l, err := lexer.New(staticmodule.NewSourceString("testing:///test/test.blush", input))
 	if err != nil {
 		t.Fatal(err)
@@ -92,7 +200,7 @@ func prepareSourceFileParsing(t *testing.T, input string) *ast.SourceFile {
 	return srcFile
 }
 
-func checkParserErrors(t *testing.T, p *parser.Parser, contents string) {
+func checkParserErrors(t testing.TB, p *parser.Parser, contents string) {
 	if len(p.Errors()) > 0 {
 		for _, err := range p.Errors() {
 			src := err.Token.Source
@@ -118,6 +226,8 @@ func testExpectedValue(t *testing.T, expected interface{}, actual runtime.Runtim
 
 func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 	switch expected := expected.(type) {
+	case nil:
+		return testNull(actual)
 	case int:
 		return testInt(int64(expected), actual)
 	case bool:
@@ -131,6 +241,14 @@ func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 	default:
 		return fmt.Errorf("unhandled type %T", expected)
 	}
+}
+
+func testNull(actual runtime.RuntimeValue) error {
+	_, ok := actual.(runtime.Null)
+	if !ok {
+		return fmt.Errorf("object is not Null. got=%T (%+v)", actual, actual)
+	}
+	return nil
 }
 
 func testInt(expected int64, actual runtime.RuntimeValue) error {

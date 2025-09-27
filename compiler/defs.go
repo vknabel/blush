@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
 	"github.com/vknabel/blush/runtime"
 )
@@ -11,8 +12,9 @@ type emittedInstruction struct {
 }
 
 type CompilationScope struct {
-	constants    []runtime.RuntimeValue
-	instructions op.Instructions
+	Instructions op.Instructions
+	symbols      *ast.SymbolTable
+	locals       []*ast.Symbol
 
 	lastInstruction     emittedInstruction
 	previousInstruction emittedInstruction
@@ -21,10 +23,12 @@ type CompilationScope struct {
 type Bytecode struct {
 	Instructions op.Instructions
 	Constants    []runtime.RuntimeValue
+	Globals      []*CompilationScope
 }
 
 type Compiler struct {
 	constants []runtime.RuntimeValue
+	globals   []*CompilationScope
 	plugins   *runtime.ExternPluginRegistry
 
 	scopes   []*CompilationScope
@@ -33,8 +37,8 @@ type Compiler struct {
 
 func New() *Compiler {
 	mainScope := &CompilationScope{
-		instructions: op.Instructions{},
-		constants:    []runtime.RuntimeValue{},
+		Instructions: op.Instructions{},
+		symbols:      ast.MakeSymbolTable(nil, nil),
 	}
 	return &Compiler{
 		constants: []runtime.RuntimeValue{},
@@ -45,13 +49,14 @@ func New() *Compiler {
 }
 
 func (c *Compiler) currentInstructions() op.Instructions {
-	return c.scopes[c.scopeIdx].instructions
+	return c.scopes[c.scopeIdx].Instructions
 }
 
 func (c *Compiler) Bytecode() *Bytecode {
 	return &Bytecode{
 		Instructions: c.currentInstructions(),
 		Constants:    c.constants,
+		Globals:      c.globals,
 	}
 }
 
@@ -69,7 +74,7 @@ func (c *Compiler) emit(opcode op.Opcode, operands ...int) int {
 
 func (c *Compiler) addInstruction(ins []byte) int {
 	newPos := len(c.currentInstructions())
-	c.scopes[c.scopeIdx].instructions = append(c.scopes[c.scopeIdx].instructions, ins...)
+	c.scopes[c.scopeIdx].Instructions = append(c.scopes[c.scopeIdx].Instructions, ins...)
 	return newPos
 }
 
@@ -79,12 +84,17 @@ func (c *Compiler) addConstant(v runtime.RuntimeValue) int {
 	return len(c.constants) - 1
 }
 
-func (c *Compiler) enterScope() {
+func (c *Compiler) addGlobal(scope *CompilationScope) int {
+	c.globals = append(c.globals, scope)
+	return len(c.globals) - 1
+}
+
+func (c *Compiler) enterScope(syms *ast.SymbolTable) {
 	c.scopes = append(c.scopes, &CompilationScope{
-		instructions: op.Instructions{},
+		Instructions: op.Instructions{},
+		symbols:      syms,
 	})
 	c.scopeIdx++
-	panic("unimplemented")
 }
 
 func (c *Compiler) leaveScope() *CompilationScope {
@@ -116,7 +126,7 @@ func (c *Compiler) removeLastInstruction() emittedInstruction {
 	old := c.currentInstructions()
 	new := old[:last.Position]
 
-	c.scopes[c.scopeIdx].instructions = new
+	c.scopes[c.scopeIdx].Instructions = new
 	c.scopes[c.scopeIdx].lastInstruction = previous
 
 	return last

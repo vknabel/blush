@@ -33,6 +33,7 @@ func NewSourceParser(lex *lexer.Lexer, parent *ast.SymbolTable, path string) *Pa
 	p.registerPrefix(token.IDENT, p.parsePrattExprIdentifier)
 	p.registerPrefix(token.TRUE, p.parsePrattExprTrue)
 	p.registerPrefix(token.FALSE, p.parsePrattExprFalse)
+	p.registerPrefix(token.NULL, p.parsePrattExprNull)
 	p.registerPrefix(token.INT, p.parsePrattExprInt)
 	p.registerPrefix(token.FLOAT, p.parsePrattExprFloat)
 	p.registerPrefix(token.BANG, p.parsePrattExprPrefix)
@@ -317,7 +318,7 @@ func (p *Parser) parseStaticIdentifierReference() ast.StaticReference {
 //	  <optional:annotations> <func_decl>
 //	  <optional:annotations> <var_decl>
 //	}
-func (p *Parser) parseDataDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclData {
+func (p *Parser) parseDataDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclData {
 	declToken, _ := p.expect(token.DATA)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -368,7 +369,7 @@ func (p *Parser) parseDataDeclField() *ast.DeclField {
 //	annotation <identifier> {
 //	  // properties
 //	}
-func (p *Parser) parseAnnotationDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclAnnotation {
+func (p *Parser) parseAnnotationDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclAnnotation {
 	declToken, _ := p.expect(token.ANNOTATION)
 	identToken, _ := p.expect(token.IDENT)
 	ident := ast.MakeIdentifier(identToken)
@@ -454,7 +455,7 @@ func (p *Parser) parseExternDecl(pos StatementPosition, annos ast.AnnotationChai
 	return extern
 }
 
-func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationChain) *ast.DeclFunc {
+func (p *Parser) parseFunctionDecl(_ StatementPosition, annos ast.AnnotationChain) *ast.DeclFunc {
 	funcTok, _ := p.expect(token.FUNCTION)
 	nameTok, _ := p.expect(token.IDENT)
 
@@ -482,7 +483,8 @@ func (p *Parser) parseFunctionDecl(pos StatementPosition, annos ast.AnnotationCh
 
 	decl := ast.MakeDeclFunc(funcTok, ast.MakeIdentifier(nameTok), impl)
 	decl.Annotations = annos
-	p.curSymbolTable.Insert(decl)
+	sym := p.curSymbolTable.Insert(decl)
+	sym.ChildTable = impl.Symbols
 	return decl
 }
 
@@ -530,7 +532,10 @@ func (p *Parser) parseVariableDecl(pos StatementPosition, annos ast.AnnotationCh
 	p.expect(token.ASSIGN)
 	expr := p.parseExpr()
 	let := ast.MakeDeclVariable(letTok, name, expr)
+	let.IsGlobal = pos < IN_FUNC
 	let.Annotations = annos
+
+	p.curSymbolTable.Insert(let)
 	return let
 }
 
@@ -598,7 +603,7 @@ func (p *Parser) parseDeclParameterList() []ast.DeclParameter {
 	}
 }
 
-func (p *Parser) parseStatementReturn(pos StatementPosition) ast.StmtReturn {
+func (p *Parser) parseStatementReturn(pos StatementPosition) *ast.StmtReturn {
 	if pos != IN_FUNC {
 		p.errStatementMisplaced(pos)
 	}
@@ -608,6 +613,11 @@ func (p *Parser) parseStatementReturn(pos StatementPosition) ast.StmtReturn {
 			return ast.MakeStmtReturn(retTok, nil)
 		}
 	}
+
+	if p.curIs(token.RBRACE, token.CASE) {
+		return ast.MakeStmtReturn(retTok, nil)
+	}
+
 	expr := p.parseExpr()
 	return ast.MakeStmtReturn(retTok, expr)
 }
@@ -665,7 +675,7 @@ func (p *Parser) parseExpr() ast.Expr {
 	return expr
 }
 
-func (p *Parser) parseStmtBlock(pos StatementPosition) ast.Block {
+func (p *Parser) parseStmtBlock(_ StatementPosition) ast.Block {
 	block := make([]ast.Statement, 0)
 
 	for !p.curIs(token.RBRACE, token.RBRACKET, token.RPAREN) {
@@ -687,9 +697,9 @@ func (p *Parser) parseExprFunction() *ast.ExprFunc {
 	fun.SetParams(params)
 
 	if len(params) == 0 {
-		p.skip(token.ARROW)
+		p.skip(token.RIGHT_ARROW)
 	} else {
-		p.expect(token.ARROW)
+		p.expect(token.RIGHT_ARROW)
 	}
 	fun.SetImplBlock(p.parseStmtBlock(IN_FUNC))
 	p.expect(token.RBRACE)

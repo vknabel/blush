@@ -22,5 +22,5 @@ func (i SimpleType) Lookup(name string) RuntimeValue {
 
 // TypeConstantId implements runtime.RuntimeValue.
 func (i SimpleType) TypeConstantId() TypeId {
-	return TypeId(i.Decl.ConstantId)
+	return TypeId(*i.Decl.ConstantId)
 }

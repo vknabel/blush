@@ -78,8 +78,8 @@ import strings
 
 func nameOf(juristic) {
     type juristic = JuristicPerson {
-        Person: { person => person.name },
-        Company: { company =>
+        Person: { person -> person.name },
+        Company: { company ->
                 strings.concat [
                 company.name, " ", company.corporateForm
             ]

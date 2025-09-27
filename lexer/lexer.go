@@ -46,7 +46,7 @@ func (l *Lexer) NextToken() token.Token {
 		tok = l.newToken(token.PLUS, l.ch)
 	case '-': // MINUS, new ARROW
 		if l.peekChar() == '>' {
-			tok = token.Token{Type: token.ARROW, Literal: "->"}
+			tok = token.Token{Type: token.RIGHT_ARROW, Literal: "->"}
 			l.advance()
 		} else {
 			tok = l.newToken(token.MINUS, l.ch)
@@ -78,7 +78,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{Type: token.EQ, Literal: "=="}
 			l.advance()
 		case '>':
-			tok = token.Token{Type: token.ARROW, Literal: "=>"}
+			tok = token.Token{Type: token.RIGHT_ARROW, Literal: "->"}
 			l.advance()
 		default:
 			tok = l.newToken(token.ASSIGN, l.ch)

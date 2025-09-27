@@ -42,7 +42,7 @@ func (dt *DataType) Arity() int {
 // Call implements Callable.
 func (dt *DataType) Call(args []RuntimeValue) RuntimeValue {
 	val := &DataValue{
-		TypeId: TypeId(dt.symbol.ConstantId),
+		TypeId: TypeId(*dt.symbol.ConstantId),
 		Fields: make(map[string]RuntimeValue, len(dt.FieldSymbols)),
 	}
 	for i, f := range dt.FieldSymbols {
@@ -63,5 +63,5 @@ func (dt *DataType) Lookup(name string) RuntimeValue {
 
 // TypeConstantId implements Callable.
 func (dt *DataType) TypeConstantId() TypeId {
-	return TypeId(dt.symbol.TypeSymbol.ConstantId)
+	return TypeId(*dt.symbol.TypeSymbol.ConstantId)
 }
