@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/vknabel/blush/potfile"
+	"github.com/vknabel/blush/cavefile"
 	"github.com/vknabel/blush/registry"
 	"github.com/vknabel/blush/version"
 )
@@ -35,8 +35,8 @@ func (p mockResolvedPackage) ResolveModules() ([]registry.ResolvedModule, error)
 
 func TestInstallationTaskRun(t *testing.T) {
 	ver := version.SemverVersion{Major: 1, Minor: 0, Patch: 0}
-	dep := potfile.Dependency{Source: "example/pkg", Predicate: version.Predicate{Comparison: version.ComparisonExact, Version: ver}}
-	pot := potfile.Potfile{Dependencies: []potfile.Dependency{dep}}
+	dep := cavefile.Dependency{Source: "example/pkg", Predicate: version.Predicate{Comparison: version.ComparisonExact, Version: ver}}
+	pot := cavefile.Cavefile{Dependencies: []cavefile.Dependency{dep}}
 	pkg := mockResolvedPackage{source: dep.Source, ver: ver}
 	pm := &PackageManager{registries: []registry.Provider{mockRegistry{pkgs: []registry.ResolvedPackage{pkg}}}}
 	task := pm.Install(pot)
