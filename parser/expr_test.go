@@ -17,7 +17,7 @@ func TestExprIdentifier(t *testing.T) {
 		{"42", "42"},
 		// {"0b11", "3"}, // TODO
 		{"13.37", "13.370000"},
-		{"!True", "(!True)"},
+		{"!true", "(!true)"},
 		{"-3", "(-3)"},
 		{"(-3)", "(-3)"},
 		{"(if x { y } else { z })", "(if x { y } else { z })"},
@@ -27,6 +27,12 @@ func TestExprIdentifier(t *testing.T) {
 		{"[42 + 1337]", "[(42+1337)]"},
 		{"[42 + 1337: 12 - 34]", "[(42+1337): (12-34)]"},
 		{"[42 + 1337: 12 - 34, 2: 3]", "[(42+1337): (12-34), 2: 3]"},
+		{"true", "true"},
+		{"false", "false"},
+		{"[1, 2]", "[1, 2]"},
+		{"some()", "some(some)"},
+		{"call(1, 2)", "call(1, 2call)"},
+		{"{}", "{->/* 0 stmts */}"},
 	}
 
 	for i, tt := range tests {
