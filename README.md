@@ -5,7 +5,7 @@ Blush is an experimental programming language with a reference implementation in
 - Lexer, parser, and AST
 - Bytecode compiler and virtual machine
 - Standard library with prelude types such as `Array`, `Bool`, `Int`, and `String`
-- Package management via `Potfile` and registries
+- Package management via `Cavefile` and registries
 - Documentation on syntax, types, and style in [`docs/`](docs)
 
 ## Language overview

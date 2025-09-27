@@ -1,8 +1,8 @@
-package potfile
+package cavefile
 
 import "github.com/vknabel/blush/version"
 
-type Potfile struct {
+type Cavefile struct {
 	Dependencies []Dependency
 }
 

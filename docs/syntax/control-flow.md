@@ -46,7 +46,7 @@ of exactly one expression; `return` statements are not allowed.
 The statement form simply walks a collection for its effects:
 
 ```blush
-for n -> [1, 2, 3] {
+for n <- [1, 2, 3] {
     print(n)
 }
 ```

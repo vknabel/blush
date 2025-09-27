@@ -4,22 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vknabel/blush/potfile"
+	"github.com/vknabel/blush/cavefile"
 	"github.com/vknabel/blush/registry"
 )
 
 type InstallationTask struct {
-	pot        potfile.Potfile
+	cave       cavefile.Cavefile
 	pkgmanager *PackageManager
 
 	completed []registry.ResolvedPackage
-	queue     []potfile.Dependency
+	queue     []cavefile.Dependency
 }
 
 // TODO: Recursively install dependencies!
 func (t *InstallationTask) Run(ctx context.Context) error {
 	if t.queue == nil {
-		t.queue = t.pot.Dependencies
+		t.queue = t.cave.Dependencies
 	}
 	availables := make(map[string][]registry.ResolvedPackage, 0)
 
