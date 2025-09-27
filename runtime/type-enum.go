@@ -24,5 +24,5 @@ func (*EnumType) Lookup(name string) RuntimeValue {
 
 // TypeConstantId implements RuntimeValue.
 func (et *EnumType) TypeConstantId() TypeId {
-	return TypeId(et.symbol.TypeSymbol.ConstantId)
+	return TypeId(*et.symbol.TypeSymbol.ConstantId)
 }

@@ -15,8 +15,10 @@ import (
 )
 
 type compilerTestCase struct {
+	label                string
 	input                string
 	expectedConstants    []interface{}
+	expectedGlobals      [][]code.Instructions
 	expectedInstructions []code.Instructions
 }
 
@@ -389,11 +391,181 @@ func TestArrayExpressions(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestDeclFunction(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			label: "function with value return",
+			input: "func example() { return 42 }",
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.Const, 1),
+						code.Make(code.Return),
+					},
+				},
+				42,
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+		{
+			label: "function call with value return",
+			input: "func example() { return 42 }\nexample()",
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.Const, 1),
+						code.Make(code.Return),
+					},
+				},
+				42,
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Call, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label: "function with blank return",
+			input: "func example() { return }",
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.ConstNull),
+						code.Make(code.Return),
+					},
+				},
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+		{
+			label: "function call with blank return",
+			input: "func example() { return }\nexample()",
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.ConstNull),
+						code.Make(code.Return),
+					},
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Call, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label: "function can access global variables",
+			input: `
+			let x = 42
+			func example() {
+				return x
+			}
+			`,
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.GetGlobal, 0),
+						code.Make(code.Return),
+					},
+				},
+				42,
+			},
+			expectedGlobals: [][]code.Instructions{
+				{code.Make(code.Const, 1)},
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+		{
+			label: "function can access global variables declared after usage",
+			input: `
+			func example() {
+				return x
+			}
+			let x = 42
+			`,
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.GetGlobal, 0),
+						code.Make(code.Return),
+					},
+				},
+				42,
+			},
+			expectedGlobals: [][]code.Instructions{
+				{code.Make(code.Const, 1)},
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+		{
+			label: "function with local variable",
+			input: `
+			func example() {
+				let x = 42
+				return x+x
+			}
+			`,
+			expectedConstants: []any{
+				compiledFunction{
+					name:   "example",
+					params: 0,
+					ins: []code.Instructions{
+						code.Make(code.Const, 1),
+						code.Make(code.SetLocal, 0),
+						code.Make(code.GetLocal, 0),
+						code.Make(code.GetLocal, 0),
+						code.Make(code.Add),
+						code.Make(code.Return),
+					},
+				},
+				42,
+			},
+			expectedInstructions: []code.Instructions{},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
+func TestVariables(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: "let a = 42\na",
+			expectedConstants: []any{
+				42,
+			},
+			expectedGlobals: [][]code.Instructions{
+				{code.Make(code.Const, 0)},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.GetGlobal, 0),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 
 	for i, tt := range tests {
-		t.Run(fmt.Sprintf("%d.", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d. %s", i, tt.label), func(t *testing.T) {
 			program := prepareSourceFileParsing(t, tt.input)
 
 			compiler := compiler.New()
@@ -412,6 +584,11 @@ func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 			err = testConstants(t, tt.expectedConstants, bytecode.Constants)
 			if err != nil {
 				t.Fatalf("testConstants failed: %s", err)
+			}
+
+			err = testGlobals(t, tt.expectedGlobals, bytecode.Globals)
+			if err != nil {
+				t.Fatalf("testGlobals failed: %s", err)
 			}
 		})
 	}
@@ -504,10 +681,55 @@ func testConstants(
 			if !ok || want != int(got) {
 				return fmt.Errorf("wrong constant at %d.\nwant=%d\ngot=%q", i, want, got)
 			}
+		case compiledFunction:
+			got, ok := actual[i].(*runtime.CompiledFunction)
+			if !ok {
+				return fmt.Errorf("constant %d is not a function: %T", i, actual[i])
+			}
+
+			if got.Symbol.Name != want.name {
+				return fmt.Errorf("wrong function name at %d.\nwant=%q\ngot=%q", i, want.name, got.Symbol.Name)
+			}
+
+			if got.Arity() != want.params {
+				return fmt.Errorf("wrong function params at %d.\nwant=%d\ngot=%d", i, want.params, got.Arity())
+			}
+
+			err := testInstructions(t, want.ins, got.Instructions)
+			if err != nil {
+				return fmt.Errorf("wrong function instructions at %d: %s", i, err)
+			}
+
 		default:
 			got := actual[i]
 			return fmt.Errorf("unhandled wanted type %T of value at %d.\nwant=%q\ngot=%q", i, want, want, got)
 		}
 	}
 	return nil
+}
+
+func testGlobals(t *testing.T,
+	expected [][]code.Instructions,
+	actual []*compiler.CompilationScope,
+) error {
+	t.Helper()
+
+	if len(actual) != len(expected) {
+		return fmt.Errorf("wrong amount of globals.\nwant=%d\ngot=%d", len(expected), len(actual))
+	}
+
+	for i, ins := range expected {
+		err := testInstructions(t, ins, actual[i].Instructions)
+		if err != nil {
+			return fmt.Errorf("wrong global instructions at %d: %s", i, err)
+		}
+	}
+
+	return nil
+}
+
+type compiledFunction struct {
+	name   string
+	params int
+	ins    []code.Instructions
 }

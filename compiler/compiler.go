@@ -6,6 +6,7 @@ import (
 
 	"github.com/vknabel/blush/ast"
 	"github.com/vknabel/blush/op"
+	"github.com/vknabel/blush/runtime"
 	"github.com/vknabel/blush/token"
 )
 
@@ -18,21 +19,56 @@ const (
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
 	case *ast.ContextModule:
+		c.enterScope(node.Symbols)
+
 		for _, src := range node.Files {
 			err := c.Compile(src)
 			if err != nil {
 				return err
 			}
 		}
+
+		c.leaveScope()
+
 		return nil
 	case *ast.SourceFile:
+		c.enterScope(node.Symbols)
+
+		for _, sym := range node.Symbols.Symbols {
+			err := c.reserveSymbol(sym)
+			if err != nil {
+				return err
+			}
+		}
+
+		for _, sym := range node.Symbols.Symbols {
+			err := c.compileSymbol(sym)
+			if err != nil {
+				return err
+			}
+		}
+
 		for _, stmt := range node.Statements {
 			err := c.Compile(stmt)
 			if err != nil {
 				return err
 			}
 		}
+
+		scope := c.leaveScope()
+
+		// at its core this is fine, but shouldn't this be at the module level?
+		c.scopes[c.scopeIdx].Instructions = append(
+			c.scopes[c.scopeIdx].Instructions,
+			scope.Instructions...,
+		)
+
 		return nil
+
+	case *ast.DeclVariable, *ast.DeclFunc:
+		sym := c.scopes[c.scopeIdx].symbols.Insert(node.(ast.Decl))
+		return c.compileSymbol(sym)
+
 	case *ast.StmtExpr:
 		err := c.Compile(node.Expr)
 		if err != nil {
@@ -55,6 +91,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 		} else {
 			c.emit(op.ConstFalse)
 		}
+		return nil
+	case *ast.ExprNull:
+		c.emit(op.ConstNull)
 		return nil
 	case *ast.ExprInt:
 		val := c.plugins.Prelude().Int(node.Literal)
@@ -101,21 +140,131 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(op.Const, idx)
 		c.emit(op.Dict)
 		return nil
+	case *ast.ExprIdentifier:
+		symbol := c.scopes[c.scopeIdx].symbols.LookupIdentifier(node.Name)
+		if symbol == nil {
+			return fmt.Errorf("undefined identifier %q", node.Name)
+		}
+		switch symbol.Decl.(type) {
+		case *ast.DeclFunc, *ast.DeclData, *ast.DeclEnum, *ast.DeclExternFunc, *ast.DeclAnnotation:
+			sym := symbol.Original()
+			if sym.ConstantId == nil {
+				return fmt.Errorf("identifier %q has no constant id", node.Name)
+			}
+			c.emit(op.Const, *sym.ConstantId)
+			return nil
+
+		case *ast.DeclVariable:
+			sym := symbol.Original()
+
+			if sym.LocalId != nil {
+				c.emit(op.GetLocal, *sym.LocalId)
+				return nil
+			}
+			if sym.GlobalId != nil {
+				c.emit(op.GetGlobal, *sym.GlobalId)
+				return nil
+			}
+
+			return fmt.Errorf("variable %q has no local or global id", node.Name)
+
+		case *ast.DeclParameter:
+			c.emit(op.GetLocal, *symbol.LocalId)
+			return nil
+
+		default:
+			return fmt.Errorf("identifier %q has unknown declaration type %T", node.Name, symbol.Decl)
+		}
+
+	case *ast.ExprInvocation:
+		for i := len(node.Arguments) - 1; i >= 0; i-- {
+			err := c.Compile(node.Arguments[i])
+			if err != nil {
+				return err
+			}
+		}
+		err := c.Compile(node.Function)
+		if err != nil {
+			return err
+		}
+
+		c.emit(op.Call, len(node.Arguments))
+		return nil
+
+	case *ast.StmtReturn:
+		if node.Expr == nil {
+			c.emit(op.ConstNull)
+			c.emit(op.Return)
+			return nil
+		}
+
+		err := c.Compile(node.Expr)
+		if err != nil {
+			return err
+		}
+
+		c.emit(op.Return)
+		return nil
 
 	default:
 		return fmt.Errorf("unknown ast node %T", node)
 	}
 }
 
+func (c *Compiler) reserveSymbol(sym *ast.Symbol) error {
+	switch decl := sym.Decl.(type) {
+	case *ast.DeclFunc:
+		id := len(c.constants)
+		c.constants = append(c.constants, nil)
+		sym.ConstantId = &id
+		return nil
+
+	case *ast.DeclVariable:
+		switch decl.ExportScope() {
+		case ast.ExportScopeInternal, ast.ExportScopePublic:
+			id := c.addGlobal(nil)
+			sym.GlobalId = &id
+			return nil
+
+		case ast.ExportScopeLocal:
+			id := len(c.scopes[c.scopeIdx].locals)
+			c.scopes[c.scopeIdx].locals = append(c.scopes[c.scopeIdx].locals, sym)
+			sym.LocalId = &id
+			return nil
+
+		default:
+			return fmt.Errorf("unknown variable scope %v", sym.Scope)
+		}
+
+	case *ast.DeclParameter:
+		if sym.LocalId != nil {
+			panic("parameter already has a local id")
+		}
+		id := len(c.scopes[c.scopeIdx].locals)
+		c.scopes[c.scopeIdx].locals = append(c.scopes[c.scopeIdx].locals, sym)
+		sym.LocalId = &id
+		return nil
+
+	case *ast.DeclData, *ast.DeclEnum, *ast.DeclExternFunc, *ast.DeclAnnotation:
+		id := len(c.constants)
+		c.constants = append(c.constants, nil)
+		sym.ConstantId = &id
+		return nil
+
+	default:
+		return fmt.Errorf("unknown declaration %T", decl)
+	}
+}
+
 func (c *Compiler) changeOperand(pos int, operand int) {
-	opcode := op.Opcode(c.instructions[pos])
+	opcode := op.Opcode(c.currentInstructions()[pos])
 	patched := op.Make(opcode, operand)
 	c.replaceInstruction(pos, patched)
 }
 
 func (c *Compiler) replaceInstruction(pos int, patched []byte) {
 	for i := 0; i < len(patched); i++ {
-		c.instructions[pos+i] = patched[i]
+		c.currentInstructions()[pos+i] = patched[i]
 	}
 }
 
@@ -132,7 +281,7 @@ func (c *Compiler) compileBlock(block ast.Block) error {
 func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 	var (
 		jumpNext int
-		jumpEnds []int = make([]int, 0, 1+len(node.ElseIf))
+		jumpEnds = make([]int, 0, 1+len(node.ElseIf))
 		endPos   int
 	)
 	err := c.Compile(node.Condition)
@@ -149,7 +298,7 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 	jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 
 	for _, elseIf := range node.ElseIf {
-		c.changeOperand(jumpNext, len(c.instructions))
+		c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 		err = c.Compile(elseIf.Condition)
 		if err != nil {
@@ -165,7 +314,7 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 	}
 
 	if node.ElseBlock != nil {
-		c.changeOperand(jumpNext, len(c.instructions))
+		c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 		err = c.compileBlock(node.ElseBlock)
 		if err != nil {
@@ -173,13 +322,15 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 		}
 	} else {
 		lastIndex := len(jumpEnds) - 1
-		lastPos := jumpEnds[lastIndex]
-		c.instructions = c.instructions[:lastPos]
+
+		if c.isLastInstruction(op.Pop) {
+			c.removeLastInstruction()
+		}
 
 		jumpEnds[lastIndex] = jumpNext
 	}
 
-	endPos = len(c.instructions)
+	endPos = len(c.currentInstructions())
 	for _, pos := range jumpEnds {
 		c.changeOperand(pos, endPos)
 	}
@@ -189,7 +340,7 @@ func (c *Compiler) compileStmtIf(node ast.StmtIf) error {
 func (c *Compiler) compileExprIf(node ast.ExprIf) error {
 	var (
 		jumpNext int
-		jumpEnds []int = make([]int, 0, 1+len(node.ElseIf))
+		jumpEnds = make([]int, 0, 1+len(node.ElseIf))
 		endPos   int
 	)
 	err := c.Compile(node.Condition)
@@ -206,7 +357,7 @@ func (c *Compiler) compileExprIf(node ast.ExprIf) error {
 	jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 
 	for _, elseIf := range node.ElseIf {
-		c.changeOperand(jumpNext, len(c.instructions))
+		c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 		err = c.Compile(elseIf.Condition)
 		if err != nil {
@@ -220,14 +371,14 @@ func (c *Compiler) compileExprIf(node ast.ExprIf) error {
 		}
 		jumpEnds = append(jumpEnds, c.emit(op.Jump, placeholderJumpAddress))
 	}
-	c.changeOperand(jumpNext, len(c.instructions))
+	c.changeOperand(jumpNext, len(c.currentInstructions()))
 
 	err = c.Compile(node.ElseExpr)
 	if err != nil {
 		return err
 	}
 
-	endPos = len(c.instructions)
+	endPos = len(c.currentInstructions())
 	for _, pos := range jumpEnds {
 		c.changeOperand(pos, endPos)
 	}
@@ -271,7 +422,7 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		jumpEnd := c.emit(op.Jump, placeholderJumpAddress)
 		pos := c.emit(op.ConstFalse)
 		c.changeOperand(jumpQuick, pos)
-		c.changeOperand(jumpEnd, len(c.instructions))
+		c.changeOperand(jumpEnd, len(c.currentInstructions()))
 		return nil
 
 	case token.OR:
@@ -284,7 +435,7 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		jumpEnd := c.emit(op.Jump, placeholderJumpAddress)
 		pos := c.emit(op.ConstTrue)
 		c.changeOperand(jumpQuick, pos)
-		c.changeOperand(jumpEnd, len(c.instructions))
+		c.changeOperand(jumpEnd, len(c.currentInstructions()))
 		return nil
 
 	case token.PLUS:
@@ -366,5 +517,70 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 		return nil
 	default:
 		return fmt.Errorf("unknown infix operator %q", node.Operator.Literal)
+	}
+}
+
+func (c *Compiler) compileSymbol(sym *ast.Symbol) error {
+	switch decl := sym.Decl.(type) {
+	case *ast.DeclFunc:
+		c.enterScope(decl.Impl.Symbols)
+
+		for _, child := range decl.Impl.Symbols.Symbols {
+			if child.Decl == nil {
+				continue
+			}
+			err := c.reserveSymbol(child)
+			if err != nil {
+				return err
+			}
+		}
+		err := c.compileBlock(decl.Impl.Impl)
+		if err != nil {
+			return err
+		}
+		scope := c.leaveScope()
+
+		c.constants[*sym.ConstantId] = runtime.MakeCompiledFunction(
+			scope.Instructions,
+			len(decl.Impl.Parameters),
+			sym,
+		)
+
+		return nil
+
+	case *ast.DeclVariable:
+		switch decl.ExportScope() {
+		case ast.ExportScopeInternal, ast.ExportScopePublic:
+			c.enterScope(sym.ChildTable)
+
+			err := c.Compile(decl.Value)
+			if err != nil {
+				return err
+			}
+
+			scope := c.leaveScope()
+
+			c.globals[*sym.GlobalId] = scope
+
+			return nil
+
+		case ast.ExportScopeLocal:
+			err := c.Compile(decl.Value)
+			if err != nil {
+				return err
+			}
+
+			c.scopes[c.scopeIdx].locals[*sym.LocalId] = sym
+
+			c.emit(op.SetLocal, *sym.LocalId)
+
+			return nil
+
+		default:
+			return fmt.Errorf("unknown variable scope %v", sym.Scope)
+		}
+
+	default:
+		return fmt.Errorf("unknown declaration %T", decl)
 	}
 }

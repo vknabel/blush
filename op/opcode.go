@@ -3,6 +3,7 @@ package op
 const (
 	_ Opcode = iota
 	Const
+	ConstNull
 	ConstTrue
 	ConstFalse
 	Pop
@@ -33,6 +34,13 @@ const (
 	LessThan
 	LessThanOrEqual
 
+	Call
+	Return
+	GetGlobal
+	SetGlobal
+	GetLocal
+	SetLocal
+
 	// Serves as instruction to optionally pause on breakpoints.
 	// Will not be compiled for non debugging sessions.
 	Debug
@@ -40,6 +48,7 @@ const (
 
 var definitions = map[Opcode]*Definition{
 	Const:      {"const", []int{2}}, // const id
+	ConstNull:  {"constnull", []int{}},
 	ConstTrue:  {"consttrue", []int{}},
 	ConstFalse: {"constfalse", []int{}},
 	Pop:        {"pop", []int{}},
@@ -67,6 +76,13 @@ var definitions = map[Opcode]*Definition{
 	GreaterThanOrEqual: {"gte", []int{}},
 	LessThan:           {"lt", []int{}},
 	LessThanOrEqual:    {"lte", []int{}},
+
+	Call:      {"call", []int{2}}, // arg count
+	Return:    {"return", []int{}},
+	GetGlobal: {"getglobal", []int{2}},
+	SetGlobal: {"setglobal", []int{2}},
+	GetLocal:  {"getlocal", []int{2}},
+	SetLocal:  {"setlocal", []int{2}},
 
 	Debug: {"debug", []int{}},
 }

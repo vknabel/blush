@@ -32,8 +32,17 @@ type Symbol struct {
 
 	// Filled by later phases
 
-	ConstantId uint16
+	ConstantId *int
+	GlobalId   *int
+	LocalId    *int
 	TypeSymbol *Symbol
+}
+
+func (sym *Symbol) Original() *Symbol {
+	if sym.Parent != nil {
+		return sym.Parent.Original()
+	}
+	return sym
 }
 
 type SymbolUsage struct {

@@ -56,11 +56,11 @@ annotation Numeric {
 
 enum Number {
   // A floating point number.
-  @Numeric({ f => f })
+  @Numeric({ f -> f })
   extern Float {}
 
   // A whole integer number.
-  @Numeric({ i => i })
+  @Numeric({ i -> i })
   extern Int {}
 }
 
@@ -69,7 +69,7 @@ extern type String {
 }
 
 // Represents the absence of a value.
-@Type(Void)
-extern let void
-// The type of the `void` value.
-extern type Void {}
+@Type(Null)
+extern let null
+// The type of the `null` value.
+extern type Null {}

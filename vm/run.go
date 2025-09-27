@@ -2,26 +2,35 @@ package vm
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/vknabel/blush/op"
 	"github.com/vknabel/blush/runtime"
 )
 
 func (vm *VM) Run() error {
-	var (
-		ip   int
-		code op.Opcode
-	)
+	var taskId = TaskId(rand.Uint64())
+	return vm.runTask(taskId)
+}
 
-	for ip = 0; ip < len(vm.instructions); ip++ {
-		code = op.Opcode(vm.instructions[ip])
+func (vm *VM) runTask(taskId TaskId) error {
+	for vm.currentFrame().ip < len(vm.currentFrame().Instructions()) {
+		vm.currentFrame().ip++
+
+		var (
+			fr   = vm.currentFrame()
+			ip   = fr.ip
+			ins  = fr.Instructions()
+			code = op.Opcode(ins[ip-1])
+		)
+
 		switch code {
 		case op.Pop:
 			vm.pop()
 
 		case op.Const:
-			idx := op.ReadUint16(vm.instructions[ip+1:])
-			ip += 2
+			idx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
 
 			err := vm.push(vm.constants[idx])
 			if err != nil {
@@ -37,30 +46,35 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case op.ConstNull:
+			err := vm.push(runtime.Null{})
+			if err != nil {
+				return err
+			}
 
 		case op.Jump:
-			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
-			ip = pos - 1
+			pos := int(op.ReadUint16(ins[ip:]))
+			fr.ip = pos
 		case op.JumpFalse:
-			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			pos := int(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
 			cond := vm.pop()
 
 			if cond == runtime.Bool(false) {
-				ip = pos - 1
+				fr.ip = pos
 			}
 		case op.JumpTrue:
-			pos := int(op.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			pos := int(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
 			cond := vm.pop()
 
 			if cond != runtime.Bool(false) {
-				ip = pos - 1
+				fr.ip = pos
 			}
 
 		case op.AssertType:
-			typeId := runtime.TypeId(op.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			typeId := runtime.TypeId(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
 			v := vm.stack[vm.sp-1]
 			if v.TypeConstantId() != typeId {
 				return fmt.Errorf("unexpected type (%T %q)", v, v.Inspect())
@@ -150,6 +164,76 @@ func (vm *VM) Run() error {
 				return err
 			}
 
+		case op.SetLocal:
+			idx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
+			val := vm.pop()
+			fr.locals[idx] = val
+
+		case op.GetLocal:
+			idx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
+
+			if err := vm.push(fr.locals[idx]); err != nil {
+				return err
+			}
+
+		case op.GetGlobal:
+			idx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
+
+			global := vm.globals[idx]
+
+			val, err := global.Get(taskId)
+			if err != nil {
+				return err
+			}
+
+			if err := vm.push(val); err != nil {
+				return err
+			}
+
+		case op.SetGlobal:
+			idx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
+			val := vm.pop()
+
+			if err := vm.globals[idx].Set(taskId, val); err != nil {
+				return err
+			}
+
+		case op.Call:
+			argCount := int(op.ReadUint16(ins[ip:]))
+			fr.ip += 2
+			callee := vm.pop()
+
+			switch callee := callee.(type) {
+			case *runtime.CompiledFunction:
+				if argCount != callee.Arity() {
+					return fmt.Errorf("wrong number of arguments: want=%d, got=%d", callee.Arity(), argCount)
+				}
+
+				closure := runtime.MakeClosure(callee, nil)
+				frame := newClosureFrame(closure, vm.sp-argCount)
+
+				vm.pushFrame(frame)
+				vm.sp = frame.basep
+
+				for i := 0; i < argCount; i++ {
+					// TODO: or pop?
+					frame.locals[argCount-1-i] = vm.stack[vm.sp+i]
+				}
+			}
+
+		case op.Return:
+			ret := vm.pop()
+			frame := vm.popFrame()
+			vm.sp = frame.basep
+
+			if err := vm.push(ret); err != nil {
+				return err
+			}
+
 		default:
 			def, err := op.Lookup(byte(code))
 			if err != nil {
@@ -158,6 +242,7 @@ func (vm *VM) Run() error {
 			return fmt.Errorf("unknown opcode %q", def.Name)
 		}
 	}
+
 	return nil
 }
 
@@ -286,9 +371,26 @@ func (vm *VM) isEqual() runtime.Bool {
 			return false
 		}
 		return lhs == rhs
-	case runtime.Void:
-		_, ok := rhs.(runtime.Void)
+	case runtime.Null:
+		_, ok := rhs.(runtime.Null)
 		return runtime.Bool(ok)
 	}
 	panic(fmt.Sprintf("unknown type for equality check %T of %q", lhs, lhs.Inspect()))
+}
+
+func (vm *VM) initGlobal(owner TaskId, ins op.Instructions) (runtime.RuntimeValue, error) {
+	frame := newGeneralFrame(ins, vm.sp)
+	frame.ip = 0
+	vm.pushFrame(frame)
+	vm.sp = frame.basep
+
+	err := vm.runTask(owner)
+	if err != nil {
+		return nil, err
+	}
+
+	val := vm.stack[vm.sp-1]
+	vm.popFrame()
+
+	return val, nil
 }

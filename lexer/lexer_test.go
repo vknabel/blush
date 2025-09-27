@@ -19,15 +19,15 @@ import tests {
 }
 import tests.tests_t
 
-test "any in enums matches all types", { fail =>
+test "any in enums matches all types", { fail ->
 	enum AnyEnum {
 		Int
 		Any
 	}
 
 	let isCorrect = with "should be any", type AnyEnum {
-		Int: { _ => False },
-		Any: { _ => True }
+		Int: { _ -> False },
+		Any: { _ -> True }
 	}
 	unless isCorrect, fail "should not be the case"
 }
@@ -58,7 +58,7 @@ test "any in enums matches all types", { fail =>
 		{token.COMMA, ","},
 		{token.LBRACE, "{"},
 		{token.IDENT, "fail"},
-		{token.ARROW, "=>"},
+		{token.RIGHT_ARROW, "->"},
 		{token.ENUM, "enum"},
 		{token.IDENT, "AnyEnum"},
 		{token.LBRACE, "{"},
@@ -78,7 +78,7 @@ test "any in enums matches all types", { fail =>
 		{token.COLON, ":"},
 		{token.LBRACE, "{"},
 		{token.BLANK, "_"},
-		{token.ARROW, "=>"},
+		{token.RIGHT_ARROW, "->"},
 		{token.IDENT, "False"},
 		{token.RBRACE, "}"},
 		{token.COMMA, ","},
@@ -86,7 +86,7 @@ test "any in enums matches all types", { fail =>
 		{token.COLON, ":"},
 		{token.LBRACE, "{"},
 		{token.BLANK, "_"},
-		{token.ARROW, "=>"},
+		{token.RIGHT_ARROW, "->"},
 		{token.IDENT, "True"},
 		{token.RBRACE, "}"},
 		{token.RBRACE, "}"},
@@ -319,12 +319,12 @@ func TestAllTokens(t *testing.T) {
 		},
 		{
 			name:  "fat arrow",
-			input: `=>`,
+			input: `->`,
 			expected: []struct {
 				expectedType    token.TokenType
 				expectedLiteral string
 			}{
-				{token.ARROW, "=>"},
+				{token.RIGHT_ARROW, "->"},
 				{token.EOF, ""},
 			},
 		},
@@ -335,7 +335,7 @@ func TestAllTokens(t *testing.T) {
 				expectedType    token.TokenType
 				expectedLiteral string
 			}{
-				{token.ARROW, "->"},
+				{token.RIGHT_ARROW, "->"},
 				{token.EOF, ""},
 			},
 		},

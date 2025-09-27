@@ -19,7 +19,7 @@ const (
 	typeIdInt
 	typeIdModule
 	typeIdString
-	typeIdVoid
+	typeIdNull
 )
 
 var _ ExternPlugin = &Prelude{}
@@ -38,7 +38,7 @@ func (*Prelude) Bind(module *ast.SymbolTable, decl *ast.Symbol) RuntimeValue {
 		"Int",
 		"Module",
 		"String",
-		"Void":
+		"Null":
 		return SimpleType{Decl: decl}
 	case "Any":
 		return MakeAnyType(decl)
@@ -53,4 +53,4 @@ func (p *Prelude) Dict(val map[RuntimeValue]RuntimeValue) Dict { return Dict(val
 func (p *Prelude) Float(val float64) Float                     { return Float(val) }
 func (p *Prelude) Int(val int64) Int                           { return Int(val) }
 func (p *Prelude) String(val string) String                    { return String(val) }
-func (p *Prelude) Void() Void                                  { return Void{} }
+func (p *Prelude) Null() Null                                  { return Null{} }
