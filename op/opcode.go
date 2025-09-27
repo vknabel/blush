@@ -74,7 +74,7 @@ var definitions = map[Opcode]*Definition{
 	LessThanOrEqual:    {"lte", []int{}},
 
 	Call:   {"call", []int{2}},   // arg count
-	Return: {"return", []int{2}}, // return value
+	Return: {"return", []int{}}, // return value
 
 	Debug: {"debug", []int{}},
 }
