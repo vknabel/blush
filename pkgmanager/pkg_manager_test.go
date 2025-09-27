@@ -33,7 +33,7 @@ func (p mockResolvedPackage) Resolve(ctx context.Context) (registry.ResolvedPack
 }
 func (p mockResolvedPackage) ResolveModules() ([]registry.ResolvedModule, error) { return nil, nil }
 
-func TestInstallationTaskRun(t *testing.T) {
+func TestPkgManagerInstallationTaskRun(t *testing.T) {
 	ver := version.SemverVersion{Major: 1, Minor: 0, Patch: 0}
 	dep := cavefile.Dependency{Source: "example/pkg", Predicate: version.Predicate{Comparison: version.ComparisonExact, Version: ver}}
 	pot := cavefile.Cavefile{Dependencies: []cavefile.Dependency{dep}}
