@@ -1,7 +1,7 @@
 # Base Language
 
 - **Proposal:** BE-001
-- **Status:** Draft
+- **Status:** In Progress
 - **Author:** [@vknabel](https://github.com/vknabel)
 
 ## Introduction

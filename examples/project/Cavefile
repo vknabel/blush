@@ -3,19 +3,32 @@ import cave.tasks
 
 @cave.Dependencies()
 data Dependencies {
-        @cave.Prelude()
-        data Prelude {
-                @tasks.Use("test")
-                test
-        }
+  // Standard library packages are available by default
+  @cave.Stdlib("tests")
+  @tasks.Import("test") // this imports the `test` task from the tests package so it can be run with `blush test`
+  tests // this will be the name of the import
+
+  @cave.Stdlib("prelude") // this is optional, as prelude is always included
+  prelude
+
+  @cave.Local("../some-local-package")
+  helpers // importable as helpers
+
+  @cave.Git("https://github.com/vknabel/blush")
+  @cave.Version(">0.1.0")
+  future // importable as future
 }
 
+// Define a task named "generate" with a help description and specify the script to run.
+// Can be executed with `blush generate [arg] [--dry]`
 @tasks.Name("generate")
-@tasks.Help("")
+@tasks.Help("Generates something")
+@tasks.Exec("tasks/generate.blush")
 data GenerateTask {
 	@Bool
-	@tasks.Flag("dry")
-	@tasks.Help("")
+	@tasks.Flag()
+  @tasks.Name("dry")
+	@tasks.Help("If true, only simulates the generation")
 	isDryRun
 
 	@String
