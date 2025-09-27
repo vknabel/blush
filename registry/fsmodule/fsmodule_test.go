@@ -34,7 +34,7 @@ func TestDiscoderFSModules(t *testing.T) {
 			cwd:  "/github.com/vknabel/blush-example",
 			base: "memory:///github.com/vknabel/blush-example",
 			files: map[string]string{
-				"/github.com/vknabel/blush-example/Cavefile":        "module cavefile",
+                                "/github.com/vknabel/blush-example/Cavefile":        "module cavefile",
 				"/github.com/vknabel/blush-example/tools/fmt.blush": "module tools",
 				"/github.com/vknabel/blush-example/cmd/main.blush":  "module cmd",
 				"/github.com/vknabel/blush-example/app/root.blush":  "module app",

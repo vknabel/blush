@@ -13,5 +13,6 @@ To create a new proposal:
 
 | Proposal | Title | Status | Author |
 | --- | --- | --- | --- |
-| *(none yet)* |  |  |  |
+| [BE-001](BE-001-base-language.md) | Base Language | Draft | [@vknabel](https://github.com/vknabel) |
+| [BE-002](BE-002-package-manager.md) | Package Manager and Cavefile | Draft | [@vknabel](https://github.com/vknabel), [@blushling](https://github.com/blushling) |
 
