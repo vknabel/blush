@@ -27,7 +27,7 @@ data Dependencies {
 data GenerateTask {
 	@Bool
 	@tasks.Flag()
-  @tasks.Name("dry")
+	@tasks.Name("dry")
 	@tasks.Help("If true, only simulates the generation")
 	isDryRun
 

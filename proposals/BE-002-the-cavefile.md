@@ -11,10 +11,8 @@ This proposal describes the current Blush package manager and the `Cavefile` man
 ## Motivation
 
 Blush projects will rely on external modules for language extensions and tooling.
-Capturing the present-day and near future behaviour of the package manager clarifies how packages are discovered, how versions are selected, and how registries interact
-with the filesystem cache. Documenting the `Cavefile` structure likewise gives
+Capturing the present-day and near future behaviour of the package manager clarifies how packages are discovered, how versions are selected, and how registries interact with the filesystem cache. Documenting the `Cavefile` structure likewise gives
 users a reference for authoring manifests that match the implementation.
-
 ## Proposed Solution
 
 Packages declare dependencies in a `Cavefile` module that Blush parses at build or install time. The manifest itself will not be executed. The package manager solely works on the type system.
