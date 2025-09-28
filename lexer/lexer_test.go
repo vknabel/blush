@@ -636,6 +636,17 @@ func TestAllTokens(t *testing.T) {
 			},
 		},
 		{
+			name:  "floating point",
+			input: `1.9`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.FLOAT, "1.9"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			name:  "integer followed by dot",
 			input: `123.`,
 			expected: []struct {
@@ -644,6 +655,61 @@ func TestAllTokens(t *testing.T) {
 			}{
 				{token.INT, "123"},
 				{token.DOT, "."},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "hex integer",
+			input: `0xFFF`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0xFFF"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "binary integer",
+			input: `0b1010`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0b1010"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "octal integer",
+			input: `0777`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0777"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "scientific notation",
+			input: `2e10`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.FLOAT, "2e10"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "scientific notation with sign",
+			input: `1.5e-4`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.FLOAT, "1.5e-4"},
 				{token.EOF, ""},
 			},
 		},

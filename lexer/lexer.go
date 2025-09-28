@@ -217,20 +217,80 @@ func (l *Lexer) parseIdentifier() string {
 
 func (l *Lexer) parseNumber() (string, token.TokenType) {
 	position := l.currPos
+
+	if l.ch == '0' {
+		switch l.peekChar() {
+		case 'x', 'X':
+			l.advance() // consume 'x'
+			l.advance() // move to first hex digit
+			for isHexDigit(l.ch) {
+				l.advance()
+			}
+			return l.input[position:l.currPos], token.INT
+		case 'b', 'B':
+			l.advance() // consume 'b'
+			l.advance() // move to first binary digit
+			for isBinaryDigit(l.ch) {
+				l.advance()
+			}
+			return l.input[position:l.currPos], token.INT
+		case 'o', 'O':
+			l.advance() // consume 'o'
+			l.advance() // move to first octal digit
+			for isOctalDigit(l.ch) {
+				l.advance()
+			}
+			return l.input[position:l.currPos], token.INT
+		}
+	}
+
 	for isDigit(l.ch) {
 		l.advance()
 	}
-	if l.ch != '.' {
-		return l.input[position:l.currPos], token.INT
-	}
-	if !isDigit(l.peekChar()) {
-		return l.input[position:l.currPos], token.INT
-	}
-	l.advance()
-	for isDigit(l.ch) {
+
+	tokType := token.INT
+
+	if l.ch == '.' && isDigit(l.peekChar()) {
+		tokType = token.FLOAT
 		l.advance()
+		for isDigit(l.ch) {
+			l.advance()
+		}
 	}
-	return l.input[position:l.currPos], token.FLOAT
+
+	if l.ch == 'e' || l.ch == 'E' {
+		expPos := l.peekPos
+		if expPos < len(l.input) {
+			expChar := l.input[expPos]
+			if expChar == '+' || expChar == '-' {
+				expPos++
+			}
+			if expPos < len(l.input) && isDigit(l.input[expPos]) {
+				tokType = token.FLOAT
+				l.advance() // consume e/E
+				if l.ch == '+' || l.ch == '-' {
+					l.advance()
+				}
+				for isDigit(l.ch) {
+					l.advance()
+				}
+			}
+		}
+	}
+
+	return l.input[position:l.currPos], tokType
+}
+
+func isHexDigit(ch byte) bool {
+	return isDigit(ch) || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F'
+}
+
+func isBinaryDigit(ch byte) bool {
+	return ch == '0' || ch == '1'
+}
+
+func isOctalDigit(ch byte) bool {
+	return '0' <= ch && ch <= '7'
 }
 
 func isLetter(ch byte) bool {
