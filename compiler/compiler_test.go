@@ -561,6 +561,89 @@ func TestVariables(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestDeclData(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			label: "empty data declaration",
+			input: `data Example`,
+			expectedConstants: []any{
+				compiledDataType{
+					name:   "Example",
+					fields: []compiledField{},
+				},
+			},
+		},
+		{
+			label: "data declaration",
+			input: `data Example { field }`,
+			expectedConstants: []any{
+				compiledDataType{
+					name:   "Example",
+					fields: []compiledField{{name: "field"}},
+				},
+			},
+		},
+		{
+			label: "data declaration and call",
+			input: `
+				data Person {
+					name
+				}
+				Person("Max").name
+				`,
+			expectedConstants: []any{
+				compiledDataType{
+					name: "Person",
+					fields: []compiledField{
+						{name: "name"},
+					},
+				},
+				"Max",
+				"name",
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 1),
+				code.Make(code.Const, 0),
+				code.Make(code.Call, 1),
+				code.Make(code.GetField, 2),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label: "data declaration and call with two fields",
+			input: `
+				data Person {
+					name
+					age
+				}
+				Person("Max", 42).name
+				`,
+			expectedConstants: []any{
+				compiledDataType{
+					name: "Person",
+					fields: []compiledField{
+						{name: "name"},
+						{name: "age"},
+					},
+				},
+				"Max",
+				42,
+				"name",
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 1),
+				code.Make(code.Const, 2),
+				code.Make(code.Const, 0),
+				code.Make(code.Call, 2),
+				code.Make(code.GetField, 3),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 
@@ -681,6 +764,11 @@ func testConstants(
 			if !ok || want != int(got) {
 				return fmt.Errorf("wrong constant at %d.\nwant=%d\ngot=%q", i, want, got)
 			}
+		case string:
+			got, ok := actual[i].(runtime.String)
+			if !ok || want != string(got) {
+				return fmt.Errorf("wrong constant at %d.\nwant=%q\ngot=%q", i, want, got)
+			}
 		case compiledFunction:
 			got, ok := actual[i].(*runtime.CompiledFunction)
 			if !ok {
@@ -698,6 +786,26 @@ func testConstants(
 			err := testInstructions(t, want.ins, got.Instructions)
 			if err != nil {
 				return fmt.Errorf("wrong function instructions at %d: %s", i, err)
+			}
+
+		case compiledDataType:
+			got, ok := actual[i].(*runtime.DataType)
+			if !ok {
+				return fmt.Errorf("constant %d is not a data type: %T", i, actual[i])
+			}
+
+			if got.Symbol.Name != want.name {
+				return fmt.Errorf("wrong data type name at %d.\nwant=%q\ngot=%q", i, want.name, got.Symbol.Name)
+			}
+
+			if len(got.FieldSymbols) != len(want.fields) {
+				return fmt.Errorf("wrong amount of fields at %d.\nwant=%d\ngot=%d", i, len(want.fields), len(got.FieldSymbols))
+			}
+
+			for j, field := range want.fields {
+				if got.FieldSymbols[j].Name != field.name {
+					return fmt.Errorf("wrong field name at %d.%d.\nwant=%q\ngot=%q", i, j, field.name, got.FieldSymbols[j].Name)
+				}
 			}
 
 		default:
@@ -732,4 +840,12 @@ type compiledFunction struct {
 	name   string
 	params int
 	ins    []code.Instructions
+}
+type compiledDataType struct {
+	name   string
+	fields []compiledField
+}
+
+type compiledField struct {
+	name string
 }

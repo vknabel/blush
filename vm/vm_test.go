@@ -73,6 +73,56 @@ func TestBasicFunctions(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestData(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			label: "empty data",
+			input: `
+			data Example
+			Example()
+			`,
+			expected: data{typeId: 0, values: []any{}},
+		},
+		{
+			label: "data with values",
+			input: `
+			data Person {
+				name
+				age
+			}
+			Person("Max", 42)
+			`,
+			expected: data{typeId: 0, values: []any{
+				"Max", 42,
+			}},
+		},
+		{
+			label: "data with values and member access",
+			input: `
+			data Person {
+				name
+				age
+			}
+			Person("Max", 42).name
+			`,
+			expected: "Max",
+		},
+		{
+			label: "data with values and member access",
+			input: `
+			data Person {
+				name
+				age
+			}
+			Person("Max", 42).age
+			`,
+			expected: 42,
+		},
+	}
+
+	runVmTests(t, tests)
+}
+
 func BenchmarkFib10(t *testing.B) {
 	runBench(t, `
 	func fib(n) {
@@ -238,6 +288,8 @@ func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 		return testArray([]any(expected), actual)
 	case map[any]any:
 		return testDict(map[any]any(expected), actual)
+	case data:
+		return testData(expected, actual)
 	default:
 		return fmt.Errorf("unhandled type %T", expected)
 	}
@@ -330,6 +382,35 @@ func testDict(expected map[any]any, actual runtime.RuntimeValue) error {
 			return fmt.Errorf("at index %q: %w", key, err)
 		}
 	}
+	return nil
+}
+
+type data struct {
+	typeId runtime.TypeId
+	values []any
+}
+
+func testData(expected data, actual runtime.RuntimeValue) error {
+	result, ok := actual.(*runtime.DataValue)
+	if !ok {
+		return fmt.Errorf("object is not Data. got=%T (%+v)", actual, actual)
+	}
+
+	if result.TypeConstantId() != expected.typeId {
+		return fmt.Errorf("data type does not match. got=%q, want=%q", result.TypeConstantId(), expected.typeId)
+	}
+
+	if len(expected.values) != len(result.Values) {
+		return fmt.Errorf("length does not match. got=%d, want=%d", len(result.Values), len(expected.values))
+	}
+
+	for i, el := range result.Values {
+		err := testValue(expected.values[i], el)
+		if err != nil {
+			return fmt.Errorf("at index %d: %w", i, err)
+		}
+	}
+
 	return nil
 }
 

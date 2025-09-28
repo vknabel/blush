@@ -15,7 +15,7 @@ type Definition struct {
 	OperandWidths []int
 }
 
-func Lookup(op byte) (*Definition, error) {
+func LookupDefinition(op byte) (*Definition, error) {
 	def, ok := definitions[Opcode(op)]
 	if !ok {
 		return nil, fmt.Errorf("opcode %d undefined", op)
@@ -73,7 +73,7 @@ func (ins Instructions) String() string {
 	var out bytes.Buffer
 
 	for i := 0; i < len(ins); i++ {
-		def, err := Lookup(ins[i])
+		def, err := LookupDefinition(ins[i])
 		if err != nil {
 			fmt.Fprintf(&out, "ERROR: %s\n", err)
 			continue

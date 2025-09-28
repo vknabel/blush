@@ -20,7 +20,7 @@ func TestLookup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			def, err := Lookup(tt.opcode)
+			def, err := LookupDefinition(tt.opcode)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatalf("expected error for opcode %d", tt.opcode)
@@ -72,7 +72,7 @@ func TestReadOperands(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ins := Make(tt.opcode, tt.operand)
-			def, _ := Lookup(ins[0])
+			def, _ := LookupDefinition(ins[0])
 			operands, read := ReadOperands(def, ins[1:])
 			if read != 2 {
 				t.Fatalf("expected to read 2 bytes, got %d", read)

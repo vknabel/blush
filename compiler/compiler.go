@@ -176,8 +176,20 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return fmt.Errorf("identifier %q has unknown declaration type %T", node.Name, symbol.Decl)
 		}
 
+	case *ast.ExprMemberAccess:
+		err := c.Compile(node.Target)
+		if err != nil {
+			return err
+		}
+		c.emit(op.GetField, c.addConstant(c.plugins.Prelude().String(node.Property.Value)))
+		return nil
+
 	case *ast.ExprInvocation:
-		for i := len(node.Arguments) - 1; i >= 0; i-- {
+		for i := 0; i < len(node.Arguments); i++ {
+			// compile arguments in left-to-right order
+			// so they are pushed onto the stack in that order
+			// and can be popped off in reverse order by the callee
+			// (first argument is on the bottom of the stack)
 			err := c.Compile(node.Arguments[i])
 			if err != nil {
 				return err
@@ -522,6 +534,16 @@ func (c *Compiler) compileExprOperatorBinary(node *ast.ExprOperatorBinary) error
 
 func (c *Compiler) compileSymbol(sym *ast.Symbol) error {
 	switch decl := sym.Decl.(type) {
+	case *ast.DeclData:
+		dt, err := runtime.MakeDataType(sym)
+		if err != nil {
+			return err
+		}
+
+		c.constants[*sym.ConstantId] = dt
+
+		return nil
+
 	case *ast.DeclFunc:
 		c.enterScope(decl.Impl.Symbols)
 
