@@ -27,7 +27,11 @@ func (dv *DataValue) Inspect() string {
 
 // Lookup implements RuntimeValue.
 func (dv *DataValue) Lookup(name string) RuntimeValue {
-	return dv.Values[dv.Fields[name]]
+	idx, ok := dv.Fields[name]
+	if !ok {
+		return nil
+	}
+	return dv.Values[idx]
 }
 
 // TypeConstantId implements RuntimeValue.
