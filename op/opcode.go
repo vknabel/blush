@@ -10,8 +10,8 @@ const (
 
 	Array
 	Dict
-	GetIndex
 
+	GetIndex
 	GetField
 
 	// does not consume, just assert top value's type
@@ -56,10 +56,10 @@ var definitions = map[Opcode]*Definition{
 	ConstFalse: {"constfalse", []int{}},
 	Pop:        {"pop", []int{}},
 
-	Array:    {"array", []int{}},
-	Dict:     {"dict", []int{}},
-	GetIndex: {"getindex", []int{}},
+	Array: {"array", []int{}},
+	Dict:  {"dict", []int{}},
 
+	GetIndex: {"getindex", []int{}},
 	GetField: {"getfield", []int{2}}, // name id
 
 	AssertType: {"asserttype", []int{2}}, // type id
