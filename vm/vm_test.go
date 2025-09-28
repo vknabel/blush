@@ -130,8 +130,8 @@ func TestData(t *testing.T) {
 func BenchmarkFib10(t *testing.B) {
 	runBench(t, `
 	func fib(n) {
-		return if n < 3 {
-			1
+		return if n < 2 {
+			n
 		} else {
 			fib(n-1) + fib(n-2)				
 		}
@@ -144,8 +144,8 @@ func BenchmarkFib10(t *testing.B) {
 func BenchmarkFib28(t *testing.B) {
 	runBench(t, `
 	func fib(n) {
-		return if n < 3 {
-			1
+		return if n < 2 {
+			n
 		} else {
 			fib(n-1) + fib(n-2)				
 		}
@@ -158,8 +158,8 @@ func BenchmarkFib28(t *testing.B) {
 func BenchmarkFib30(t *testing.B) {
 	runBench(t, `
 	func fib(n) {
-		return if n < 3 {
-			1
+		return if n < 2 {
+			n
 		} else {
 			fib(n-1) + fib(n-2)				
 		}
@@ -172,8 +172,8 @@ func BenchmarkFib30(t *testing.B) {
 func BenchmarkFib32(t *testing.B) {
 	runBench(t, `
 	func fib(n) {
-		return if n < 3 {
-			1
+		return if n < 2 {
+			n
 		} else {
 			fib(n-1) + fib(n-2)				
 		}
