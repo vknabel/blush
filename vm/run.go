@@ -164,6 +164,38 @@ func (vm *VM) runTask(taskId TaskId) error {
 				return err
 			}
 
+		case op.GetIndex:
+			index := vm.pop()
+			target := vm.pop()
+
+			switch target := target.(type) {
+			case runtime.Array:
+				idx, ok := index.(runtime.Int)
+				if !ok {
+					return fmt.Errorf("array index must be Int (%T %q)", index, index.Inspect())
+				}
+				pos := int(idx)
+				if pos < 0 || pos >= len(target) {
+					return fmt.Errorf("array index %d out of bounds", pos)
+				}
+				if err := vm.push(target[pos]); err != nil {
+					return err
+				}
+			case runtime.Dict:
+				val, ok := target[index]
+				if !ok {
+					if err := vm.push(runtime.Null{}); err != nil {
+						return err
+					}
+					break
+				}
+				if err := vm.push(val); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("index operator not supported on %T", target)
+			}
+
 		case op.SetLocal:
 			idx := op.ReadUint16(ins[ip:])
 			fr.ip += 2
