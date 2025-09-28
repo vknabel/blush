@@ -36,13 +36,13 @@ func (e DeclExternType) DeclName() Identifier {
 
 func (e DeclExternType) DeclOverview() string {
 	if len(e.Fields) == 0 {
-		return fmt.Sprintf("extern %s", e.Name)
+		return fmt.Sprintf("extern type %s", e.Name)
 	}
 	fieldLines := make([]string, 0)
 	for _, field := range e.Fields {
 		fieldLines = append(fieldLines, "    "+field.DeclOverview())
 	}
-	return fmt.Sprintf("extern %s {\n%s\n}", e.Name, strings.Join(fieldLines, "\n"))
+	return fmt.Sprintf("extern type %s {\n%s\n}", e.Name, strings.Join(fieldLines, "\n"))
 }
 
 func (e DeclExternType) ExportScope() ExportScope {
