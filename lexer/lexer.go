@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"strings"
+
 	"github.com/vknabel/blush/registry"
 	"github.com/vknabel/blush/token"
 )
@@ -151,14 +153,45 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 func (l *Lexer) parseString() string {
-	position := l.currPos + 1
+	var out strings.Builder
+	escaped := false
 	for {
 		l.advance()
-		if l.ch == '"' || l.ch == 0 {
+		ch := l.ch
+
+		if ch == 0 {
 			break
 		}
+
+		if escaped {
+			switch ch {
+			case 'n':
+				out.WriteByte('\n')
+			case '\\':
+				out.WriteByte('\\')
+			case '"':
+				out.WriteByte('"')
+			default:
+				out.WriteByte('\\')
+				out.WriteByte(ch)
+			}
+			escaped = false
+			continue
+		}
+
+		if ch == '\\' {
+			escaped = true
+			continue
+		}
+
+		if ch == '"' {
+			break
+		}
+
+		out.WriteByte(ch)
 	}
-	return l.input[position:l.currPos]
+
+	return out.String()
 }
 
 func (l *Lexer) parseChar() (string, bool) {

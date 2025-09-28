@@ -505,6 +505,39 @@ func TestAllTokens(t *testing.T) {
 			},
 		},
 		{
+			name:  "string escaped newline",
+			input: "\"\\n\"",
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.STRING, "\n"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "string escaped quote",
+			input: "\"\\\"\"",
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.STRING, "\""},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "string escaped backslash",
+			input: "\"\\\\\"",
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.STRING, "\\"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			name:  "char",
 			input: `'a'`,
 			expected: []struct {
