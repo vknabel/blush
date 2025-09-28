@@ -3,6 +3,8 @@ package syncheck
 import (
 	"fmt"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type SyntaxMatcher func(lineOffset int, line string, assert Assertion) bool
@@ -41,5 +43,5 @@ func (h *Harness) Test(doc string) error {
 		out.WriteString(lines[a.Line-1] + "\n")
 		out.WriteString(lines[a.SourceLine-1] + "\n")
 	}
-	return fmt.Errorf(out.String())
+	return errors.New(out.String())
 }
