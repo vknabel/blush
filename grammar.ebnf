@@ -102,6 +102,18 @@ function_function = function_literal;
 data = DATA, data_name, [LBRACE, data_members, RBRACE];
 data_name = identifier;
 
+extern = extern_type | extern_func | extern_value;
+extern_type = EXTERN, TYPE, extern_type_name, [LBRACE, extern_type_fields, RBRACE];
+extern_type_name = identifier;
+extern_type_fields = { field, [_list_separator] };
+
+extern_func = EXTERN, FUNCTION, extern_func_name, LPAREN, [extern_func_params], RPAREN;
+extern_func_name = identifier;
+extern_func_params = { parameter, [_list_separator] };
+
+extern_value = EXTERN, LET, extern_value_name;
+extern_value_name = identifier;
+
 (* expressions *)
 
 identifier = IDENT;

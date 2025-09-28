@@ -406,53 +406,89 @@ func (p *Parser) parseModuleDecl(pos StatementPosition, annos ast.AnnotationChai
 	return mod
 }
 
-// parseExternDecl parses two possible types:
-// 1. an external function
-// 2. an external type
-//
-//	extern <identifier> // type
-//	extern <identifier>() // function
-//	extern <identifier> { // type
-//	  // see data declarations
-//	}
+// parseExternDecl parses three possible types:
+// 1. an external type: extern type <identifier> [{ fields }]
+// 2. an external function: extern func <identifier>([params])
+// 3. an external value: extern let <identifier>
 func (p *Parser) parseExternDecl(pos StatementPosition, annos ast.AnnotationChain) ast.StatementDeclaration {
 	if pos != IN_INITIAL && pos != IN_GLOBAL {
 		p.errStatementMisplaced(pos)
 	}
 	externTok, _ := p.expect(token.EXTERN)
+
+	// Expect one of: type, func, let
+	if p.curIs(token.TYPE) {
+		return p.parseExternTypeDecl(externTok, annos)
+	} else if p.curIs(token.FUNCTION) {
+		return p.parseExternFuncDecl(externTok, annos)
+	} else if p.curIs(token.LET) {
+		return p.parseExternValueDecl(externTok, annos)
+	} else {
+		p.detectError(ParseError{
+			Token:   p.curToken,
+			Summary: "expected 'type', 'func', or 'let' after 'extern'",
+			Details: fmt.Sprintf("got %q", p.curToken.Literal),
+		})
+		return nil
+	}
+}
+
+// parseExternTypeDecl parses extern type declarations
+func (p *Parser) parseExternTypeDecl(externTok token.Token, annos ast.AnnotationChain) *ast.DeclExternType {
+	p.expect(token.TYPE)
 	nameTok, _ := p.expect(token.IDENT)
 	nameIdent := ast.MakeIdentifier(nameTok)
 
+	extern := ast.MakeDeclExternType(externTok, nameIdent)
+	extern.Annotations = annos
+
 	if p.curIs(token.LBRACE) {
-		// TODO: parse properties
 		p.expect(token.LBRACE)
-		extern := ast.MakeDeclExternType(externTok, nameIdent)
 		p.curSymbolTable = ast.MakeSymbolTable(p.curSymbolTable, extern)
 
-		extern.Annotations = annos
 		fields := p.parsePropertyDeclarationList()
 		for _, f := range fields {
 			extern.AddField(f)
 		}
 		p.expect(token.RBRACE)
-
 		p.popSymbolTable()
-		p.curSymbolTable.Insert(extern)
-		return extern
 	}
+
+	p.curSymbolTable.Insert(extern)
+	return extern
+}
+
+// parseExternFuncDecl parses extern func declarations
+func (p *Parser) parseExternFuncDecl(externTok token.Token, annos ast.AnnotationChain) *ast.DeclExternFunc {
+	p.expect(token.FUNCTION)
+	nameTok, _ := p.expect(token.IDENT)
+	nameIdent := ast.MakeIdentifier(nameTok)
+
 	extern := ast.MakeDeclExternFunc(externTok, nameIdent)
 	extern.Annotations = annos
 	p.curSymbolTable = ast.MakeSymbolTable(p.curSymbolTable, extern)
 
-	if p.curIs(token.LPAREN) {
-		p.expect(token.LPAREN)
+	p.expect(token.LPAREN)
+	if !p.curIs(token.RPAREN) {
 		params := p.parseDeclParameterList()
-		p.expect(token.RPAREN)
-
 		extern.SetParams(params)
 	}
+	p.expect(token.RPAREN)
 
 	p.popSymbolTable()
+	p.curSymbolTable.Insert(extern)
+	return extern
+}
+
+// parseExternValueDecl parses extern let declarations
+func (p *Parser) parseExternValueDecl(externTok token.Token, annos ast.AnnotationChain) *ast.DeclExternValue {
+	p.expect(token.LET)
+	nameTok, _ := p.expect(token.IDENT)
+	nameIdent := ast.MakeIdentifier(nameTok)
+
+	extern := ast.MakeDeclExternValue(externTok, nameIdent)
+	extern.Annotations = annos
+
 	p.curSymbolTable.Insert(extern)
 	return extern
 }

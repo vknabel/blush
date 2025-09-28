@@ -43,13 +43,13 @@ func (e DeclExternFunc) ExportScope() ExportScope {
 
 func (e DeclExternFunc) DeclOverview() string {
 	if len(e.Parameters) == 0 {
-		return fmt.Sprintf("extern %s { -> }", e.Name)
+		return fmt.Sprintf("extern func %s()", e.Name)
 	}
 	paramNames := make([]string, len(e.Parameters))
 	for i, param := range e.Parameters {
 		paramNames[i] = string(param.Name.Value)
 	}
-	return fmt.Sprintf("extern %s { %s -> }", e.Name, strings.Join(paramNames, ", "))
+	return fmt.Sprintf("extern func %s(%s)", e.Name, strings.Join(paramNames, ", "))
 }
 
 func MakeDeclExternFunc(tok token.Token, name Identifier) *DeclExternFunc {

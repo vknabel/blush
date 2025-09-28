@@ -40,27 +40,27 @@ enum Optional {
 	Some
 }
 
-extern b // this is an extern constant
-// <- ast.DeclExternFunc
-//     ^ ast.Identifier
+extern let b // this is an extern constant
+// <- ast.DeclExternValue
+//         ^ ast.Identifier
 
-extern doSomething()
+extern func doSomething()
 // <- ast.DeclExternFunc
 	
-extern doSomethingWith(argument)
+extern func doSomethingWith(argument)
 // <- ast.DeclExternFunc
-//     ^ ast.Identifier
-//                     ^ ast.DeclParameter
+//          ^ ast.Identifier
+//                          ^ ast.DeclParameter
 
-extern SomeType {
+extern type SomeType {
 // <- ast.DeclExternType
     name
 //  ^ ast.DeclField
 }
 
-extern SomeEmptyType {}
+extern type SomeEmptyType {}
 // <- ast.DeclExternType
-//     ^ ast.Identifier
+//          ^ ast.Identifier
 
 annotation Type {
 // <- ast.DeclAnnotation
