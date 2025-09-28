@@ -110,6 +110,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 		idx := c.addConstant(val)
 		c.emit(op.Const, idx)
 		return nil
+	case *ast.ExprChar:
+		val := c.plugins.Prelude().Char(node.Literal)
+		idx := c.addConstant(val)
+		c.emit(op.Const, idx)
+		return nil
 
 	case *ast.ExprArray:
 		for _, el := range node.Elements {

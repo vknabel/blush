@@ -46,6 +46,7 @@ func NewSourceParser(lex *lexer.Lexer, parent *ast.SymbolTable, path string) *Pa
 	// p.registerPrefix(token.SWITCH / MATCH, p.parseExprSwitch) // only exactly one expr per case
 	p.registerPrefix(token.LBRACKET, p.parseExprListOrDict)
 	p.registerPrefix(token.STRING, p.parsePrattExprString)
+	p.registerPrefix(token.CHAR, p.parsePrattExprChar)
 
 	p.infixParsers = make(map[token.TokenType]infixParser)
 	p.registerInfix(token.OR, p.parsePrattExprInfix)

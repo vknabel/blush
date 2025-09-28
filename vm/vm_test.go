@@ -39,6 +39,10 @@ func TestBasicOperations(t *testing.T) {
 		{input: "(if true || false { 2*3 } else { 3 })", expected: 6},
 		{input: "if true || false { 2*3 } else { 3 }", expected: 6},
 		{input: `"abc"`, expected: "abc"},
+		{input: "'a'", expected: 'a'},
+		{input: "'\\n'", expected: '\n'},
+		{input: "'\\''", expected: '\''},
+		{input: "'\\\\'", expected: '\\'},
 		{input: "[]", expected: []any{}},
 		{input: "[1, 2, 3]", expected: []any{1, 2, 3}},
 		{input: "[1, 2, 3][0]", expected: 1},
@@ -286,6 +290,8 @@ func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 		return testInt(int64(expected), actual)
 	case bool:
 		return testBool(bool(expected), actual)
+	case rune:
+		return testChar(expected, actual)
 	case string:
 		return testString(expected, actual)
 	case []any:
@@ -330,6 +336,19 @@ func testBool(expected bool, actual runtime.RuntimeValue) error {
 	if bool(result) != expected {
 		return fmt.Errorf("object has wrong value. got=%t, want=%t",
 			result, expected)
+	}
+
+	return nil
+}
+
+func testChar(expected rune, actual runtime.RuntimeValue) error {
+	result, ok := actual.(runtime.Char)
+	if !ok {
+		return fmt.Errorf("object is not Char. got=%T (%+v)", actual, actual)
+	}
+
+	if rune(result) != expected {
+		return fmt.Errorf("object has wrong value. got=%q, want=%q", result, expected)
 	}
 
 	return nil
