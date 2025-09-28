@@ -55,6 +55,49 @@ func TestUnaryOperators(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestCharLiterals(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			label:             "simple char",
+			input:             "'a'",
+			expectedConstants: []any{'a'},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "escaped newline",
+			input:             "'\\n'",
+			expectedConstants: []any{'\n'},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "escaped quote",
+			input:             "'\\''",
+			expectedConstants: []any{'\''},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "escaped backslash",
+			input:             "'\\\\'",
+			expectedConstants: []any{'\\'},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func TestBinaryOperators(t *testing.T) {
 	tests := []compilerTestCase{
 		{
@@ -824,6 +867,11 @@ func testConstants(
 			got, ok := actual[i].(runtime.Int)
 			if !ok || want != int(got) {
 				return fmt.Errorf("wrong constant at %d.\nwant=%d\ngot=%q", i, want, got)
+			}
+		case rune:
+			got, ok := actual[i].(runtime.Char)
+			if !ok || want != rune(got) {
+				return fmt.Errorf("wrong constant at %d.\nwant=%q\ngot=%q", i, string(want), got)
 			}
 		case string:
 			got, ok := actual[i].(runtime.String)

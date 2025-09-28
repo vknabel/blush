@@ -22,6 +22,7 @@ const (
 	// Identifiers + literals
 	IDENT  TokenType = "IDENT"
 	STRING TokenType = "STRING"
+	CHAR   TokenType = "CHAR"
 	INT    TokenType = "INT"
 	FLOAT  TokenType = "FLOAT"
 

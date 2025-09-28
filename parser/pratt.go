@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/vknabel/blush/ast"
@@ -156,6 +157,15 @@ func (p *Parser) parsePrattExprFloat() ast.Expr {
 	return ast.MakeExprFloat(float, tok)
 }
 
+func (p *Parser) parsePrattExprChar() ast.Expr {
+	tok, _ := p.expect(token.CHAR)
+	ch, err := parseCharLiteral(tok.Literal)
+	if err != nil {
+		p.errUnderlyingErrorf(err, "invalid char literal %q", tok.Literal)
+	}
+	return ast.MakeExprChar(ch, tok)
+}
+
 func (p *Parser) parsePrattExprPrefix() ast.Expr {
 	tok := p.nextToken()
 	op := ast.OperatorUnary(tok)
@@ -293,6 +303,20 @@ func (p *Parser) parsePrattExprIndex(owner ast.Expr) ast.Expr {
 func (p *Parser) parsePrattExprString() ast.Expr {
 	tok := p.nextToken()
 	return ast.MakeExprString(tok, tok.Literal)
+}
+
+func parseCharLiteral(literal string) (rune, error) {
+	if literal == "" {
+		return 0, errors.New("char literal must contain exactly one character")
+	}
+	ch, _, tail, err := strconv.UnquoteChar(literal, '\'')
+	if err != nil {
+		return 0, err
+	}
+	if tail != "" {
+		return 0, errors.New("char literal must contain exactly one character")
+	}
+	return ch, nil
 }
 
 func (p *Parser) parseExprListOrDict() ast.Expr {

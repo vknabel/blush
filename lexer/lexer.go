@@ -122,6 +122,15 @@ func (l *Lexer) NextToken() token.Token {
 	case '"': // STRING
 		tok.Type = token.STRING
 		tok.Literal = l.parseString()
+	case '\'': // CHAR
+		tok.Type = token.CHAR
+		literal, ok := l.parseChar()
+		if !ok {
+			tok.Type = token.ILLEGAL
+			tok.Literal = l.input[l.startPos:l.currPos]
+			break
+		}
+		tok.Literal = literal
 	case 0: // EOF
 		tok.Type = token.EOF
 	default: // IDENT, INT, FLOAT
@@ -150,6 +159,34 @@ func (l *Lexer) parseString() string {
 		}
 	}
 	return l.input[position:l.currPos]
+}
+
+func (l *Lexer) parseChar() (string, bool) {
+	position := l.currPos + 1
+	escaped := false
+	for {
+		l.advance()
+		if l.ch == 0 {
+			l.peekPos = l.currPos
+			return "", false
+		}
+		if l.ch == '\n' || l.ch == '\r' {
+			l.peekPos = l.currPos
+			return "", false
+		}
+		if escaped {
+			escaped = false
+			continue
+		}
+		if l.ch == '\\' {
+			escaped = true
+			continue
+		}
+		if l.ch == '\'' {
+			break
+		}
+	}
+	return l.input[position:l.currPos], true
 }
 
 func (l *Lexer) advance() {
