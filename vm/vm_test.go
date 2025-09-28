@@ -47,7 +47,7 @@ func TestBasicOperations(t *testing.T) {
 		{input: `["hello": "world", 1: 2]`, expected: map[any]any{"hello": "world", 1: 2}},
 		{input: `["1": 3, 1: 2]`, expected: map[any]any{"1": 3, 1: 2}},
 		{input: `["hello": "world"]["hello"]`, expected: "world"},
-		{input: `["hello": "world"]["missing"]`, expected: nil},
+		{input: `["hello": "world"]["missing"]`, expected: runtime.Null{}},
 	}
 
 	runVmTests(t, tests)
@@ -280,7 +280,7 @@ func testExpectedValue(t *testing.T, expected interface{}, actual runtime.Runtim
 
 func testValue(expected interface{}, actual runtime.RuntimeValue) error {
 	switch expected := expected.(type) {
-	case nil:
+	case runtime.Null:
 		return testNull(actual)
 	case int:
 		return testInt(int64(expected), actual)
