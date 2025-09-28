@@ -250,20 +250,66 @@ func (l *Lexer) parseIdentifier() string {
 
 func (l *Lexer) parseNumber() (string, token.TokenType) {
 	position := l.currPos
+
+	// Handle special prefixes: 0x, 0b, 0B
+	if l.ch == '0' && l.peekChar() == 'x' {
+		// Hexadecimal: 0x...
+		l.advance() // consume '0'
+		l.advance() // consume 'x'
+		for isHexDigit(l.ch) {
+			l.advance()
+		}
+		return l.input[position:l.currPos], token.INT
+	}
+
+	if l.ch == '0' && (l.peekChar() == 'b' || l.peekChar() == 'B') {
+		// Binary: 0b... or 0B...
+		l.advance() // consume '0'
+		l.advance() // consume 'b' or 'B'
+		for isBinaryDigit(l.ch) {
+			l.advance()
+		}
+		return l.input[position:l.currPos], token.INT
+	}
+
+	// Parse regular decimal number (including octal starting with 0)
 	for isDigit(l.ch) {
 		l.advance()
 	}
-	if l.ch != '.' {
-		return l.input[position:l.currPos], token.INT
+
+	// Check for decimal point
+	if l.ch == '.' && isDigit(l.peekChar()) {
+		l.advance() // consume '.'
+		for isDigit(l.ch) {
+			l.advance()
+		}
+		// Check for scientific notation in float
+		if l.ch == 'e' || l.ch == 'E' {
+			l.advance() // consume 'e' or 'E'
+			if l.ch == '+' || l.ch == '-' {
+				l.advance() // consume sign
+			}
+			for isDigit(l.ch) {
+				l.advance()
+			}
+		}
+		return l.input[position:l.currPos], token.FLOAT
 	}
-	if !isDigit(l.peekChar()) {
-		return l.input[position:l.currPos], token.INT
+
+	// Check for scientific notation in integer (e.g., 2e10)
+	if l.ch == 'e' || l.ch == 'E' {
+		l.advance() // consume 'e' or 'E'
+		if l.ch == '+' || l.ch == '-' {
+			l.advance() // consume sign
+		}
+		for isDigit(l.ch) {
+			l.advance()
+		}
+		return l.input[position:l.currPos], token.FLOAT
 	}
-	l.advance()
-	for isDigit(l.ch) {
-		l.advance()
-	}
-	return l.input[position:l.currPos], token.FLOAT
+
+	// Regular integer (decimal or octal)
+	return l.input[position:l.currPos], token.INT
 }
 
 func isLetter(ch byte) bool {
@@ -272,6 +318,14 @@ func isLetter(ch byte) bool {
 
 func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
+}
+
+func isHexDigit(ch byte) bool {
+	return isDigit(ch) || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')
+}
+
+func isBinaryDigit(ch byte) bool {
+	return ch == '0' || ch == '1'
 }
 
 func (l *Lexer) newToken(tokenType token.TokenType, ch byte) token.Token {

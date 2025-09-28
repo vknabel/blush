@@ -669,6 +669,94 @@ func TestAllTokens(t *testing.T) {
 			},
 		},
 		{
+			name:  "hexadecimal integer",
+			input: `0xFFF`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0xFFF"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "hexadecimal integer lowercase",
+			input: `0x8899aa`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0x8899aa"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "octal integer",
+			input: `0777`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0777"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "binary integer",
+			input: `0b101010`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0b101010"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "binary integer uppercase",
+			input: `0B100011`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.INT, "0B100011"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "scientific float positive exponent",
+			input: `2e10`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.FLOAT, "2e10"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "scientific float negative exponent",
+			input: `1.5e-3`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.FLOAT, "1.5e-3"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			name:  "scientific float uppercase E",
+			input: `3.14E+2`,
+			expected: []struct {
+				expectedType    token.TokenType
+				expectedLiteral string
+			}{
+				{token.FLOAT, "3.14E+2"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			name:  "integer followed by dot",
 			input: `123.`,
 			expected: []struct {

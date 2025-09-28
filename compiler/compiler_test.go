@@ -98,6 +98,67 @@ func TestCharLiterals(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestNumberLiterals(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			label:             "decimal integer",
+			input:             "42",
+			expectedConstants: []any{42},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "hexadecimal integer",
+			input:             "0xFFF",
+			expectedConstants: []any{4095}, // 0xFFF = 4095
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "octal integer",
+			input:             "0777",
+			expectedConstants: []any{511}, // 0777 = 511
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "binary integer",
+			input:             "0b101010",
+			expectedConstants: []any{42}, // 0b101010 = 42
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "float literal",
+			input:             "3.14",
+			expectedConstants: []any{3.14},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "scientific notation float",
+			input:             "2e10",
+			expectedConstants: []any{2e10},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func TestBinaryOperators(t *testing.T) {
 	tests := []compilerTestCase{
 		{
@@ -867,6 +928,11 @@ func testConstants(
 			got, ok := actual[i].(runtime.Int)
 			if !ok || want != int(got) {
 				return fmt.Errorf("wrong constant at %d.\nwant=%d\ngot=%q", i, want, got)
+			}
+		case float64:
+			got, ok := actual[i].(runtime.Float)
+			if !ok || want != float64(got) {
+				return fmt.Errorf("wrong constant at %d.\nwant=%f\ngot=%f", i, want, float64(got))
 			}
 		case rune:
 			got, ok := actual[i].(runtime.Char)
