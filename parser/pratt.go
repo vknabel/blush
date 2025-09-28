@@ -306,15 +306,17 @@ func (p *Parser) parsePrattExprString() ast.Expr {
 }
 
 func parseCharLiteral(literal string) (rune, error) {
-	decoded, err := strconv.Unquote("'" + literal + "'")
+	if literal == "" {
+		return 0, errors.New("char literal must contain exactly one character")
+	}
+	ch, _, tail, err := strconv.UnquoteChar(literal, '\'')
 	if err != nil {
 		return 0, err
 	}
-	runes := []rune(decoded)
-	if len(runes) != 1 {
+	if tail != "" {
 		return 0, errors.New("char literal must contain exactly one character")
 	}
-	return runes[0], nil
+	return ch, nil
 }
 
 func (p *Parser) parseExprListOrDict() ast.Expr {

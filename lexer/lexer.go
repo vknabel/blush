@@ -167,9 +167,11 @@ func (l *Lexer) parseChar() (string, bool) {
 	for {
 		l.advance()
 		if l.ch == 0 {
+			l.peekPos = l.currPos
 			return "", false
 		}
 		if l.ch == '\n' || l.ch == '\r' {
+			l.peekPos = l.currPos
 			return "", false
 		}
 		if escaped {
