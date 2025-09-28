@@ -325,9 +325,10 @@ func (p *Parser) parseDataDecl(_ StatementPosition, annos ast.AnnotationChain) *
 	data := ast.MakeDeclData(declToken, ident)
 	data.Annotations = annos
 
-	p.curSymbolTable.Insert(data)
+	sym := p.curSymbolTable.Insert(data)
 
-	p.curSymbolTable = ast.MakeSymbolTable(p.curSymbolTable, data)
+	sym.ChildTable = ast.MakeSymbolTable(p.curSymbolTable, data)
+	p.curSymbolTable = sym.ChildTable
 	defer func() { p.popSymbolTable() }()
 
 	if !p.curIs(token.LBRACE) {
@@ -547,6 +548,7 @@ func (p *Parser) parsePropertyDeclarationList() []ast.DeclField {
 		}
 		field := p.parseDataDeclField()
 		if field != nil {
+			p.curSymbolTable.Insert(field)
 			fields = append(fields, *field)
 		}
 	}

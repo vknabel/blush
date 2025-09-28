@@ -35,6 +35,7 @@ const (
 	LessThanOrEqual
 
 	Call
+	GetField
 	Return
 	GetGlobal
 	SetGlobal
@@ -77,7 +78,8 @@ var definitions = map[Opcode]*Definition{
 	LessThan:           {"lt", []int{}},
 	LessThanOrEqual:    {"lte", []int{}},
 
-	Call:      {"call", []int{2}}, // arg count
+	Call:      {"call", []int{2}},     // arg count
+	GetField:  {"getfield", []int{2}}, // name id
 	Return:    {"return", []int{}},
 	GetGlobal: {"getglobal", []int{2}},
 	SetGlobal: {"setglobal", []int{2}},

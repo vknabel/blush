@@ -202,6 +202,24 @@ func (vm *VM) runTask(taskId TaskId) error {
 				return err
 			}
 
+		case op.GetField:
+			nameIdx := op.ReadUint16(ins[ip:])
+			fr.ip += 2
+			nameConst, ok := vm.constants[nameIdx].(runtime.String)
+			if !ok {
+				return fmt.Errorf("name lookup requires a String constant (%T %q)", vm.constants[nameIdx], vm.constants[nameIdx].Inspect())
+			}
+			name := string(nameConst)
+			obj := vm.pop()
+			val := obj.Lookup(name)
+			if val == nil {
+				return fmt.Errorf("name %q not found in %T %q", name, obj, obj.Inspect())
+			}
+
+			if err := vm.push(val); err != nil {
+				return err
+			}
+
 		case op.Call:
 			argCount := int(op.ReadUint16(ins[ip:]))
 			fr.ip += 2
@@ -220,8 +238,23 @@ func (vm *VM) runTask(taskId TaskId) error {
 				vm.sp = frame.basep
 
 				for i := 0; i < argCount; i++ {
-					// TODO: or pop?
 					frame.locals[argCount-1-i] = vm.stack[vm.sp+i]
+				}
+
+			case *runtime.DataType:
+				if argCount != callee.Arity() {
+					return fmt.Errorf("wrong number of arguments: want=%d, got=%d", callee.Arity(), argCount)
+				}
+
+				vals := make([]runtime.RuntimeValue, argCount)
+				for i := 0; i < argCount; i++ {
+					vals[argCount-1-i] = vm.pop()
+				}
+
+				dv := runtime.MakeDataValue(callee, vals)
+				err := vm.push(dv)
+				if err != nil {
+					return err
 				}
 			}
 
@@ -235,7 +268,7 @@ func (vm *VM) runTask(taskId TaskId) error {
 			}
 
 		default:
-			def, err := op.Lookup(byte(code))
+			def, err := op.LookupDefinition(byte(code))
 			if err != nil {
 				return fmt.Errorf("unhandled opcode: %w", err)
 			}

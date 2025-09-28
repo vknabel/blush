@@ -4,7 +4,20 @@ import "fmt"
 
 type DataValue struct {
 	TypeId TypeId
-	Fields map[string]RuntimeValue
+	Values []RuntimeValue
+	Fields map[string]int
+}
+
+func MakeDataValue(dt *DataType, values []RuntimeValue) *DataValue {
+	fields := make(map[string]int, len(dt.FieldSymbols))
+	for i, f := range dt.FieldSymbols {
+		fields[f.Name] = i
+	}
+	return &DataValue{
+		TypeId: TypeId(*dt.Symbol.ConstantId),
+		Fields: fields,
+		Values: values,
+	}
 }
 
 // Inspect implements RuntimeValue.
@@ -14,7 +27,11 @@ func (dv *DataValue) Inspect() string {
 
 // Lookup implements RuntimeValue.
 func (dv *DataValue) Lookup(name string) RuntimeValue {
-	panic("unimplemented")
+	idx, ok := dv.Fields[name]
+	if !ok {
+		return nil
+	}
+	return dv.Values[idx]
 }
 
 // TypeConstantId implements RuntimeValue.
