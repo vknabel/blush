@@ -184,6 +184,18 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(op.GetField, c.addConstant(c.plugins.Prelude().String(node.Property.Value)))
 		return nil
 
+	case *ast.ExprIndexAccess:
+		err := c.Compile(node.Target)
+		if err != nil {
+			return err
+		}
+		err = c.Compile(node.IndexExpr)
+		if err != nil {
+			return err
+		}
+		c.emit(op.GetIndex)
+		return nil
+
 	case *ast.ExprInvocation:
 		for i := 0; i < len(node.Arguments); i++ {
 			// compile arguments in left-to-right order

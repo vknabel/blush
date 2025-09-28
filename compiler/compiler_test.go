@@ -386,6 +386,67 @@ func TestArrayExpressions(t *testing.T) {
 				code.Make(code.Pop),
 			},
 		},
+		{
+			label:             "array index",
+			input:             "[1, 2, 3][1]",
+			expectedConstants: []any{1, 2, 3, 3, 1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Const, 1),
+				code.Make(code.Const, 2),
+				code.Make(code.Const, 3),
+				code.Make(code.Array),
+				code.Make(code.Const, 4),
+				code.Make(code.GetIndex),
+				code.Make(code.Pop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
+func TestDictExpressions(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             "[:]",
+			expectedConstants: []any{0},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Dict),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "dict with two key-value pairs",
+			input:             "[1: 2, 3: 4]",
+			expectedConstants: []any{1, 2, 3, 4, 2},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Const, 1),
+				code.Make(code.Const, 2),
+				code.Make(code.Const, 3),
+				code.Make(code.Const, 4),
+				code.Make(code.Dict),
+				code.Make(code.Pop),
+			},
+		},
+		{
+			label:             "dict with expressions",
+			input:             "[1 + 1: 2 * 2]",
+			expectedConstants: []any{1, 1, 2, 2, 1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.Const, 0),
+				code.Make(code.Const, 1),
+				code.Make(code.Add),
+				code.Make(code.Const, 2),
+				code.Make(code.Const, 3),
+				code.Make(code.Mul),
+				code.Make(code.Const, 4),
+				code.Make(code.Dict),
+				code.Make(code.Pop),
+			},
+		},
 	}
 
 	runCompilerTests(t, tests)

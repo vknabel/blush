@@ -46,6 +46,7 @@ var precedences = map[token.TokenType]Precedence{
 	token.PERCENT:  PRODUCT,
 	token.ASTERISK: PRODUCT,
 	token.LPAREN:   CALL,
+	token.LBRACKET: CALL,
 	token.DOT:      MEMBER,
 }
 

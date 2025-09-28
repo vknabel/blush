@@ -11,6 +11,9 @@ const (
 	Array
 	Dict
 
+	GetIndex
+	GetField
+
 	// does not consume, just assert top value's type
 	AssertType
 
@@ -35,7 +38,6 @@ const (
 	LessThanOrEqual
 
 	Call
-	GetField
 	Return
 	GetGlobal
 	SetGlobal
@@ -56,6 +58,9 @@ var definitions = map[Opcode]*Definition{
 
 	Array: {"array", []int{}},
 	Dict:  {"dict", []int{}},
+
+	GetIndex: {"getindex", []int{}},
+	GetField: {"getfield", []int{2}}, // name id
 
 	AssertType: {"asserttype", []int{2}}, // type id
 
@@ -78,8 +83,7 @@ var definitions = map[Opcode]*Definition{
 	LessThan:           {"lt", []int{}},
 	LessThanOrEqual:    {"lte", []int{}},
 
-	Call:      {"call", []int{2}},     // arg count
-	GetField:  {"getfield", []int{2}}, // name id
+	Call:      {"call", []int{2}}, // arg count
 	Return:    {"return", []int{}},
 	GetGlobal: {"getglobal", []int{2}},
 	SetGlobal: {"setglobal", []int{2}},

@@ -58,7 +58,6 @@ func (e ExprDict) Expression() string {
 		if i+1 < len(e.Entries) {
 			out.WriteString(", ")
 		}
-		i += 1
 	}
 	out.WriteString("]")
 
